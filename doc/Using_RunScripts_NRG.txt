@@ -1,0 +1,48 @@
+=========
+1- Running NRG in ./runNN directories
+========
+A very common task using the NRG code is to do several runs changing only 
+one or perhaps two paramenters at a time. Let's get a concrete example:
+
+The "vanilla" Anderson model has 3 parameters: ed, U and Gamma. Let's say
+I want to do 7 different runs with U=0.5, Gamma=0.01 and 7 ed values: 
+ed=-0.4,-0.35,-0.3, -0.25,-0.2, -0.15,-0.1 
+
+That means, 7 different input_nrg.dat files, in which would have the following structure:
+
+===
+51 <-- Nsites: line 0 
+1000 <-- Nstates: line 1
+0.5  <-- U : line 2
+0.01 <-- Gamma: line 3
+-0.4 <-- ed: line 4 (varying this one)
+2.5  <-- Lambda
+0   <-- chemical potential (=0 by default)
+0   <-- always zero (for historical reasons)
+0   <-- Update Before cut? [0 - no (dafault) 1- yes]
+0   <-- calculate what? [0- 1-body observables, 1- spectral densities, 2-Thermodynamics, 3- Chain thermodynamics, etc.]
+9999999 <-- marker (any integer)
+(..)
+===
+
+So, what do you do? You say: "Well, I just make 7 copies of input_nrg.dat and edit line 4 (starting from 0) above to change ed". Yeah, what if you have 1000 runs instead of 7? Will you edit each one of them manually?
+
+The script "ChangeNRGParams.perl" can help to make changing the parameters in input_nrg.txt  automatically. For that, you need to create "runNN" (NN->number) directories, one for each NRG run. In the example above, we create
+
+$mkdir ./run1
+$mkdir ./run2
+(...)
+$mkdir ./run7
+
+and place a copy of the above input_nrg.file (with U=0.5, Gamma=0.01 and ed=-0.4) in each one of them. Also, create a symbolic link to NRG_main in each one.
+
+Once you are done, make a symbolic link to "ChangeNRGParams.perl" and run
+
+$ChangeNRGParams.perl -h
+
+will give you the options. In this example, we are doing
+
+$ChangeNRGParams.perl -i 1 -f 7 --choiceparam=4 --p0=-0.4 --pstep=0.05 
+
+Meaning: please change the values of line 4 (starting from 0) in files "input_nrg.dat" (default) located in dirs "./run1" through "./run7", starting from -0.4 in ./run1 and increasing this value by 0.05 as you go to the next dir. 
+

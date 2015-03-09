@@ -1,0 +1,89 @@
+Here's a quick guide to set up the NRG code:
+
+*********
+1 - Untar the tar.gz file
+*********
+
+Choose a directory (for instance, "(SOME PATH)/NRGcode") and untar the file. It will store the files in 3 basic directories:
+
+./include -> C++ header files
+./src     -> C++ source codes
+./doc     -> Documentation
+
+Once you did this, set up the $TWOCHDIR enviroment variable in your .barhsc file. This variable contains the location of the directory (SOME PATH)/NRGcode. For instance, if your created "./NRGcode" directly in $HOME, you can add the following to your .bashrc file:
+
+if [ -z $TWOCHDIR ]; then
+  TWOCHDIR=$HOME/NRGcode
+  export TWOCHDIR
+fi
+
+Just to make sure everything is ok, do:
+$source .bashrc
+$echo $TWOCHDIR
+
+*********
+2 - Install the required packages
+*********
+
+In addition to a C++ compiler (g++ works fine. gcc has some problems, I guess it's my fault... ), the code will need the following external packages:
+
+Boost - www.boost.org
+LAPACK - www.netlib.org/lapack/
+Gnu Scientific Library (GSL) - www.gnu.org/s/gsl
+
+which are easy to find in the internet. 
+
+NOTE to CygWin USERS: You can find those packages in the Cygwin installation.
+
+The code will need the ".a"  libraries such as libgsl.a, etc. so make sure these are in a location that is included in the directories the compiler will look for libraries. To check this, you can use the "-v" option in g++ (it will list the directories it is looking for libraries) 
+ 
+
+*********
+3 - Compile the codes 
+*********
+
+Now comes the critical part. There are three separate codes that need to be compiled:
+
+Main NRG code    : in $TWOCHDIR/src/Main   -- Use "make"
+DM-NRG code      : in $TWOCHDIR/src/DM_NRG -- Use "make"
+Conductance      : in $TWOCHDIR/src/DM_NRG -- Use "make Conductance"
+
+The procedure is similar for all three codes so I will illustrate with the first one.
+
+Go in each of the folder above and edit the file called "Makefile" and set the correct value for the variable "$TWOCHDIR" defined above. For instance: 
+
+TWOCHDIR=$(HOME)/NRGcode/
+
+(note the "/" in the end. This is important) 
+
+Then exit and do:
+
+$ make
+
+It should compile by now and create a bunch of .o files. If it worked, congratulations! Look at "Using_NRG_main.txt" now.
+
+If it did not compile, open the $TWOCHDIR/src/Main/Makefile with vi or your favorite text editor and start bug-hunting.
+
+Some tips:
+
+- A common error is something like:
+
+"No rule to make target (...) needed by NRG_main"
+
+This means make is not finding the files it needs. 
+
+Check $TWOCHDIR above and see whether the "-I" options are pointing to the right places.
+
+- Sometimes g++ itself will give compilation errors such as not finding a library (LAPACK for instance).
+
+The first thing I would do is to add the "-v" option to the g++ compiler:
+
+$(CXX) -v -c $(CXXFLAGS) $< -o $@
+
+and then see whether it is looking for the libraries at the right places.
+ 
+- E-mail me or call me on gmail chat and we'll try to figure stuff out.
+
+- Pray for the Makefile Gods. Sometimes it works.
+
+

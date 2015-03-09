@@ -1,0 +1,32 @@
+To run NRG_main with PBS batch files do:
+
+1) Write a script file containing:
+
+========
+#!/bin/sh 
+#PBS -N job_test
+#
+#PBS -e job_test.error 
+#
+#PBS -o job_test.output
+#
+#PBS -l nodes=1 
+NRG_main > output_pbs_test.txt 
+echo "Finished NRG  > Finish_test
+========
+
+(Obs: to run with "PowerLaw" option, replace command line above with
+
+NRG_main -b PowerLaw > output_pbs_test.txt 
+)
+
+2) Save the above in a file (for example, PBS_script)
+and run 
+===
+$qsub PBS_script
+===
+
+3) To check the status, do
+===
+$qstat
+===

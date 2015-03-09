@@ -1,0 +1,212 @@
+***********
+0- Calling the code: 
+***********
+
+$NRG_main -m (model) -b (band)  > output.txt
+
+For the different possibilities, use the help:
+
+$NRG_main -h
+
+***********
+1- Parameter files: 
+***********
+
+The NRG_main code has two basic input files:
+
+input_nrg.dat : always called.
+
+Each line correponds to a parameter. A typical file looks like this:
+========
+71  
+1000   
+0.5
+2.82691E-2
+-2.5E-1
+2.5
+1.0
+0
+0
+2
+9999999 
+(other parameters for double dot codes and etc.)
+========
+
+where the basic parameters (say, for the Anderson model calculations) are:
+
+========
+71     <-- Nsites+1 (length of final Wilson chain)  
+1000   <-- Nkept (number of kept states)
+0.5    <-- U/D
+2.82691E-2  <-- Gamma/D
+-2.5E-1 <-- e_d/D
+2.5     <-- Lambda
+1.0     <-- D (always =1.0)
+0       <-- tela (always=0)
+0       <-- Update Before Cutting? [0- no (default), 1- yes]
+2       <-- calculate spectral density/susceptibility 
+        [0 -no, 1- spec density, 2 -chi_imp 3-chi^{(0)}]
+9999999 <-- a marker (any integer)
+(...)
+
+========
+
+lanc.in : called when options "-b SideDot" , "-b PowerLaw",  "-b Const"  are used.
+
+Typical format (first lines):
+====
+1
+1.0
+0.016
+0.0
+0.0
+0.0
+====
+
+where the numbers have different meanings depending on whether you are using "SideDot" or "PowerLaw". 
+
+The above example is for "PowerLaw" (Gamma(w)=Gamma_0.|w-w0|^r + small_gamma) so let's explain it.
+
+====
+1      <-- Band type (=1 for power-law, =4 for side dot)
+1.0    <-- exponent r
+0.016  <-- Gamma_0
+0.0    <-- small_gamma 
+0.0    <-- w0 (=0.0 for E_F at the Dirac point, pseudogap model)
+0.0    <-- (nothing in PowerLaw)
+====
+
+Z-trick: use "-b Const" and the code will read the value of z from the second line of lanc.in (in the example above, it would do the trivial case  "z=1.0").
+
+***********
+2- Calculating suscpetibility and entropy curves. 
+***********
+
+You need first to calculate the "chain" susceptbility for the model. Use option "3" in the 10th line of input_nrg.dat and run the code once (ex.: single-channel Anderson model with QS symmetry, the default).
+
+It will produce the following output files, corresponding to the chain susceptibilities: 
+
+===
+SuscepChain1Ch_QS_zEQ1.dat
+EntropyChain1Ch_QS_zEQ1.dat
+===
+
+Then change the 10th line of input_nrg.dat to "2" and run the code again. It will produce the files:
+
+===
+EntropyImp1ChQS_Anderson_zEQ1.dat
+SuscepImp1ChQS_Anderson_zEQ1.dat
+===
+
+Each of these files will have 4 columns: "Temp Tot Chain Imp". 
+
+"Temp" is the temperature. "Tot" is the total susceptibility (or entropy), "Chain" is the susceptibility for the system without the impurity and "Imp=Tot-Chain" is the impurity contribution to the suceptibility (the most important).
+
+
+Usually, we do plots "Imp x Temp". Thus, if you are using xmgrace to read "SuscepImp1ChQS_Anderson_zEQ1.dat" then read the first column to "x" and the fourth column to "y". Set "x" to a log scale.
+
+A technical detail: the data above are, in the notation of Bulla:
+
+"Imp"=Temp.\chi_imp(Temp)
+
+(the temperature is already multiplying \chi_imp).
+
+ADDED:
+ 
+ - Calculating the occupation vs temperature.
+
+the current version of the code calculates the impurtity occupation versus temperature for the Anderson model (with Q,S and Q,Sz symmetries) 
+
+Run the code as described above (using option "2" in the 10th line of input_nrg.dat) and pipe the output to a text file (e.g. "output_NRG.txt"): 
+
+$NRG_main > output_NRG.txt
+
+The occupation data will be printed in "output_NRG.txt" in lines containing the string "Ndot". To obtain this data, do 
+
+
+$grep Ndot output_NRG.txt
+T= 2.40715 Ndot= 0.970467
+T= 1.52242 Ndot= 0.954853
+(...)
+
+(In this example, I used  U=0.5 ed=-0.1 Gamma=0.02827. If ed=-U/2, Ndot should be equal to 1).
+
+To save it in a data file (e.g. Ndot_Temp.dat), do
+
+$grep Ndot output_NRG.txt | awk '{print $2 "  " $4}' > Ndot_Temp.dat
+
+***********
+3- Calculating dynamical properties (e.g., spectral function) 
+***********
+
+For that, we are using DM-NRG code, which uses Hofstetter's "DM-NRG" method and, more recently, has Ander's "Complete Fock State" (CFS) basis implemented as well.
+
+The first step is to run NRG_main as above setting option "1" in the 10th line of inptu_nrg.dat. For instance: 
+
+========
+71     <-- Nsites+1 (length of final Wilson chain)  
+1000   <-- Nkept (number of kept states)
+0.5    <-- U/D
+2.82691E-2  <-- Gamma/D
+-2.5E-1 <-- e_d/D
+2.5     <-- Lambda
+1.0     <-- D (always =1.0)
+0       <-- tela (always=0)
+0       <-- Update Before Cutting? [0- no (default), 1- yes]
+1       <-- calculate spectral density/susceptibility 
+        [0 -no, 1- spec density, 2 -chi_imp 3-chi^{(0)}]
+9999999 <-- a marker (any integer)
+(...)
+
+========
+
+Run the "NRG_main" code. It will save binary files ( Abasis_**_N**.bin and Mat*_**_N**.bin) needed later to calculate spectral densities.
+
+Once these files are in place, you can run the "./DM_NRG" code in the SAME directory. Using the defaultsi and for zero temperature, it is simply:
+
+$nice DM_NRG > outputDMNRG.txt &
+ 
+It will calculate the reduced density matrices and save them on "rhoDM_**_N**.bin" files. The spectral densities involving impurity operators c_i and c^\dagger_j will be saved in rho_[i]_[j]_OmegaRhow.dat. 
+
+The number of operators/files will depend on the model. In the case of the Anderson model with QS symmetry, there will be only one file:
+
+rho_0_0_OmegaRhow.dat. 
+
+For the Anderson model with QSz symmetry, there will be two:    
+
+rho_0_0_OmegaRhow.dat -> spin up spectral density. 
+rho_1_1_OmegaRhow.dat -> spin down spectral density. 
+
+=== Finite-temperature calculations
+
+The above procedure calculates spectral densities at T=0.
+
+In order to calculate spectral functions at a finite tempererature rho(w,T), NRG has to overcome some difficulties, which have been long stated in the literature. 
+
+At the heart of the problem is the fact that spectral properties are not well resolved for frequencies below the temperature (w<T). Thus, one uses spectral information at energies w>~T. In practice, it means that only NRG data up to a maximum chain lenght M<N such that D_M~T will be used in this calculation. 
+
+In order to calculate rho(w,T) with the DM_NRG code you have to specify this "M"as:
+
+$nice ./DM_NRG -M > output_DMNRG_finiteT.txt &
+
+It will calculate the reduced density matrices and save them on "rhoDM_**_N**.bin" files but up to N=M only. The spectral densities involving impurity operators c_i and c^\dagger_j will be saved as usual in rho_[i]_[j]_OmegaRhow.dat. 
+
+
+== Practical example
+For instance, in the input_NRG.dat file above, we have N+1=71 and Lamda=2.5. The last site of the chain will correspond to an energy scale D_{N}=(1/2)*(1+1/Lambda)*Lambda^{-(N-1)/2} which will be D_{N=70}~1.eE-14. This is, essentially, "zero temperature" for practical purposes.
+
+If we want to calculate the spectral function for a higher temperature of the oder ~10^{-6}, for instance, we can use M=30 which gives D_{M=30}~1.18E-6.
+
+Having run the "NRG_main" code, and with files Abasis_**_N**.bin and Mat*_**_N**.bin in place,  we now erase all rhoDM*.bin files left over and do:
+
+$nice ./DM_NRG -M 30 > output_DMNRG_finiteT.txt &
+
+It will produce rho_0_0_OmegaRhow.dat, which contains the finite-temperature spectral function. The actual value of the temperature can be found in the TempMtemp.dat file.
+
+Of course we will want to do SOMETHING with these files (such as calculating the conductance or resistivity) and this is what we will discuss next.
+
+***********
+4- Calculating conductances and resistivities (./Conductance code) 
+***********
+(coming soon)
+====
