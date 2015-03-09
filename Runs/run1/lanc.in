@@ -1,0 +1,74 @@
+1
+1.0
+0.016
+0.0
+-0.2
+0.0
+
+whichbandtype
+en0 (r)
+Gamma2 (G0)
+Gamma1 (small_gamma)
+small_lambda (w0)
+MagFlux/Pi
+
+
+g2em3: lambda=0.077950267125
+Paper: 
+0.035390016806384517477005482709048
+0.062664300190096673275710164805635
+0.077950267125057395126437348496277
+
+pi/2
+1.570796327
+pi
+3.141592654
+3pi/2
+4.712388980
+2pi
+6.283185307
+
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+CCC
+CCC   whichbandtype=1 -> power-law en^r
+CCC    G(w)=G0*|w-w0|^r : 1 - r , 2 - G0, 3 - delta (gap) , 4 - w0
+CCC
+CCC                                               ___
+CCC   whichbandtype=2 -> ------gap(1)\___/root(1)/   \root(2)\___/gap(2)------
+CCC
+CCC   whichbandtype=3 -> 1 + wo*Gamma^2/[(en-en0)^2+Gamma^2]  Lorentzian shape
+CCC           (peak or dip)
+CCC
+CCC   whichbandtype=4 -> Gamma(e)=pi*lambda^2*(Gamma/Pi)/[(en-en0)^2+Gamma^2]
+CCC  pure Lorentzian shape (peak)
+CCC
+CCC                      Gamma(0)=lambda^2/Gamma_2
+CCC
+CCC   whichbandtype=5 -> Gamma1(1 - Gamma2^2/[(en-en0)^2+Gamma2^2]) 
+CCC          pure Lorentzian shape (dip)
+CCC              USING THIS ONE: mloopmax has to be 17....
+CCC
+CCC   whichbandtype=6 -> Gamma(e) = Gamma1 + 
+CCC  Pi*(barrho)*(lambda^2-Gamma1*Gamma2+2*lambda*sqrt(Gamma1/Gamma2)*(e2-en0)
+CCC                      
+CCC                      All variables case (Fano-like shape)
+CCC                      USING THIS, set gamma_d=1.0 in nrg_input_Anderson.dat
+CCC
+CCC   whichbandtype=7 -> Same as 6, with en0 centered at the peak [en0=-Gamma2*sqrt(Delta1*Delta2)/lambda]
+CCC                      
+CCC   whichbandtype=8 -> Same as 6, with en0 centered at the dip  [en0=lambda*sqrt(Delta2/Delta1)]  
+CCC              USING THIS ONE: mloopmax has to be 17....
+CCC
+CCC   whichbandtype=9 -> similar to case 5, now with a Magnetic Field
+CCC
+CCC (New thing: Magnetic Field in Feb 07)
+CCC
+CCC Gamma(e)= pi*(barrho)*(Gamma1/Gamma2)*[(en-en0)^2+(Gamma2*sin[phi/2])^2] 
+CCC
+CCC        =  Gamma1[1 - (Gamma2*cosMagFlux/2.0)^2/[(en-en0)^2+Gamma2^2]]
+CCC 
+CCC       pure Lorentzian shape (dip) for phi=0
+CCC                      
+CCC
+CCC
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

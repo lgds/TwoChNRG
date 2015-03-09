@@ -1,0 +1,57 @@
+4
+1000   
+5.E-1
+2.82691E-2
+-0.25
+2.5
+0
+0
+0
+0
+9999999 
+0.2
+0.0 
+1.0
+1.0
+0.0
+0.0
+0.0
+0.0
+
+
+
+0.5
+2.82691E-2
+-2.5E-1
+
+Nsitesmax+1 (watch out! this is Nsitesmax+1 no Nsitesmax...)
+Ncutoff     (Cutoff states)
+U_d
+Gamma1 (J1)
+e_d
+Lambda
+Dband
+tela           (Display messages on screen?          y - 1; n - 0)
+setGSzero/UpdateBefCut           (in old/new code    y - 1; n - 0)
+calc_density   (calculate the spectral density?      y - 1; n - 0; 2- Calc Suscep; 3- calc chain suscep)
+-------- cont for SMM / CM phonons
+U2                        w0
+Gamma2 (J2)               lambda_ph
+e2                        alpha
+J12                       Nph
+BmagPar
+BmagPerp
+Dz
+B2
+
+Sample parameters for 1ch calc:
+
+U/D=0.5   ; U/(Pi Gamma) = 5.63 
+5.E-1
+2.82691E-2
+-2.5E-1
+2.5
+1.0
+
+
+
