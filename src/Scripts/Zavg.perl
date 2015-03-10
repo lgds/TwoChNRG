@@ -17,6 +17,7 @@ my $SusChainArray=shift(@_);
 my $SusImpArray=shift(@_);
 my $FileName=shift(@_);
 my $nt=0;
+my $LowTemp=10;
 
 @$TempArray=();
 @$SusArray=();
@@ -28,6 +29,7 @@ my $nt=0;
      $TheLine = $_;
      chomp($TheLine);
      ($auxtemp,$auxsuschainpimp,$auxsuschain,$auxsusimp)=split(/ +/,$TheLine);
+     if (abs($auxtemp)<$LowTemp){$LowTemp=abs($auxtemp);}
      push(@$TempArray,$auxtemp);
      push(@$SusArray,$auxsuschainpimp);
      push(@$SusChainArray,$auxsuschain);
@@ -36,7 +38,7 @@ my $nt=0;
    }
  close(INFILE);
 
- return($nt);
+ return(($nt,$LowTemp));
 }
 
 ###############################
@@ -292,6 +294,7 @@ my $ntempsChain=0;
 ##########################
 
 $ifile=0;
+my $LowTempCutOff=1e-100;
 foreach $FileName (@MatchingFiles){
 ## Add an empty Array to each
   @tmp=();
@@ -301,11 +304,10 @@ foreach $FileName (@MatchingFiles){
   push(@SusChain,[ @tmp ] );
   push(@SusImp,[ @tmp ] );
 
-
-  ##$ntemps=ReadSusFile(\@Temps,\@SusChainPImp,\@SusChain,\@SusImp,$SuscepFilename);
-
   ## When using array of arrays, parameters to function call are like THIS:
-  $ntemps=ReadSusFile($Temps[$ifile],$SusChainPImp[$ifile],$SusChain[$ifile],$SusImp[$ifile],$FileName);
+  ($ntemps,$LowTemp)=ReadSusFile($Temps[$ifile],$SusChainPImp[$ifile],$SusChain[$ifile],$SusImp[$ifile],$FileName);
+  if ($LowTemp>$LowTempCutOff){$LowTempCutOff=$LowTemp;}
+  ## LowTempCutOff will be the lowest energy present in ALL files.
   push(@NtempsFile, $ntemps);
   $ifile++;
 
@@ -316,6 +318,7 @@ my $NumFiles=$ifile;
 
 #print " Num files = $NumFiles = ".($#Temps+1)."; ntemps_Zeq1 = ".$NtempsFile[$izeq1]." \n";
 
+print "Low Energy Cut off = $LowTempCutOff \n";
 
 my @BaseXtemps=();
 for ($ii=0;$ii<=$NtempsFile[$izeq1];$ii++){
@@ -357,7 +360,10 @@ print "Saving in $OutFileName \n";
 open(OUTFILE,"> ".$OutFileName);
 ##  for ($ii=0;$ii<=$#BaseXtemps-20;$ii++){
   for ($ii=0;$ii<=$#BaseXtemps-1;$ii++){
+    if (abs($BaseXtemps[$ii])>=$LowTempCutOff){
     printf(OUTFILE "%20.20e %20.20e %20.20e %20.20e\n",$BaseXtemps[$ii],$YAvg[$ii],$YAvg[$ii],$YAvg[$ii]);
+    }
+    ## only save energies above than cut-off
   }
 close(OUTFILE);
 
