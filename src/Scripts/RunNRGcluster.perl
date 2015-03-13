@@ -261,10 +261,10 @@ if (!defined($Command)){
 ##
 ##  Ztrick: use 2nd line of lanc.in to implement it!!! 
 ##
-##  print "Use Ztrick (z=0.75,1,1.25,1.5) ? (y/n) :";
-##  chomp($UseZtrickYN = <STDIN>);
-## if ($UseZtrickYN eq "y"){$UseZtrick=1;}else{$UseZtrick=0;}
-$UseZtrick=0;
+ print "Use Ztrick (z=0.2...1.0 step 0.2 -> Nz=5) ? (y/n) :";
+ chomp($UseZtrickYN = <STDIN>);
+ if ($UseZtrickYN eq "y"){$UseZtrick=1;}else{$UseZtrick=0;}
+##$UseZtrick=0;
 }
 # end if !defined($Command)
 else{
@@ -369,9 +369,9 @@ for ($Dir=$Dir0;
 ### NEED TO CHANGE ALL THIS!!
 ### z-trick is now set in the second line of lanc.in using -b Const
    if ($UseZtrick==1){
-     $z0=0.75;
-     $zF=1.51;
-     $zstep=0.25;
+     $z0=0.2;
+     $zF=1.0;
+     $zstep=0.2;
      for ($zz=$z0;$zz<=$zF;$zz+=$zstep){
        $ExecNameZ=$ExecName." -z ".$zz;
        $ExtensionZ=$Extension."_zEQ".$zz;
@@ -385,13 +385,13 @@ for ($Dir=$Dir0;
        if ($UseAllCodes==1){
          if ($UseCFS==1){$String.="nice ./DM_NRG -C -n ${Nw} > output_DMNRG_CFS_zEQ${zz}_Dir${Dir}.txt \n";}
          else {$String.="nice ./DM_NRG -n ${Nw} > output_DMNRG_zEQ${zz}_Dir${Dir}.txt \n";}
-         $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhozEQ".$zz."_\\1\.dat/\" \| sh \n";
          $String.="rm -f \*.bin \n"; 
-        ## Add a script here to average rho files
        }
        # end if UseAllCodes=1 (using Z-trick with DM-NRG)
      }
      # end loop in Z
+     $String.="ls rho_\*_OmegaRhow.dat \| sed \"s\/rho_\\(\.\*\\)_OmegaRhow\.dat\/cp \-p \& rho_\\1_OmegaRhow_zEQ1\.00\.dat/\" \| sh \n";
+     ## Add a script here to average rho files
      $UseAllCodes=0; ## need this to avoide
    }
    else{ ## no Z-trick
