@@ -48,6 +48,7 @@ Print_Help() if ( (!defined($Dir0))||(!defined($DirF)) );
       elsif (/correlated/){print "Correlated cluster. \n";}
       elsif (/glyph/){print "Glyph cluster. \n";}
       elsif (/wilson/){print "Wilson cluster. \n";}
+      elsif (/aguia000/){print "Aguia cluster (PBS). \n";}
       else{print "Cant recognize cluster. Exiting... \n"; exit(0);}
     }
                                                                               
@@ -259,9 +260,12 @@ if (!defined($Command)){
   }
 # end for ChoiceBand
 ##
-##  Ztrick: use 2nd line of lanc.in to implement it!!! 
+##  Ztrick: command line 
 ##
- print "Use Ztrick (z=0.2...1.0 step 0.2 -> Nz=5) ? (y/n) :";
+ $z0=0.6;
+ $zF=1.41;
+ $zstep=0.2;
+ print "Use Ztrick (z=".$z0."...".$zF." step ".$zstep." -> Nz=".(int(($zF-$z0)/$zstep)+1).") ? (y/n) :";
  chomp($UseZtrickYN = <STDIN>);
  if ($UseZtrickYN eq "y"){$UseZtrick=1;}else{$UseZtrick=0;}
 ##$UseZtrick=0;
@@ -350,7 +354,7 @@ for ($Dir=$Dir0;
       $SubCommand.="-q $QueueName " if defined $QueueName;
       $SubCommand.=" < $LocalDir/$ScriptFileName \n";
      }
-   elsif ( ($HostName =~ m/glyph/)||($HostName =~ m/wilson/) )
+   elsif ( ($HostName =~ m/glyph/)||($HostName =~ m/wilson/)||($HostName =~ m/aguia000/) )
      {
       $ScriptFileName="PBS_".$ScriptFileName;
       $String.="\#PBS -N job".$Extension."\n\#\n";
@@ -359,6 +363,7 @@ for ($Dir=$Dir0;
       if (defined($PBSresources)){$String.="\#PBS -l $PBSresources \n";}
       else{$String.="\#PBS -l nodes=1:ppn=2 \n";}
       $SubCommand="qsub ";
+      $SubCommand.="-q $QueueName " if defined $QueueName;
       $SubCommand.=" $LocalDir/$ScriptFileName \n";
 ## ## -d path : Defines the working directory path and stores it in $PBS_O_INITDIR
 ###      $SubCommand.=" $ScriptFileName -d $LocalDir \n";
@@ -366,12 +371,13 @@ for ($Dir=$Dir0;
    else {print "Which cluster is this? \n"; exit(0);}
    $String.="cd ".$LocalDir."\n";
 ## Adding z-trick
-### NEED TO CHANGE ALL THIS!!
-### z-trick is now set in the second line of lanc.in using -b Const
    if ($UseZtrick==1){
-     $z0=0.2;
-     $zF=1.0;
-     $zstep=0.2;
+######
+## Using Z-trick
+######
+##     $z0=0.6;
+##     $zF=1.41;
+##     $zstep=0.2;
      for ($zz=$z0;$zz<=$zF;$zz+=$zstep){
        $ExecNameZ=$ExecName." -z ".$zz;
        $ExtensionZ=$Extension."_zEQ".$zz;
@@ -392,61 +398,64 @@ for ($Dir=$Dir0;
      # end loop in Z
      $String.="ls rho_\*_OmegaRhow.dat \| sed \"s\/rho_\\(\.\*\\)_OmegaRhow\.dat\/cp \-p \& rho_\\1_OmegaRhow_zEQ1\.00\.dat/\" \| sh \n";
      ## Add a script here to average rho files
-     $UseAllCodes=0; ## need this to avoide
+     ##$UseAllCodes=0; ## need this to avoide... Avoid what???
    }
-   else{ ## no Z-trick
+   else{ 
+######
+## no Z-trick
+######
     $String.="nice ./$ExecName > output_$Extension.txt \n";
 ## Add stuff to script
-    if (defined($Special)){
-     $String.="perl -I../ ../ChangeNRGParams.perl -i $Dir -f $Dir --choiceparam=9 --p0=2 --pstep=0 --indir  \n";
-     $String.="nice ./$ExecName > output_$Extension.txt \n";
+     if (defined($Special)){
+      $String.="perl -I../ ../ChangeNRGParams.perl -i $Dir -f $Dir --choiceparam=9 --p0=2 --pstep=0 --indir  \n";
+      $String.="nice ./$ExecName > output_$Extension.txt \n";
 ##     $String.="../GrepNRGOpAvg.perl --indir --chiloc \n"; ## ChiLoc (not Suscep)
-     $String.="cp -p SuscepImp1ChQS_Anderson_zEQ1.dat SuscepImp_25_727.dat \n";
-     $String.="./CalcTK 2 $Dir \n";
-     $String.="../GrepNRGOpAvg.perl --indir --grep=\"Ndot\" -p 4 --Tzero -i $Dir -f $Dir \n";
-    }
-## end special
+      $String.="cp -p SuscepImp1ChQS_Anderson_zEQ1.dat SuscepImp_25_727.dat \n";
+      $String.="./CalcTK 2 $Dir \n";
+      $String.="../GrepNRGOpAvg.perl --indir --grep=\"Ndot\" -p 4 --Tzero -i $Dir -f $Dir \n";
+     }
+##   end special
+     print "UseAllCodes = $UseAllCodes \n" ;
+     if ($UseAllCodes==1){
+        print "Adding DM_NRG and/or Conductance \n";
+        if ( ($ChoiceCode==4)&&($FiniteT==1) ){
+##          $String.="nice ./Conductance > output_Conductance"; 
+          $String.="nice ./Conductance -R -G > output_Resistivity";
+          if ($UseCFS==1){$String.="_CFS";}
+          $String.="_Mtemp".$Mtemp0."_Dir".$Dir.".txt \n";
+          $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
+          $String.="rm -f rhoDM\*.bin \n";
+          if($LoopMtemp==1){
+           for ($Mtemp=$Mtemp0+$MtempStep;$Mtemp<=$MtempFinal;$Mtemp+=$MtempStep){
+             $ExecName=$ExecNameTeq0." -M ".$Mtemp;
+             $ExtensionMtemp=$Extension."_MtempEQ".$Mtemp;
+             $String.="nice ./$ExecName > output_$ExtensionMtemp.txt \n";
+##             $String.="nice ./Conductance > output_Conductance";
+             $String.="nice ./Conductance -R -G > output_Resistivity";
+             if ($UseCFS==1){$String.="_CFS";}
+             $String.="_Mtemp".$Mtemp."_Dir".$Dir.".txt \n";
+             $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
+             $String.="rm -f rhoDM\*.bin \n"; 
+           } 
+           # end loop in Mtemp
+           $Mtemp=$Mtemp0;
+         } 
+         #end if LoopMtemp==1
+        } else {
+##         if($ChoiceCode != 4){ $String.="nice ./DM_NRG > output_DMNRG_Dir$Dir.txt \n"; } 
+          if($ChoiceCode != 4){ 
+           if ($UseCFS==1){$String.="nice ./DM_NRG -C -n ${Nw} > output_DMNRG_CFS_Dir$Dir.txt \n";}
+           else {$String.="nice ./DM_NRG -n ${Nw} > output_DMNRG_Dir$Dir.txt \n";}
+          } 
+          if($ChoiceCode != 5){ $String.="nice ./Conductance > output_Conductance_Dir$Dir.txt \n";}
+        }
+     }
+##   end if UseAllCodes==1
    }
 ## end if UseZtrick
-   print "UseAllCodes = $UseAllCodes \n" ;
-   if ($UseAllCodes==1){
-      print "Adding DM_NRG and/or Conductance \n";
-      if ( ($ChoiceCode==4)&&($FiniteT==1) ){
-##        $String.="nice ./Conductance > output_Conductance"; 
-        $String.="nice ./Conductance -R -G > output_Resistivity";
-        if ($UseCFS==1){$String.="_CFS";}
-        $String.="_Mtemp".$Mtemp0."_Dir".$Dir.".txt \n";
-        $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
-        $String.="rm -f rhoDM\*.bin \n";
-        if($LoopMtemp==1){
-         for ($Mtemp=$Mtemp0+$MtempStep;$Mtemp<=$MtempFinal;$Mtemp+=$MtempStep){
-           $ExecName=$ExecNameTeq0." -M ".$Mtemp;
-           $ExtensionMtemp=$Extension."_MtempEQ".$Mtemp;
-           $String.="nice ./$ExecName > output_$ExtensionMtemp.txt \n";
-##           $String.="nice ./Conductance > output_Conductance";
-           $String.="nice ./Conductance -R -G > output_Resistivity";
-           if ($UseCFS==1){$String.="_CFS";}
-           $String.="_Mtemp".$Mtemp."_Dir".$Dir.".txt \n";
-           $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
-           $String.="rm -f rhoDM\*.bin \n"; 
-         } 
-         # end loop in Mtemp
-         $Mtemp=$Mtemp0;
-       } 
-       #end if LoopMtemp==1
-      } else {
-##        if($ChoiceCode != 4){ $String.="nice ./DM_NRG > output_DMNRG_Dir$Dir.txt \n"; } 
-        if($ChoiceCode != 4){ 
-         if ($UseCFS==1){$String.="nice ./DM_NRG -C -n ${Nw} > output_DMNRG_CFS_Dir$Dir.txt \n";}
-         else {$String.="nice ./DM_NRG -n ${Nw} > output_DMNRG_Dir$Dir.txt \n";}
-        } 
-        if($ChoiceCode != 5){ $String.="nice ./Conductance > output_Conductance_Dir$Dir.txt \n";}
-      }
-   }
-## end if UseAllCodes==1
-   
-   $String.="echo Finished > $LocalDir/Finish_$Extension \n";
-   print "Building $ScriptFileName ... ";
+
+  $String.="echo Finished > $LocalDir/Finish_$Extension \n";
+  print "Building $ScriptFileName ... ";
 
   open (OUT,"> $LocalDir/".$ScriptFileName);
     print OUT $String;

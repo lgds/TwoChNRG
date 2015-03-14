@@ -14,16 +14,24 @@ sub Print_Help(){
   print "\t--help\t\t: prints this message \n";
   print "\t--addtoname=string \t: adds \"string\" to the output file names extension\n";
   print "\t--queue=queuename \t: sends to queue \"queuename\"\n";
+  print "\t--special \t: adds special features in the script (edit it here) \n";
+  print "\t--pbsresources=\"nodes=1:wilson01:ppn=2\" , etc\t: text for -l option in qsub (advanced). Useful to request a single node (default: nodes=1:ppn=2) \n";
+  print "\t--Nw=nw \t: DM_NRG -n nw option: Number of omegas per shell (default: 1) \n";
   exit;
 
 }
 use Getopt::Long;
+
+my $Nw=1;
 
 GetOptions("queue=s"=>\$QueueName,
            "i|dir0=i" =>\$Dir0,
            "f|dirF=i" =>\$DirF,
            "C|command=s" => \$Command,
            "addtoname=s" => \$AddToName,
+           "pbsresources=s" => \$PBSresources,
+           "Nw=i" => \$Nw,
+           "special" => \$Special,
            "h|help" => \$HelpOpt);
 
 Print_Help() if defined $HelpOpt;
@@ -38,8 +46,8 @@ Print_Help() if ( (!defined($Dir0))||(!defined($DirF)) );
     {
       if (/winnebago/){print "Winnebago cluster \n"; }
       elsif (/correlated/){print "Correlated cluster. \n";}
-      elsif (/wilson/){print "Wilson cluster. \n";}
       elsif (/glyph/){print "Glyph cluster. \n";}
+      elsif (/wilson/){print "Wilson cluster. \n";}
       else{print "Cant recognize cluster. Exiting... \n"; exit(0);}
     }
                                                                               
@@ -65,7 +73,7 @@ if (!defined($Command)){
   print "      3     - NRG_main (default) \n";
   print "        3.1 - NRG_main with ./DM_NRG and ./Conductance \n";
   print "      4     - DM_NRG \n";
-  print "        4.1 - DM_NRG with ./Conductance \n";
+  print "        4.1 - DM_NRG with ./Conductance (allows for G vs T) \n";
   print "      5     - Conductance \n \n";
   print "  choice : ";
 ##  chomp($ChoiceCode = <STDIN>);
@@ -87,6 +95,9 @@ if (!defined($Command)){
         $ChoiceCode=3;
 	$UseAllCodes=1;
 	print "Using ALL codes...\n";
+        $UseCFS=0;
+        print "Use Complete Fock Space? (y/n) "; chomp($ChoiceYN = <STDIN>);
+        if ($ChoiceYN eq "y"){$UseCFS=1;}
     }
    }
    elsif (/^4/){
@@ -124,6 +135,7 @@ if (!defined($Command)){
     print "      6     - Double Quantum Dot (DQD) 1chQS \n";
     print "        6.1 - DQD with Zeeman in both dots (1chQSz) (NRG_main only) \n";
     print "      7     - DM_NRG/Conductance calculation (no model) \n";
+    print "      8     - Majorana model (Nup Pdn basis)  \n";
     print "  choice : ";
 #    chomp($ChoiceModel = <STDIN>);
     chomp($test1 = <STDIN>);
@@ -160,6 +172,9 @@ if (!defined($Command)){
    elsif (/^7/){
     $ModelName="";
    }
+   elsif (/^8/){
+    $ModelName="1chNupPdn_Majorana";
+   }
      else{print "Model not valid. Exiting... \n";exit; }
   }
  
@@ -182,11 +197,13 @@ if (!defined($Command)){
         $Mtemp=$Input;
         $FiniteT=1;
         print "Mtemp = $Mtemp \n";
-        print "Loop Mtemp in each dir? (Mtemp0=$Mtemp ) (y/n) ";
+##        print "Loop Mtemp in each dir? (Mtemp0=$Mtemp ) (y/n) ";
+        print "Loop Mtemp (in same dir)? (Mtemp0=$Mtemp ) (y/n) ";
         chomp($ChoiceLoopMtemp = <STDIN> );
         if ($ChoiceLoopMtemp eq "y"){
           $LoopMtemp=1;
-##          print "MtempFinal = "; chomp($MtempFinal = <STDIN> );
+          $Mtemp0=$Mtemp;
+          print "MtempFinal = "; chomp($MtempFinal = <STDIN> );
           print "MtempStep = "; chomp($MtempStep = <STDIN> );
         } ## end if LoopMtemp
       } else {print "Not valid. Keeping Mtemp = $Mtemp;"}
@@ -197,6 +214,9 @@ if (!defined($Command)){
         print "betabar = $betabar \n";
       } else {print "Not valid. Keeping betabar = $betabar\n";}
     }## end if choice=y
+    $UseCFS=0;
+    print "Use Complete Fock Space? (y/n) "; chomp($ChoiceYN = <STDIN>);
+    if ($ChoiceYN eq "y"){$UseCFS=1;}
   } ## end if ChoiceCode=DM_NRG
   elsif ($ChoiceCode==5){
     $ChoiceBand=0;
@@ -207,8 +227,8 @@ if (!defined($Command)){
     print "      0     - Constant (square) DoS [rho(e)=rho_0 -D < e < D] (default) \n";
     print "      1     - Side Dot (needs lanc.in) \n";
     print "      2     - Const (to use z-trick, for instance) \n";
-    print "      3     - PowerLaw \n";
-    print "      4     - FromFile (not implemented yet) \n";
+    print "      3     - PowerLaw (needs lanc.in) \n";
+    print "      4     - FromFile (needs HybFunc.dat) \n";
     print "  choice : ";
 #    chomp($ChoiceBand = <STDIN>);
     chomp($test1 = <STDIN>);
@@ -229,6 +249,9 @@ if (!defined($Command)){
    elsif (/^3/){
     $BandName="PowerLaw";
    }
+   elsif (/^4/){
+    $BandName="FromFile";
+   }
    else{print "Band not implemented. Using Default \n";
      $ChoiceBand=0;
      $BandName="SquareWilson";
@@ -236,11 +259,12 @@ if (!defined($Command)){
   }
 # end for ChoiceBand
 ##
-##  Ztrick loop? 
+##  Ztrick: use 2nd line of lanc.in to implement it!!! 
 ##
-  print "Use Ztrick (z=0.75,1,1.25,1.5) ? (y/n) :";
-  chomp($UseZtrickYN = <STDIN>);
-  if ($UseZtrickYN eq "y"){$UseZtrick=1;}else{$UseZtrick=0;}
+ print "Use Ztrick (z=0.2...1.0 step 0.2 -> Nz=5) ? (y/n) :";
+ chomp($UseZtrickYN = <STDIN>);
+ if ($UseZtrickYN eq "y"){$UseZtrick=1;}else{$UseZtrick=0;}
+##$UseZtrick=0;
 }
 # end if !defined($Command)
 else{
@@ -268,8 +292,8 @@ for ($Dir=$Dir0;
 ##   chomp($LocalDir=`/bin/pwd`);
    print "Running from : $LocalDir \n";
    $User=$ENV{'USER'};
-##   $Extension="NRG_Code_".$CodeName."_Model_".$ModelName."_Dir".$Dir;
    $Extension="NRG_Code_".$CodeName;
+   if ($UseCFS==1){$Extension.="_CFS";}
    if ($ModelName ne ""){$Extension.="_Model_".$ModelName;}
    if ($ChoiceBand != 0){$Extension.="_Band_".$BandName;}
    $Extension.="_Dir".$Dir;
@@ -278,11 +302,16 @@ for ($Dir=$Dir0;
    else{
      $ExecName=$CodeName;
      if ($ChoiceCode==4){
-       if ($FiniteT==1){
-         $ExecName.=" -M ".$Mtemp;
-         if ($LoopMtemp==1){print "Running Mtemp = $Mtemp \n";$Mtemp+=$MtempStep;}
-       }
        if ($NewBBar==1){$ExecName.=" -b ".$betabar;}
+       if ($UseCFS==1){$ExecName.=" -C ";}
+       if ($FiniteT==1){
+         $ExecNameTeq0=$ExecName;
+         $ExecName.=" -M ".$Mtemp;
+##         if ($LoopMtemp==1){
+##           print "Running Mtemp = $Mtemp \n";
+##           $Mtemp+=$MtempStep;
+##         }
+       }
      } elsif ($ChoiceCode!=5) {
 ##     } else {
        if ($ModelName ne ""){$ExecName.=" -m ".$ModelName;}
@@ -321,41 +350,100 @@ for ($Dir=$Dir0;
       $SubCommand.="-q $QueueName " if defined $QueueName;
       $SubCommand.=" < $LocalDir/$ScriptFileName \n";
      }
-   elsif ( ($HostName =~ m/wilson/)||($HostName =~ m/glyph/) ) 
+   elsif ( ($HostName =~ m/glyph/)||($HostName =~ m/wilson/) )
      {
-      $ScriptFileName="TORQUE_".$ScriptFileName;
+      $ScriptFileName="PBS_".$ScriptFileName;
       $String.="\#PBS -N job".$Extension."\n\#\n";
-      $String.="\#PBS -e job".$Extension.".error\n\#\n";
-      $String.="\#PBS -o job".$Extension.".output\n\#\n";
-##   $String.="\#PBS -d ".$LocalDir."\n\#\n";
+      $String.="\#PBS -e $LocalDir/job".$Extension.".error\n\#\n";
+      $String.="\#PBS -o $LocalDir/job".$Extension.".output\n\#\n";
+      if (defined($PBSresources)){$String.="\#PBS -l $PBSresources \n";}
+      else{$String.="\#PBS -l nodes=1:ppn=2 \n";}
       $SubCommand="qsub ";
-      $SubCommand.="-q $QueueName " if defined $QueueName;
-      $SubCommand.=" < $LocalDir/$ScriptFileName \n";
+      $SubCommand.=" $LocalDir/$ScriptFileName \n";
+## ## -d path : Defines the working directory path and stores it in $PBS_O_INITDIR
+###      $SubCommand.=" $ScriptFileName -d $LocalDir \n";
      }
    else {print "Which cluster is this? \n"; exit(0);}
    $String.="cd ".$LocalDir."\n";
 ## Adding z-trick
+### NEED TO CHANGE ALL THIS!!
+### z-trick is now set in the second line of lanc.in using -b Const
    if ($UseZtrick==1){
-     $z0=0.75;
-     $zF=1.51;
-     $zstep=0.25;
+     $z0=0.2;
+     $zF=1.0;
+     $zstep=0.2;
      for ($zz=$z0;$zz<=$zF;$zz+=$zstep){
        $ExecNameZ=$ExecName." -z ".$zz;
        $ExtensionZ=$Extension."_zEQ".$zz;
-       $String.="./$ExecNameZ > output_$ExtensionZ.txt \n";
+       $String.="nice ./$ExecNameZ > output_$ExtensionZ.txt \n";
+       if (defined($Special)){
+         $String.="perl -I../ ../ChangeNRGParams.perl -i $Dir -f $Dir --choiceparam=9 --p0=2 --pstep=0 --indir  \n";
+         $String.="nice ./$ExecNameZ > output_$ExtensionZ.txt \n";
+         $String.="perl -I../ ../ChangeNRGParams.perl -i $Dir -f $Dir --choiceparam=9 --p0=3 --pstep=0 --indir  \n";
+       }
+## end special
+       if ($UseAllCodes==1){
+         if ($UseCFS==1){$String.="nice ./DM_NRG -C -n ${Nw} > output_DMNRG_CFS_zEQ${zz}_Dir${Dir}.txt \n";}
+         else {$String.="nice ./DM_NRG -n ${Nw} > output_DMNRG_zEQ${zz}_Dir${Dir}.txt \n";}
+         $String.="rm -f \*.bin \n"; 
+       }
+       # end if UseAllCodes=1 (using Z-trick with DM-NRG)
      }
      # end loop in Z
+     $String.="ls rho_\*_OmegaRhow.dat \| sed \"s\/rho_\\(\.\*\\)_OmegaRhow\.dat\/cp \-p \& rho_\\1_OmegaRhow_zEQ1\.00\.dat/\" \| sh \n";
+     ## Add a script here to average rho files
+     $UseAllCodes=0; ## need this to avoide
    }
-   else{
-    $String.="./$ExecName > output_$Extension.txt \n";
+   else{ ## no Z-trick
+    $String.="nice ./$ExecName > output_$Extension.txt \n";
+## Add stuff to script
+    if (defined($Special)){
+     $String.="perl -I../ ../ChangeNRGParams.perl -i $Dir -f $Dir --choiceparam=9 --p0=2 --pstep=0 --indir  \n";
+     $String.="nice ./$ExecName > output_$Extension.txt \n";
+##     $String.="../GrepNRGOpAvg.perl --indir --chiloc \n"; ## ChiLoc (not Suscep)
+     $String.="cp -p SuscepImp1ChQS_Anderson_zEQ1.dat SuscepImp_25_727.dat \n";
+     $String.="./CalcTK 2 $Dir \n";
+     $String.="../GrepNRGOpAvg.perl --indir --grep=\"Ndot\" -p 4 --Tzero -i $Dir -f $Dir \n";
+    }
+## end special
    }
-
+## end if UseZtrick
    print "UseAllCodes = $UseAllCodes \n" ;
    if ($UseAllCodes==1){
       print "Adding DM_NRG and/or Conductance \n";
-      if($ChoiceCode != 4){$String.="./DM_NRG > output_DMNRG_Dir$Dir.txt \n";}
-      if($ChoiceCode != 5){$String.="./Conductance > output_Conductance_Dir$Dir.txt \n";}
+      if ( ($ChoiceCode==4)&&($FiniteT==1) ){
+##        $String.="nice ./Conductance > output_Conductance"; 
+        $String.="nice ./Conductance -R -G > output_Resistivity";
+        if ($UseCFS==1){$String.="_CFS";}
+        $String.="_Mtemp".$Mtemp0."_Dir".$Dir.".txt \n";
+        $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
+        $String.="rm -f rhoDM\*.bin \n";
+        if($LoopMtemp==1){
+         for ($Mtemp=$Mtemp0+$MtempStep;$Mtemp<=$MtempFinal;$Mtemp+=$MtempStep){
+           $ExecName=$ExecNameTeq0." -M ".$Mtemp;
+           $ExtensionMtemp=$Extension."_MtempEQ".$Mtemp;
+           $String.="nice ./$ExecName > output_$ExtensionMtemp.txt \n";
+##           $String.="nice ./Conductance > output_Conductance";
+           $String.="nice ./Conductance -R -G > output_Resistivity";
+           if ($UseCFS==1){$String.="_CFS";}
+           $String.="_Mtemp".$Mtemp."_Dir".$Dir.".txt \n";
+           $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
+           $String.="rm -f rhoDM\*.bin \n"; 
+         } 
+         # end loop in Mtemp
+         $Mtemp=$Mtemp0;
+       } 
+       #end if LoopMtemp==1
+      } else {
+##        if($ChoiceCode != 4){ $String.="nice ./DM_NRG > output_DMNRG_Dir$Dir.txt \n"; } 
+        if($ChoiceCode != 4){ 
+         if ($UseCFS==1){$String.="nice ./DM_NRG -C -n ${Nw} > output_DMNRG_CFS_Dir$Dir.txt \n";}
+         else {$String.="nice ./DM_NRG -n ${Nw} > output_DMNRG_Dir$Dir.txt \n";}
+        } 
+        if($ChoiceCode != 5){ $String.="nice ./Conductance > output_Conductance_Dir$Dir.txt \n";}
+      }
    }
+## end if UseAllCodes==1
    
    $String.="echo Finished > $LocalDir/Finish_$Extension \n";
    print "Building $ScriptFileName ... ";
