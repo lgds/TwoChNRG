@@ -258,10 +258,13 @@ double Sminus(double Sp, double Szp,
 
 double OneCh_fd_table(int sigma, int type_i, int type_j);
 
-
 double TwoCh_fd_table(int channel, int sigma, int type_i, int type_j);
 
 double TwoDotQS_fd_reduced_table(int channel, int type_i, int type_j);
+
+double OneChS_fd_table(int sigma, int type_i, int type_j);
+
+double OneChS_fdupfddn_table(int type_i, int type_j);
 
 
 #endif

@@ -956,6 +956,8 @@ void CNRGmatrix::SaveBin(char arqname[]){
   OutFile.write((char*)&UpperTriangular, sizeof(bool));
   // Save IsComplex
   OutFile.write((char*)&IsComplex, sizeof(bool));
+  // Save WignerEckartL
+  OutFile.write((char*)&WignerEckartL, sizeof(double));
 
   OutFile.close();
 
@@ -1028,7 +1030,8 @@ void CNRGmatrix::ReadBinInStream(ifstream &InFile){
   InFile.read((char*)&UpperTriangular, sizeof(bool));
   // Read IsComplex
   InFile.read((char*)&IsComplex, sizeof(bool));
-
+  // Read WignerEckartL
+  InFile.read((char*)&WignerEckartL, sizeof(double));
 
 }
 /////////////

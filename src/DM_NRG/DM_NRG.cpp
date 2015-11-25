@@ -184,6 +184,7 @@ int main (int argc, char* argv[]){
 
   }
   // end read operators
+
   cout << " NshellMax Files read "<< endl;
 
   // Set density matrix at the LAST NRG iteration
@@ -321,7 +322,7 @@ int main (int argc, char* argv[]){
 
     // Debug
 //     if ((Nshell==0)||(Nshell==1)){
-//       cout << " DM-NRG: Abasis(N=0): " << endl;
+//       cout << " DM-NRG: Abasis(Nshell="<<Nshell<<"): " << endl;
 //       AbasisN.PrintBasisAll();
 //       cout << " Op1 (Nshell="<< Nshell<<"): " << endl;
 //       OpArrayN[0][Nshell].PrintAllBlocks();
@@ -374,15 +375,17 @@ int main (int argc, char* argv[]){
 
 
    // Calculate ALL spectral functions!!
+   // Jun 2015: Only diagonal functions for now...
    for (int iop=0; iop<NFermiOps; iop++){
-     if (UseCFS==1){
        DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseCFS,Nw);
-     } else {
-       for (int jop=0; jop<NFermiOps; jop++){
-	 DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,jop,UseCFS,Nw);
-       }
-     }
-     // end if CFS
+//     if (UseCFS==1){
+//       DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseCFS,Nw);
+//     } else {
+//       for (int jop=0; jop<NFermiOps; jop++){
+//	 DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,jop,UseCFS,Nw);
+//       }
+//     }
+//     // end if CFS
    }
    // end loop in Fermi Ops
 

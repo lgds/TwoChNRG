@@ -43,7 +43,8 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z:")) != -1)
     cout << "   -m DQD, 1chQS_DQD  " << endl;
     cout << "   -m 1chQSz_DQD (with Zeeman in both dots) " << endl;
     cout << "   -m 2chQS_Kondo (implenting) " << endl;
-    cout << "   -m 1chNupPdn_Majorana (implenting) " << endl;
+    cout << "   -m 1chNupPdn_Majorana " << endl;
+    cout << "   -m 1chS_AndersonSC " << endl;
     cout << " Models with chains only (no impurity): " << endl;
     cout << "   -m 1chQS_chain  " << endl;
     cout << "   -m 2chQS_chain  " << endl;
@@ -51,7 +52,8 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z:")) != -1)
     cout << "   -m 1chQ_chain  " << endl;
     cout << " Band types implemented " << endl;
     cout << "   -b SquareWilson (default): metallic phs square band, no z-trick" << endl; 
-    cout << "   -b SideDot : Lorentzian effective DoS." << endl;
+    cout << "   -b SideDot : Lorentzian effective HybFunc." << endl;
+    cout << "   -b Cavity : many-level cavity attached (effective HybFunc)." << endl;
     cout << "   -b Const : same as square band but using Lanczos procedure with z-trick" << endl;
     cout << "   -b PowerLaw : DoS(w)=C*|w|^r for |w|>Gap, zero otherwise. (needs lanc.in)" << endl; 
     cout << "   -b FromFile : Reads Gamma(w) from file HybFunc.dat (format: w, DoS). Can use z-trick" << endl; 
@@ -175,6 +177,13 @@ if ( (strcmp(ThisCode.ModelOption,"Anderson") == 0)||
 			    ThisCode.ModelNo=7;
 			    strcpy(ThisCode.Symmetry,"OneChNupPdn");
 			    ThisCode.SymNo=6;}
+
+		      else
+			if ( strcmp(ThisCode.ModelOption,"1chS_AndersonSC") == 0)
+			  {cout << " Got 1chS_AndersonSC " << endl;
+			    ThisCode.ModelNo=0;
+			    strcpy(ThisCode.Symmetry,"OneChS");
+			    ThisCode.SymNo=7;}
 		      else
 
 			{cout << " Invalid model. Exiting... " << endl;
@@ -183,7 +192,7 @@ if ( (strcmp(ThisCode.ModelOption,"Anderson") == 0)||
 
 //
 // Band type (BandNo follows the convention from old lanc.in files)
-//  (4 - side dot; 5 - parallel dot w/ pseudogap, etc...)
+//  (4 - side dot; 41 - Cavity, 5 - parallel dot w/ pseudogap, etc...)
 //
 
 if (strcmp(ThisCode.BandType,"SquareWilson")==0)
@@ -191,6 +200,9 @@ if (strcmp(ThisCode.BandType,"SquareWilson")==0)
  else
    if (strcmp(ThisCode.BandType,"SideDot") == 0)
      ThisCode.BandNo=4;
+   else
+   if (strcmp(ThisCode.BandType,"Cavity") == 0)
+     ThisCode.BandNo=41;
    else
      if (strcmp(ThisCode.BandType,"Const") == 0)
        ThisCode.BandNo=11;
@@ -240,6 +252,7 @@ cout << " BandType : " << ThisCode.BandType << " - BandNo : " << ThisCode.BandNo
 //  2* - (empty)
 //  3* - (empty)
 //  4 - SideDot : side-dot case
+//  41 - Cavity : many-level cavity.
 //  5* - ParallelDot : parallel dot case.
 //  6* - ?? : Fully connected dot 
 //  7* - ?? :(Case 6 centered at peak) 

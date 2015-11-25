@@ -76,6 +76,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 //  4 - TwoChQSP
 //  5 - TwoChQSz
 //  6 - OneChNupPdn
+//  7 - OneChS
 
 // ModelNo:
 //  0 - Anderson
@@ -217,6 +218,45 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	  ThermoArray[1].dImpValue=2.0*log(2.0);
 	  NumThermoMats=2;
 	  break;
+	case 4: // Dynamical spin susceptibility and <Sz> and <Sz^2> (2015)
+	  // 5 Matrices
+	  STLMatArray.push_back(auxNRGMat);
+	  NumThermoMats=0;
+	  // <Sz> and <Sz2> operator 
+	  auxNRGMat.NeedOld=true;
+	  auxNRGMat.UpperTriangular=false;
+	  // update procedure only works for 'false'
+	  auxNRGMat.CalcAvg=true;  // CalcAvg
+	  auxNRGMat.CheckForMatEl=Diag_check;
+	  auxNRGMat.CalcMatEl=ImpOnly_MatEl;
+
+	  STLMatArray[1]=auxNRGMat; // 1 - Sz dynamical
+	  STLMatArray[1].SaveMatYN=true;
+	  STLMatArray[1].CalcAvg=false;
+	  STLMatArray[1].CalcMatEl=OneChQS_Sz_MatEl;
+	  strcpy(STLMatArray[1].MatName,"Szomega");
+	  STLMatArray[1].WignerEckartL=1.0; // Needed by DM_NRG later
+
+
+	  STLMatArray[2]=auxNRGMat; // 2 - Nd dynamical
+	  STLMatArray[2].SaveMatYN=true;
+	  STLMatArray[2].CalcAvg=false;
+	  strcpy(STLMatArray[2].MatName,"Ndomega");
+
+	  STLMatArray[3]=auxNRGMat; // 3 - <Sz2>(T) static
+	  STLMatArray[3].SaveMatYN=false;
+	  strcpy(STLMatArray[3].MatName,"Sz2dot");
+
+	  STLMatArray[4]=auxNRGMat; // 4 - <Nd2>(T) static
+	  STLMatArray[4].SaveMatYN=false;
+	  strcpy(STLMatArray[4].MatName,"Nd2dot");
+
+	  NumNRGmats=STLMatArray.size();
+	  MatArray=&STLMatArray[0]; // Need to do this after
+	  // changes in STLMatArray!
+	  SaveData=true;
+	  strcpy(SaveArraysFileName,"1chQSAnderson");
+	  break;
 	default:
 	  cout << " calcdens = " << calcdens << " not implemented. Exiting. " << endl;
 	  exit(0);
@@ -244,6 +284,8 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	// HN params
 	pHN->CalcHNMatEl=OneChQS_HN_MatEl;
 	NumChannels=1;
+
+
 
 
 	break;
@@ -520,8 +562,6 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	//Params.push_back(HalfLambdaFactor); Do we need this??
 
 	chi2_m1=sqrt(2.0*dInitParams[4]/pi)/(sqrt(Lambda)*HalfLambdaFactor);
-
-
 
 	cout << " FOR NOW, not including the Lambda factor in J1,J2 " << endl;
 
@@ -1414,6 +1454,11 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
       break;
 
     case 6: // OneChNupPdn
+      ////////////////////////////////
+      /////                        ///
+      ///// Symmetry: OneChNupPdn  ///
+      /////                        ///
+      ////////////////////////////////
 
       // BuildBasis params
       CommonQNs.push_back(2); // No of common QNs
@@ -1427,10 +1472,6 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
       // No total S variables. Leave totSpos empty
 
       switch(ModelNo){
-      ////////////////////////////////
-      /////                        ///
-      ///// Symmetry: OneChNupPdn  ///
-      /////                        ///
       ///////////////////////////////////
       /// Models so far:              ///
       ///  3 - Chain only             ///
@@ -1631,6 +1672,145 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	exit(0);
       }  
       // end switch ModelNo for OneChNupPdn
+      break;
+
+    case 7: // OneChS
+      /////////////////////////////
+      /////                    ////
+      ///// Symmetry: OneChS   ////
+      /////                    ////
+      /////////////////////////////
+      // BuildBasis params
+      CommonQNs.push_back(1); // No of common QNs
+      CommonQNs.push_back(0); // pos of QN 1 in old
+      CommonQNs.push_back(0); // pos of QN 1 in SingleSite
+      
+      totSpos.push_back(0);   // SU(2) symmetry in position 1
+
+      switch(ModelNo){
+      //////////////////////////////////////
+      /// Models so far:                 ///
+      ///  0 - Anderson (SC leads)       ///
+      //////////////////////////////////////
+      case 0: // Single-impurity Anderson model S symmetry with SC leads
+
+	// Initialize matrices 
+	// Jul 09: using STMatArray
+
+	// fN (reduced)
+	STLMatArray[0].NeedOld=false;
+	STLMatArray[0].UpperTriangular=false;
+	STLMatArray[0].CheckForMatEl=OneChS_cd_check;
+	STLMatArray[0].CalcMatEl=OneChS_fN_MatEl;
+	STLMatArray[0].SaveMatYN=false;
+
+	switch (calcdens){
+	case 0: // OpAvg: n_d(T), n^2_d(T), S^2(T) - NEW (2012)
+	  auxNRGMat.NeedOld=true;
+	  auxNRGMat.UpperTriangular=false; // update procedure only works for 'false'
+	  auxNRGMat.CalcAvg=true;  // CalcAvg
+	  auxNRGMat.CheckForMatEl=Diag_check;
+	  auxNRGMat.CalcMatEl=ImpOnly_MatEl;
+	  STLMatArray[1]=auxNRGMat; // 1 - ndot (there already)
+	  STLMatArray[2]=auxNRGMat; // 2 - ndot^2 (there already)
+	  STLMatArray[3]=auxNRGMat; // 3 - Sdot^2 (there already)
+	  strcpy(STLMatArray[1].MatName,"Ndot");
+	  strcpy(STLMatArray[2].MatName,"NdSq");
+	  strcpy(STLMatArray[3].MatName,"SdSq");
+	  NumNRGmats=STLMatArray.size();
+	  MatArray=&STLMatArray[0]; // Need to do this after
+	  // changes in STLMatArray!
+	  SaveData=false;
+// 	  STLMatArray.pop_back(); // 1 Matrices only
+// 	  STLMatArray.pop_back(); // 1 Matrices only
+// 	  STLMatArray.pop_back(); // 1 Matrices only
+	  // No Thermo
+	  NumThermoMats=0;
+	  break;
+	case 1: //Spectral density
+	  STLMatArray.pop_back(); // 2 Matrices
+	  STLMatArray.pop_back(); // 2 Matrices
+	  NumThermoMats=0;
+	  // cd operator 
+	  STLMatArray[1].NeedOld=true;
+	  STLMatArray[1].UpperTriangular=false;
+	  STLMatArray[1].CheckForMatEl=OneChS_cd_check;
+	  STLMatArray[1].CalcMatEl=OneChS_cd_MatEl;
+	  STLMatArray[1].SaveMatYN=true;
+	  strcpy(STLMatArray[1].MatName,"cdot1");
+	  NumNRGmats=STLMatArray.size();
+	  // changes in STLMatArray!
+	  SaveData=true;
+	  strcpy(SaveArraysFileName,"1chSAndersonSC");
+	  break;
+	case 4: // Dynamical spin susceptibility and <Sz> and <Sz^2> (2015)
+	  // 6 Matrices
+	  STLMatArray.push_back(auxNRGMat);
+	  STLMatArray.push_back(auxNRGMat);
+	  NumThermoMats=0;
+	  // <Sz> and <Sz2> operator 
+	  auxNRGMat.NeedOld=true;
+	  auxNRGMat.UpperTriangular=false;
+	  // update procedure only works for 'false'
+	  auxNRGMat.CalcAvg=true;  // CalcAvg
+	  auxNRGMat.CheckForMatEl=Diag_check;
+	  auxNRGMat.CalcMatEl=ImpOnly_MatEl;
+
+	  STLMatArray[2]=auxNRGMat; // 2 - Sz dynamical
+	  STLMatArray[2].SaveMatYN=true;
+	  STLMatArray[2].CalcAvg=false;
+
+	  STLMatArray[3]=auxNRGMat; // 3 - Nd dynamical
+	  STLMatArray[3].SaveMatYN=true;
+	  STLMatArray[3].CalcAvg=false;
+
+	  STLMatArray[4]=auxNRGMat; // 4 - <Sz2>(T) static
+	  STLMatArray[4].SaveMatYN=false;
+
+	  STLMatArray[5]=auxNRGMat; // 5 - <Nd2>(T) static
+	  STLMatArray[5].SaveMatYN=false;
+
+	  strcpy(STLMatArray[2].MatName,"Szomega");
+	  strcpy(STLMatArray[3].MatName,"Ndomega");
+	  strcpy(STLMatArray[4].MatName,"Sz2dot");
+	  strcpy(STLMatArray[5].MatName,"Nd2dot");
+
+	  NumNRGmats=STLMatArray.size();
+	  // changes in STLMatArray!
+	  SaveData=true;
+	  strcpy(SaveArraysFileName,"1chSAndersonSC");
+	  break;
+
+	default:
+	  cout << " calcdens = " << calcdens << " not implemented. Exiting. " << endl;
+	  exit(0);
+
+	}
+	// end switch calcdens
+
+	// Param for H0
+	Params.push_back(Lambda);
+	Params.push_back(HalfLambdaFactor);
+	Params.push_back(dInitParams[0]); // U
+	Params.push_back(dInitParams[2]); // ed
+	Params.push_back(chi_m1); // gamma
+
+	OneChS_SetAnderson_Hm1(Params,pAeig,STLMatArray);
+
+	// HN params
+	pHN->CalcHNMatEl=OneChS_HNsc_MatEl;
+
+	NumChannels=1;
+
+	//exit(0);
+	break;
+	// end OneChS Anderson model set up
+
+      default:
+	cout << " Model not implemented for OneChS symmetry. Exiting... " << endl;
+	exit(0);
+      }  
+      // end switch ModelNo for OneChS
       break;
 
 /////////////////////////////    

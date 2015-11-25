@@ -73,7 +73,7 @@ open (GP, "|gnuplot -persist") or die "no Gnuplot";
 ##  Gnuplots 
 ##
 if (defined($plotps)){
-  $GnuplotCommand.="set terminal postscript color enhanced \n";
+  $GnuplotCommand.="set terminal postscript color enhanced solid\n";
   $GnuplotCommand.="set output \"GPlot.ps\"\n";
 }
 if (defined($setlog)){$GnuplotCommand.="set log $setlog \n";}

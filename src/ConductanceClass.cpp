@@ -479,10 +479,18 @@ double Integrand_Anderson_Resistivity_Graphene(double omega,
 
   // tau
 
+
+  double r=Gaux.CondParams[4];
+  double Gamma0=Gaux.CondParams[5];
+  double w0=Gaux.CondParams[6];
+
   double aux=-M_PI/GSL_IMAG(Tmat); // Is the pi factor ok???
 
-  // Graphene: Integrand is tau(omega)*|omega| (not simply tau)
-  aux*=fabs(omega);
+  // Graphene: Integrand is tau(omega)*|omega-w0| (not simply tau)
+  // In our language mu=-w0: Gamma(w)=Gamma0*|w-w0|
+
+
+  aux*=Gamma0*fabs(omega-w0);
 
   // Put temperature in here, my friend!
 

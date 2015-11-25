@@ -93,6 +93,7 @@ sub Print_Help() {
   print "  -f factor : (default factor=0) uses (1-factor)NewHyb+factor.OldHyb as input to the next iteration. \n";
   print "  -M Mtemp  : Finite-temperature calculation. Mtemp is the NRG site corresponding to the scale T_M.\n";
   print "  -n NwEachBin : (default Nw=1) Calculates Nw omega values for each NRG bin (note: this might produce artifacts in the band). \n";
+  print "  -C        : Uses Complete Fock Space (CFS) in DM-NRG. \n";
   exit;
 }
 ###############################
@@ -111,6 +112,7 @@ if ( @ARGV > 0 ){
 GetOptions('f=f'=>\$Factor,
            'M=i'=>\$Mtemp,
            'n=i'=>\$Nw,
+           'C'=>\$UseCFS,
            'h|help'=>\$help);
 }
 ##else{Print_Help();}
@@ -164,8 +166,10 @@ if (-e $HybFuncFileName ){
 ## NEED A BETTER INITIAL FILE, WITH THE CORRECT ENERGIES
 ##
   print "Generating Hybfunc.dat \n";
+  my $Nsh0=0;
+  if(defined($UseCFS)){$Nsh0=2;}
   open(OUTFILE,"> ".$HybFuncFileName);
-  for (my $Nsh=0; $Nsh<$Nsites; $Nsh++){
+  for (my $Nsh=$Nsh0; $Nsh<$Nsites; $Nsh++){
 ##     my $en=-$factorWN*0.5*(1.0 + (1.0/$Lambda))*$Lambda**(-($Nsh - 1)/2.0);
      my $DN=0.5*(1.0 + (1.0/$Lambda))*$Lambda**(-($Nsh - 1)/2.0);
      ## Fine structure in each bin (negative omega):
@@ -181,7 +185,7 @@ if (-e $HybFuncFileName ){
      # end for in each bin
   }
   # end for
-  for (my $Nsh=$Nsites-1; $Nsh>=0; $Nsh--){
+  for (my $Nsh=$Nsites-1; $Nsh>=$Nsh0; $Nsh--){
 ##     my $en=$factorWN*0.5*(1.0 + (1.0/$Lambda))*$Lambda**(-($Nsh - 1)/2.0);
      my $DN=0.5*(1.0 + (1.0/$Lambda))*$Lambda**(-($Nsh - 1)/2.0);
      ## Fine structure in each bin (positive omega):
@@ -202,6 +206,10 @@ if (-e $HybFuncFileName ){
 }
 # end if
 
+### Debug
+####$Diff=CreateHybfuncFile($V0,$SpecFuncFileName,$HybFuncFileName,$Factor);
+####exit(0);
+
 ## Set HybFuncNm1
 system("cp -f ".$HybFuncFileName."  ".$HybFuncNm1FileName."\n");
 
@@ -217,6 +225,8 @@ $DMNRGCommand="nice ./DM_NRG";
 #if (defined($Mtemp)){$DMNRGCommand="nice ./DM_NRG -M ".$Mtemp." > out_DMNRG.dat \n";}
 #else{$DMNRGCommand="nice ./DM_NRG > out_DMNRG.dat \n";}
 
+## CFS in DM-NRG 
+if (defined($UseCFS)){$DMNRGCommand.=" -C ";}
 ## Non-zero temperature
 if (defined($Mtemp)){$DMNRGCommand.=" -M ".$Mtemp;}
 ## -n Nw option

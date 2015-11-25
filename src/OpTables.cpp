@@ -411,3 +411,54 @@ return(Mat[type_i][type_j]);
 }
 
 ////////////////////
+
+//////////////
+//////////////
+
+
+double OneChS_fd_table(int sigma, int type_i, int type_j){
+
+  // Table for f^{\dagger}_{sigma}
+  // type   States: 
+  // 0    -  |0> 
+  // 1    -  |up dn>=fd_(up)fd_(dn)|0> (notice order) (old 3)
+  // 2    -  |up>=fd_(up)|0> (old 1)
+  // 3    -  |dn>=fd_(dn)|0> (old 2)
+  switch (sigma){ 
+  case (1):
+    if ( (type_i==2)&&(type_j==0) ) return(1.0); 
+    else
+      if ( (type_i==1)&&(type_j==3) ) return(1.0);
+      else return(0.0);
+    break;
+  case (-1):
+    if ( (type_i==3)&&(type_j==0) ) return(1.0);
+    else
+      if ( (type_i==1)&&(type_j==2) ) return(-1.0);
+      else return(0.0); 
+    break;
+  default:
+    return(0.0);
+  }
+}
+
+//////////////
+
+double OneChS_fdupfddn_table(int type_i, int type_j){
+
+  // Table for f^{\dagger}_{up} f^{\dagger}_{dn}
+  // type   States: 
+  // 0    -  |0> 
+  // 1    -  |up dn>=fd_(up)fd_(dn)|0> (notice order) (old 3)
+  // 2    -  |up>=fd_(up)|0> (old 1)
+  // 3    -  |dn>=fd_(dn)|0> (old 2)
+  // Thus, only <1|..|0> is non-zero
+
+  if ( (type_i==1)&&(type_j==0) ) return(1.0); 
+  else return(0.0);
+
+}
+
+
+//////////////
+

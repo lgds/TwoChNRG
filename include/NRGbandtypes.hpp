@@ -67,4 +67,15 @@ double HybFunc_FromFile_divEn(double omega,
 #endif
 
 ////////
+#ifndef _HYBFUNC_CAVITY_
+#define _HYBFUNC_CAVITY_
 
+double HybFunc_Cavity(double omega,
+		      void *params);
+
+double HybFunc_Cavity_timesEn(double omega,
+			      void *params);
+
+#endif
+
+////////

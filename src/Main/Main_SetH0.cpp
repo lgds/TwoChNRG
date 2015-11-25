@@ -417,9 +417,6 @@ void OneChQ_SetAnderson_Hm1(vector<double> Params,
 //// | Q Sz > basis
 ////
 
-// void OneChQSz_SetAnderson_Hm1(vector<double> Params,
-// 			    CNRGarray* pAeig, 
-// 			    CNRGmatrix* NRGMats){
 
 void OneChQSz_SetAnderson_Hm1(vector<double> Params,
 			    CNRGarray* pAeig, 
@@ -1854,9 +1851,7 @@ void OneChQS_SetAnderson_Hm1(vector<double> Params,
 
   // Eigenvectors
   pAeig->dEigVec.push_back(1.0);
-
   pAeig->dEigVec.push_back(1.0);
-
   pAeig->dEigVec.push_back(1.0);
 
   pAeig->PrintEn();
@@ -1920,62 +1915,55 @@ void OneChQS_SetAnderson_Hm1(vector<double> Params,
     // end loop over blocks
     // Test
     //cout << " <0|nd|0> = " << STLNRGMats[1].GetMatEl(0,0) << endl;
-  } else {
-    if (strcmp(STLNRGMats[1].MatName,"cdot1")==0){
-      cout << " Spectral function: setting up cd_red and cd_dn... ";
-      STLNRGMats[1].CopyData(&STLNRGMats[0]);
-      cout << " ... done." << endl;
+  }else if (strcmp(STLNRGMats[1].MatName,"Szomega")==0){
+    cout << " Dynamical spin susceptibiliy: setting up <Sz>_N=-1  ";
+    // Already Sync'ed above... 
+    int i1=0;
+    for (int ibl=0; ibl<pAeig->NumBlocks(); ibl++){
+      double Qi=pAeig->GetQNumber(ibl,0);
+      double Si=pAeig->GetQNumber(ibl,1);
+
+      cout << " Q = " << Qi
+	   << " S = " << Si 
+	   << endl;
+
+      // Sz dynamical and Nd dynamical
+      for (int imat=1;imat<=2; imat++){
+	// Block diagonal
+	STLNRGMats[imat].MatBlockMap.push_back(ibl);
+	STLNRGMats[imat].MatBlockMap.push_back(ibl);
+	// Position in MatBlock follows ist
+	// Only one state per block !
+	STLNRGMats[imat].MatBlockBegEnd.push_back(i1);
+      	STLNRGMats[imat].MatBlockBegEnd.push_back(i1);
+      }
+      STLNRGMats[1].MatEl.push_back(Si*sqrt(3.0)); // <Sz> reduced!!!
+      STLNRGMats[2].MatEl.push_back(Qi+1.0); // <Nd> 
+      i1++;
     }
-    // end if Mat[1]=cdot1
+    // end loop in blocks (Set-up of Nd,Sz,Sz2)
+
+    //Setting Sz2 and Nd2
+    for (int imat=3; imat<=4; imat++){
+      STLNRGMats[imat].CopyData(&STLNRGMats[imat-2]);
+      for (int ii=0;ii<STLNRGMats[imat].MatEl.size();ii++)
+	STLNRGMats[imat].MatEl[ii]*=STLNRGMats[imat].MatEl[ii];
+    }
+    // end setting Sz2 and Nd2
+
+    STLNRGMats[1].PrintAllBlocks();
+    STLNRGMats[2].PrintAllBlocks();
+
+    cout << " ... done." << endl;
+  } else if (strcmp(STLNRGMats[1].MatName,"cdot1")==0){
+    cout << " Spectral function: setting up cd_red and cd_dn... ";
+    STLNRGMats[1].CopyData(&STLNRGMats[0]);
+    cout << " ... done." << endl;
   }
   // end if Mat[1]=Ndot
 
-//   switch(STLNRGMats.size()){
-//   case 1:
-//     cout << " Thermodynamics only." << endl;
-//     break;
-//   case 2:
-//       cout << " Spectral function: setting up cd_red and cd_dn... ";
-//       STLNRGMats[1].CopyData(&STLNRGMats[0]);
-//       cout << " ... done." << endl;
-//     break;
-//   case 4:
-//     cout << " Setting up n_d, nd^2 and S^2... " << endl;
-//     // ndot    - imat=1 
-//     // ndot^2 - imat=2
-//     // Sdot^2   - imat=3
-//     // Setting all to Identity (all diagonal)
-//     for (int imat=1;imat<STLNRGMats.size();imat++){
-//       STLNRGMats[imat].SetDiagonalMatrix(0.0);
-//     }
-//     // Setting ndot, Sz, Sz2
-//     // Loop over diagonal
-//     for (int ibl=0;ibl<pAeig->NumBlocks();ibl++){
-//       double ndot=pAeig->GetQNumber(ibl,0)+1.0; // nel=Q+1
-//       double S=pAeig->GetQNumber(ibl,1); // S is set on each state.
-//       for (int istbl=0;istbl<pAeig->GetBlockSize(ibl);istbl++){
-// 	STLNRGMats[1].PushBlockMatEl(ndot,ibl,ibl,istbl,istbl); // n
-// 	STLNRGMats[2].PushBlockMatEl(ndot*ndot,ibl,ibl,istbl,istbl); //n^2
-// 	STLNRGMats[3].PushBlockMatEl(S*(S+1.0),ibl,ibl,istbl,istbl); // S^2
-//       }
-//       // end loop over diag states
-//     }
-//     // end loop over blocks
-//     // Test
-//     //cout << " <0|nd|0> = " << STLNRGMats[1].GetMatEl(0,0) << endl;
-
-//     break;
-//   default:
-//     cout << " Can't figure out what to do with the STLNRGMats... Exiting." << endl;
-//     exit(0);
-//   }
-//   // end switch STLNRGMats.size()
-
-
 
   cout << " ... H_{-1} done. " << endl;
-
-
 
 
 }
@@ -2619,6 +2607,146 @@ void OneChNupPdn_SetH0_AndersonMajorana(vector<double> Params,
 ///////////////////
 ///////////////////
 ///////////////////
+
+//////////////////////////////////
+///                            ///
+///  1chQS Anderson model Hm1  ///
+///                            ///
+///  | Q S > basis             ///
+///                            ///
+//////////////////////////////////
+
+void OneChS_SetAnderson_Hm1(vector<double> Params, 
+			     CNRGarray* pAeig,
+			     vector<CNRGmatrix> &STLNRGMats){
+
+
+  // Set initial CNRG array (N=-1)
+
+  double Lambda=Params[0];
+  double HalfLambdaFactor=Params[1];
+  // Testing:
+  //Lambda=1.0;
+  //HalfLambdaFactor=1.0;
+
+  double U=Params[2];
+  double ed=Params[3];
+
+
+//   double U1tilde=Params[2]/(sqrt(Lambda)*HalfLambdaFactor);
+//   double ed1tilde=Params[3]/(sqrt(Lambda)*HalfLambdaFactor);
+//   double gamma1tilde=Params[4];
+
+  pAeig->NQNumbers=1;
+  pAeig->Nshell=-1;
+  // new
+  pAeig->totalS=true;
+  pAeig->Sqnumbers.push_back(0);
+  
+
+  // |0>, |up dn>: |S=0>
+  pAeig->QNumbers.push_back(0.0);
+
+  // |up>, |dn>: |S=1/2>
+  pAeig->QNumbers.push_back(0.5);
+  //pAeig->iDegen.push_back(0); // S=1/2
+
+  // Two states in block 1; one state in block 2
+  pAeig->BlockBegEnd.push_back(0);pAeig->BlockBegEnd.push_back(1);
+  pAeig->BlockBegEnd.push_back(2);pAeig->BlockBegEnd.push_back(2);
+
+  // using version in Wilson's: the former pluse U/2 divided by Factor
+  // Assuming D=1
+  pAeig->dEn.push_back(0.5*U/(Lambda*HalfLambdaFactor));
+  pAeig->dEn.push_back((2.0*ed+1.5*U)/(Lambda*HalfLambdaFactor));
+  pAeig->dEn.push_back((ed+0.5*U)/(Lambda*HalfLambdaFactor)); // up
+
+
+  // Eigenvectors
+  pAeig->dEigVec.push_back(1.0);
+  pAeig->dEigVec.push_back(0.0);
+  pAeig->dEigVec.push_back(0.0);
+  pAeig->dEigVec.push_back(1.0);
+
+  pAeig->dEigVec.push_back(1.0);
+
+  pAeig->PrintEn();
+
+  // Set Matrix elements (reduced!)
+
+  // fN (check -sqrt(2) and whatnot...
+
+  //STLNRGMats[0].SyncNRGarray(*pAeig);
+  // Sync all
+  for (int imat=0;imat<STLNRGMats.size();imat++)
+    STLNRGMats[imat].SyncNRGarray(*pAeig);
+
+  STLNRGMats[0].UpperTriangular=false;
+
+  STLNRGMats[0].MatEl.push_back(1.0);
+  STLNRGMats[0].MatEl.push_back(0.0);
+  STLNRGMats[0].MatBlockMap.push_back(0);
+  STLNRGMats[0].MatBlockMap.push_back(1);
+  STLNRGMats[0].MatBlockBegEnd.push_back(0);
+  STLNRGMats[0].MatBlockBegEnd.push_back(1);
+
+  STLNRGMats[0].MatEl.push_back(0.0);
+  STLNRGMats[0].MatEl.push_back(-sqrt(2.0));
+  STLNRGMats[0].MatBlockMap.push_back(1);
+  STLNRGMats[0].MatBlockMap.push_back(0);
+  STLNRGMats[0].MatBlockBegEnd.push_back(2);
+  STLNRGMats[0].MatBlockBegEnd.push_back(3);
+
+
+  // Changing the way things are being done (June 2013)
+  if (strcmp(STLNRGMats[1].MatName,"Ndot")==0){
+
+    cout << " Setting up n_d, nd^2 and S^2... " << endl;
+    // ndot    - imat=1 
+    // ndot^2  - imat=2
+    // Sdot^2  - imat=3
+    // Setting all to Identity (all diagonal)
+    for (int imat=1;imat<STLNRGMats.size();imat++){
+      STLNRGMats[imat].SetDiagonalMatrix(0.0);
+    }
+    // Setting ndot, Sz, Sz2
+    // Loop over diagonal
+    for (int ibl=0;ibl<pAeig->NumBlocks();ibl++){
+      double S=pAeig->GetQNumber(ibl,0); // S is set on each state.
+      double ndot=0.0;
+      if (ibl==1) ndot=1.0; // nel=1 for S=1/2 block
+      for (int istbl=0;istbl<pAeig->GetBlockSize(ibl);istbl++){
+	if (ibl==0) ndot=2*istbl; // nel=0, 2 in S=0 block
+	STLNRGMats[1].PushBlockMatEl(ndot,ibl,ibl,istbl,istbl); // n
+	STLNRGMats[2].PushBlockMatEl(ndot*ndot,ibl,ibl,istbl,istbl); //n^2
+	STLNRGMats[3].PushBlockMatEl(S*(S+1.0),ibl,ibl,istbl,istbl); // S^2
+      }
+      // end loop over diag states
+    }
+    // end loop over blocks
+    // Test
+    //cout << " <0|nd|0> = " << STLNRGMats[1].GetMatEl(0,0) << endl;
+  } else {
+    if (strcmp(STLNRGMats[1].MatName,"cdot1")==0){
+      cout << " Spectral function: setting up cd_red  ";
+      STLNRGMats[1].CopyData(&STLNRGMats[0]);
+      cout << " ... done." << endl;
+    }
+    // end if Mat[1]=cdot1
+  }
+  // end if Mat[1]=Ndot
+
+
+  STLNRGMats[1].PrintAllBlocks();
+
+  cout << " ... H_{-1} done. " << endl;
+
+}
+// end set H_-1 for Anderson with S symmetry
+
+/////////////////
+
+
 
 
 

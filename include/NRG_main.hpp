@@ -90,6 +90,9 @@ void OneChNupPdn_SetChainH0(CNRGarray* pAeig,
 			    vector<CNRGmatrix> &STLNRGMats);
 
 
+void OneChS_SetAnderson_Hm1(vector<double> Params,
+			    CNRGarray* pAeig, 
+			    vector<CNRGmatrix> &STLNRGMats);
 
 
 

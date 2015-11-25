@@ -15,7 +15,7 @@ sub Print_Help(){
   print "\t--addtoname=string \t: adds \"string\" to the output file names extension\n";
   print "\t--queue=queuename \t: sends to queue \"queuename\"\n";
   print "\t--special \t: adds special features in the script (edit it here) \n";
-  print "\t--pbsresources=\"nodes=1:wilson01:ppn=2\" , etc\t: text for -l option in qsub (advanced). Useful to request a single node (default: nodes=1:ppn=2) \n";
+  print "\t--pbsresources=\"nodes=wilson01:ppn=2\" , etc\t: text for -l option in qsub (advanced). Useful to request a single node (default: nodes=1:ppn=2) \n";
   print "\t--Nw=nw \t: DM_NRG -n nw option: Number of omegas per shell (default: 1) \n";
   exit;
 
@@ -230,6 +230,7 @@ if (!defined($Command)){
     print "      2     - Const (to use z-trick, for instance) \n";
     print "      3     - PowerLaw (needs lanc.in) \n";
     print "      4     - FromFile (needs HybFunc.dat) \n";
+    print "      5     - Cavity (needs lanc.in) \n";
     print "  choice : ";
 #    chomp($ChoiceBand = <STDIN>);
     chomp($test1 = <STDIN>);
@@ -252,6 +253,9 @@ if (!defined($Command)){
    }
    elsif (/^4/){
     $BandName="FromFile";
+   }
+   elsif (/^5/){
+    $BandName="Cavity";
    }
    else{print "Band not implemented. Using Default \n";
      $ChoiceBand=0;

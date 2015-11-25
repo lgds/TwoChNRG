@@ -1,4 +1,9 @@
 
+#include <gsl/gsl_complex.h>
+#include <gsl/gsl_complex_math.h>
+#define GSL_FN_EVAL(F,x) (*((F)->function))(x,(F)->params)
+
+
 #include "NRGclasses.hpp"
 #include "SpecFuncClass.hpp"
 using namespace std;
@@ -261,5 +266,116 @@ double HybFunc_FromFile_divEn(double omega,
 
 }
 
+
+////////////////////////////////////////////////
+double HybFunc_Cavity(double omega,
+			  void *params){
+ 
+
+  vector<double> VecParam=*(vector<double> *)(params);
+
+  // Parameters
+  //
+  // dot-leads: \Gamma_{dS}=\Gamma{dR}=0.125U=0.0625D$.
+  // dot-cavity: \small_lambda = 0.06U--0.1U=0.03D--0.05D$.
+  // Cavity-reservoir: \Gamma_{cR}= 0.06U = 0.03D$.
+  // Level spacing: \delta = 0.32 U = 0.016D$.
+  // cavity level e2
+  // Nlevels 
+
+  // Gamma(e)=-IMAG(Sigma(e))
+  // where
+  //
+  // Sigma(e)=-i(Gamma_{dS}+Gamma_{dR})
+  //          +(\small_lambda-i(sqrt{Gamma_{dR}*Gamma_{cR}}))^2
+  //          x S(e)/(1+iS(e)Gamma_{cR})
+  // 
+  // S(e) =sum_{j=0}^{Nlevels-1} [e-(e2+j*delta)+I*small_gamma]^-1
+  // 
+  // let's set small_gamma=1e-10.
+  // 
+  //
+
+  // cavity level e2 in VecParam[1]
+  // Cavity-reservoir: \Gamma_{cR} in VecParam[2]
+  // dot-leads: \Gamma_{dS}=\Gamma{dR} in VecParam[3]
+  // dot-cavity: \small_lambda in VecParam[4]
+  // Level spacing: \delta in VecParam[5]
+  // Nlevels in VecParam[6]
+
+
+  double e2=VecParam[1];
+  double GammacR=VecParam[2];
+  double GammadS=VecParam[3];
+  double GammadR=GammadS;
+  double small_lambda=VecParam[4];
+  double delta=VecParam[5];
+  int Nlevels=(int)VecParam[6];
+
+  double small_gamma=1e-10;
+ 
+
+//    cout << " e2= " << e2 
+//         << " GammacR= " << GammacR 
+//         << " GammadS(R)= " << GammadS 
+//         << " small_lambda = " << small_lambda 
+//         << " delta= " << delta
+//         << " Nlevels= " << Nlevels
+// 	<< endl;
+
+  if (VecParam.size()<7)
+    return(1.0);
+  else{
+    // Set S(w)
+    gsl_complex Sw;
+    gsl_complex caux[3];
+    double aux=0.0;
+    GSL_SET_COMPLEX(&Sw,0.0,0.0);
+
+    for (int ii=0;ii<Nlevels;ii++){
+      aux=e2+ii*delta;
+      GSL_SET_COMPLEX(&caux[0],0.0,small_gamma);
+      caux[0]=gsl_complex_add_real(caux[0],(omega-aux));
+      caux[0]=gsl_complex_inverse(caux[0]);
+      Sw=gsl_complex_add(Sw,caux[0]);
+    }
+    // Set Sigma(w)
+  // Sigma(e)=-i(Gamma_{dS}+Gamma_{dR})
+  //          +(\small_lambda-i(sqrt{Gamma_{dR}*Gamma_{cR}}))^2
+  //          x S(e)/(1+iS(e)Gamma_{cR})
+
+    GSL_SET_COMPLEX(&caux[0],0.0,-1.0);
+    caux[0]=gsl_complex_mul_real(caux[0],(GammadS+GammadR));
+
+    GSL_SET_COMPLEX(&caux[1],small_lambda,-sqrt(GammadR*GammacR));
+    caux[1]=gsl_complex_mul(caux[1],caux[1]);
+
+    GSL_SET_COMPLEX(&caux[2],0.0,1.0);
+    caux[2]=gsl_complex_mul(caux[2],Sw);
+    caux[2]=gsl_complex_mul_real(caux[2],GammacR);
+    caux[2]=gsl_complex_add_real(caux[2],1.0);
+    caux[2]=gsl_complex_div(Sw,caux[2]);
+    
+    caux[1]=gsl_complex_mul(caux[1],caux[2]);
+    
+    //Sigma
+    caux[0]=gsl_complex_add(caux[0],caux[1]);
+
+    // Set Delta(w)    
+    aux=-GSL_IMAG(caux[0]);
+
+    return(aux);
+  }
+
+}
+
+///////
+
+double HybFunc_Cavity_timesEn(double omega,
+			      void *params){
+
+  return(omega*HybFunc_Cavity(omega,params));
+
+}
 
 ////////////////////////////////////////////////

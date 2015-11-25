@@ -21,6 +21,7 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
   boost::numeric::ublas::matrix<double> Zjbl;
   boost::numeric::ublas::matrix<double> fnbasis;
 
+
   boost::numeric::ublas::matrix<complex<double> > cZibl;
   boost::numeric::ublas::matrix<complex<double> > cZjbl;
   boost::numeric::ublas::matrix<complex<double> > cfnbasis;
@@ -36,7 +37,7 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
   boost::timer t2;
   double time_lap2;
 
-
+  
   CNRGmatrix* MatOLD = new CNRGmatrix [NumNRGMats];
 
   //Clear all
@@ -136,6 +137,7 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
 		 jst<=pAbasis->GetBlockLimit(jblBC,1);jst++){
 	      //int typej=pAbasis->iType[jst];
 	      //int stcfj=pAbasis->StCameFrom[jst];
+
 	      	  
 	      if (NRGMats[imats].IsComplex) 
 		cfnbasis(istbl,jstbl)=ZeroC;
@@ -150,20 +152,6 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
 		}
 		  else
 		fnbasis(istbl,jstbl)=(NRGMats[imats].CalcMatEl(pAbasis,pSingleSite,ist,jst))*MatOLD[imats].GetMatEl(iold,jold);
-		//// Debug
-// 		if ( (pAeigCut->Nshell==1)&&
-// 		     (imats==1)&&
-// 		     (ist==369)&&(jst==632) ){
-// 		  cout << " ist = " << ist
-// 		       << " jst = " << jst 
-// 		       << " iold = " << iold 
-// 		       << " jold = " << jold 
-// 		       << " MatOld = " << MatOLD[imats].GetMatEl(iold,jold)
-// 		       << " prefac = " << NRGMats[imats].CalcMatEl(pAbasis,pSingleSite,ist,jst)
-// 		       << " Mat el = " << fnbasis(istbl,jstbl) 
-// 		       << endl;
-// 		}
-		////end Debug
 	      }
 	      else{
 		if (NRGMats[imats].IsComplex)
@@ -171,7 +159,6 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
  
 		else
 		  fnbasis(istbl,jstbl)=NRGMats[imats].CalcMatEl(pAbasis,pSingleSite,ist,jst);
-
 	      }
 	      jstbl++;
 	    }
@@ -202,19 +189,22 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
 	  time_elapsed=t.elapsed();
 	  if (display) cout << "    ...done. Elapsed time:" << time_elapsed << endl;
 	  // Debug
-// 	  if ( (display)&&(pAeigCut->Nshell==1)&&(imats==1)&&(NRGMats[imats].IsComplex)&&
-// 	       ( ((ibl==1)&&(jbl==3))||((ibl==3)&&(jbl==1)) ) 
-// 	       ) {
-// 	    cout << "Z(i="<<ibl<<")  : " <<  Zibl << endl;
-// 	    cout << "Z(j="<<jbl<<")  : " <<  Zjbl << endl;
-// 	    cout << "fbasis   :" <<  fnbasis << endl;
-// 	    cout << "Zi.fbasis.ZjT : " <<  fnw << endl;
-// 	    ///
-// 	    cout << "Z(i="<<ibl<<")  : " <<  cZibl << endl;
-// 	    cout << "Z(j="<<jbl<<")  : " <<  cZjbl << endl;
-// 	    cout << "fbasis   :" <<  cfnbasis << endl;
-// 	    cout << "Zi.fbasis.ZjT : " <<  cfnw << endl;
-// 	  }
+	  if ( (display)&&(pAeigCut->Nshell<=1)&&
+	       ( (imats==1)||(imats==2) )
+     //	       ( ((ibl==1)&&(jbl==2))||((ibl==2)&&(jbl==1)) ) 
+	       ) {
+	    cout << "Z(i="<<ibl<<")  : " <<  Zibl << endl;
+	    cout << "Z(j="<<jbl<<")  : " <<  Zjbl << endl;
+	    cout << "fbasis   :" <<  fnbasis << endl;
+	    cout << "Zi.fbasis.ZjT : " <<  fnw << endl;
+	    ///
+// 	    cout << "cZ(i="<<ibl<<")  : " <<  cZibl << endl;
+// 	    cout << "cZ(j="<<jbl<<")  : " <<  cZjbl << endl;
+// 	    cout << "cfbasis   :" <<  cfnbasis << endl;
+// 	    cout << "cZi.cfbasis.cZjT : " <<  cfnw << endl;
+	    //cout << "faux   :" <<  faux << endl;
+
+	  }
 	// end debug
 
 	  // Add to NRGMats[imats-1]
@@ -233,7 +223,7 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
 	//end if Q=Q'+1 etc
 
       }
-      // end matrix loop
+      // end imats loop
 
 
 

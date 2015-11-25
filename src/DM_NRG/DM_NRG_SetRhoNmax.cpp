@@ -20,8 +20,6 @@ void DM_NRG_SetRhoNmax(vector<double> ParamsTemp,
   // Check for complex matrices
   if (pAcutNp1->CheckComplex()){pRhoNmax->IsComplex=true;}
 
-
-
   double TempBar=ParamsTemp[0];
   double betabar=0.0;
 
@@ -38,12 +36,13 @@ void DM_NRG_SetRhoNmax(vector<double> ParamsTemp,
 
   double ZN;
 
+  cout << " Got here " << endl;
+
   // PartitionFuncTeq0() does not work well... Use the other one.
 //   if (ZeroTemp)
 //     ZN=pAcutNp1->PartitionFuncTeq0();
 //   else
 //     ZN=pAcutNp1->PartitionFunc(betabar);
-
 
   ZN=pAcutNp1->PartitionFunc(betabar);
 

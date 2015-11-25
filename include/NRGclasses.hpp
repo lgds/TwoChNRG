@@ -353,7 +353,7 @@ class CNRGmatrix: public CNRGarray{
 public :
 
   // Default constructor (with initialization list)
-  CNRGmatrix():UpperTriangular(false),NeedOld(false),SaveMatYN(false),CalcAvg(false),IsComplex(false)
+  CNRGmatrix():UpperTriangular(false),NeedOld(false),SaveMatYN(false),CalcAvg(false),IsComplex(false),WignerEckartL(0.5)
   {}
   //CNRGmatrix(){}
 
@@ -362,6 +362,7 @@ public :
      UpperTriangular=false;
      SaveMatYN=false;
      CalcAvg=false;
+     IsComplex=false;
      CNRGarray::Nshell=A1.Nshell;
      CNRGarray::NQNumbers=A1.NQNumbers;
      CNRGarray::QNumbers=A1.QNumbers;
@@ -411,6 +412,10 @@ public :
 
   // Is complex?
   bool IsComplex;
+
+  // Wigner-Eckart rank (usually 1/2 but it can be 1)
+  // Needed when using SU(2) symmetry.
+  double WignerEckartL;
 
   
   //////////////////////
@@ -507,6 +512,7 @@ public :
     MatKept=pMat1->MatKept;
     UpperTriangular=pMat1->UpperTriangular; 
     IsComplex=pMat1->IsComplex;
+    WignerEckartL=pMat1->WignerEckartL;
   }
 
 
@@ -824,8 +830,10 @@ public :
   void SetChainLanczos(int Nsitesmax);
 
 
-
   double GetHyb_w(double omega);
+
+  double ScaleFactor(int n);
+
 
 private:
 
@@ -844,7 +852,6 @@ private:
 		    vector<double> *pFm,
 		    vector<double> *pEm);
 
-  double ScaleFactor(int n);
 
   double RHS(int n, double eam, double um, double um1, 
 	     double en, double chinm1, bool scale=true);

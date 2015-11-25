@@ -196,6 +196,14 @@ int main (int argc, char* argv[]){
 	<< " chi_m1 = " << chi_m1 
 	<< " eN(0) = " << eN << endl;
 
+   // Adding A_Lambda factor (except if using Campo-Oliveira)
+   if (ThisCode.chain.DiscScheme!=1){
+     chi_m1*=sqrt(0.5*log(Lambda)*(Lambda+1)/(Lambda-1));
+   }
+
+   cout  << " sqrt(ALambda)*chi_m1 = " << chi_m1  << endl;
+
+
    // Sep 08: 1ChQ chain calculations diverted to Anderson (ModelNo=0)
    // Aug 09: Why?? Is this correct?
 
@@ -204,7 +212,15 @@ int main (int argc, char* argv[]){
      ThisCode.ModelNo=0;
    }
 
-   
+   double DeltaSC=0.0;
+   // Set 2015: added SC leads
+   if (ThisCode.SymNo==7){
+     if (ThisCode.ModelNo==0){
+       DeltaSC=ThisCode.dInitParams[3];
+       cout << " DeltaSC = " << DeltaSC << endl;
+       }
+   }
+   // end add DeltaSC
 
    /***************/
    // Model specific hamiltonians //
@@ -251,6 +267,9 @@ int main (int argc, char* argv[]){
 
    // added: chains away from phs
    ParamsHN.push_back(eN);
+   // added: superconducting leads
+   ParamsHN.push_back(DeltaSC);
+
 
    // Entering calculation of H_Nsites0
    ThisCode.Nsites=ThisCode.Nsites0;
@@ -262,8 +281,8 @@ int main (int argc, char* argv[]){
      cout << "DN = " << ThisCode.DN << " TM = " << TM << endl;
      // Debugging...
      //bool disp=(ThisCode.Nsites==3?true:false);
-     //bool disp=true;
-     bool disp=false;
+     bool disp=true;
+     //bool disp=false;
 
      // Build Basis
 
@@ -319,6 +338,7 @@ int main (int argc, char* argv[]){
      // end if UpdateBefCut
 
 
+
      // Update matrices (in either case)
 
      if (ThisCode.Nsites<ThisCode.Nsitesmax){
@@ -338,6 +358,7 @@ int main (int argc, char* argv[]){
      // Save stuff to files
 
      if (ThisCode.SaveData){ThisCode.SaveArrays();}
+
  
      // Calculate Other things that need updated matrices
      //
@@ -377,11 +398,19 @@ int main (int argc, char* argv[]){
      ThisCode.Nsites++;
 
      // Adding eN: is this before or after Nsites is updated? After!
-     if (ParamsHN.size()>ThisCode.NumChannels+1){
+     if (ParamsHN.size()>ThisCode.NumChannels+2){
        eN=ThisCode.chain.GetEn(ThisCode.Nsites);
        ParamsHN[ThisCode.NumChannels+1]=eN;
        cout << " eN_" << ThisCode.Nsites << " = " << eN << endl;
+       // Adding DeltaSC RENORMALIZED
+       double ScaleFactorNm1=ThisCode.chain.ScaleFactor(ThisCode.Nsites-1);
+       ParamsHN[ThisCode.NumChannels+2]=ScaleFactorNm1*DeltaSC;
+       cout << " ScaleFactorN_" << ThisCode.Nsites-1 << " = " << ScaleFactorNm1
+	    << " DeltaSC_scaled = " << " DeltaSC_scaled = " << ScaleFactorNm1*DeltaSC
+	    << endl;
+
      }
+     // apparently this is ALWAYS true!
 
      
    }

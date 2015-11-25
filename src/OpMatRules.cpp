@@ -166,6 +166,26 @@ bool OneChNupPdn_cddn_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2){
 
 ////////////////////////////////////////////
 
+////////////////////////
+// OneChS check
+
+bool OneChS_cd_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2){
+
+  double Si=pAeigCut->GetQNumber(iblock1,0);
+
+  double Sj=pAeigCut->GetQNumber(iblock2,0);
+
+  
+  if ( (dEqual(Sj,(Si+0.5)))||(dEqual(Sj,(Si-0.5))) ) 
+    return(true);
+  else
+    return(false);
+
+}
+
+////////////////////////////////////////////
+
+
 
 
 ////////////////////////////////
@@ -981,8 +1001,7 @@ double OneChQ_HN_MatEl(vector<double> Params,
 		       CNRGbasisarray* pAbasis, 
 		       CNRGbasisarray* pSingleSite,
 		       CNRGmatrix* MatArray,
-		       int ist, int jst)
-{
+		       int ist, int jst){
 
   // July 08
   // Calculates matrix elements for HN when Sz is explicitly included
@@ -1006,73 +1025,66 @@ double OneChQ_HN_MatEl(vector<double> Params,
 
   if (ist==jst)
     MatEl=sqrt(Lambda)*pAbasis->dEn[ist];
-  else
-    {
-      int type_i=pAbasis->iType[ist];
-      int type_j=pAbasis->iType[jst];
+  else{
+    int type_i=pAbasis->iType[ist];
+    int type_j=pAbasis->iType[jst];
 
-      // Sum over spins
-      int imat=0;
-      for (int isigma=1;isigma>=-1;isigma-=2)
-	{
-	  int typep=type_i;
-	  int type=type_j;
+    // Sum over spins
+    int imat=0;
+    for (int isigma=1;isigma>=-1;isigma-=2){
+      int typep=type_i;
+      int type=type_j;
 
-	  int stcf_i=pAbasis->StCameFrom[ist];
-	  int stcf_j=pAbasis->StCameFrom[jst];
+      int stcf_i=pAbasis->StCameFrom[ist];
+      int stcf_j=pAbasis->StCameFrom[jst];
 
-	  // Matrix element from <istcf| fN_sigma | jstcf>
-	  double OldEl=MatArray[imat].GetMatEl(stcf_i,stcf_j);
+      // Matrix element from <istcf| fN_sigma | jstcf>
+      double OldEl=MatArray[imat].GetMatEl(stcf_i,stcf_j);
 
-	  // if zero, try the h.c term, meaning f+N f_N+1 in original case
-	  if (dEqual(OldEl,0.0))
-	    {
-	      OldEl=MatArray[imat].GetMatEl(stcf_j,stcf_i);
-	      typep=type_j;
-	      type=type_i;
-	    }
+      // if zero, try the h.c term, meaning f+N f_N+1 in original case
+      if (dEqual(OldEl,0.0)){
+	OldEl=MatArray[imat].GetMatEl(stcf_j,stcf_i);
+	typep=type_j;
+	type=type_i;
+      }
 
-	  // Get SingleSite QNumbers
+      // Get SingleSite QNumbers
 
-	  double Qtilde=pSingleSite->GetQNumberFromSt(type,0);
+      double Qtilde=pSingleSite->GetQNumberFromSt(type,0);
 
-	  // Fermi Sign
-	  double FermiSign=1.0;
-	  if (dEqual(Qtilde,0.0)) FermiSign=-1.0;
+      // Fermi Sign
+      double FermiSign=1.0;
+      if (dEqual(Qtilde,0.0)) FermiSign=-1.0;
 
-// 	  cout << " ist = " << ist 
-// 	       << " jst = " << jst
-// 	       << " stcf_i = " << stcf_i
-// 	       << " stcf_j = " << stcf_j
-// 	       << " type_i = " << type_i
-// 	       << " type_j = " << type_j
-// 	       << " sigma = " << isigma << endl;
-// 	  cout << " typep = " << typep
-// 	       << " type = " << type 
-// 	       << " OldEl = " << OldEl
-// 	       << endl;
-// 	  cout << " fd_table = "
-// 	       << OneCh_fd_table(isigma,typep,type) 
-// 	       << endl;
-// 	  cout << " Qtilde = " << Qtilde << endl;
-// 	  cout << " FermiSign = " << FermiSign << endl;
-// 	  cout << " chi_N = " << chi_N << endl;
+      // 	  cout << " ist = " << ist 
+      // 	       << " jst = " << jst
+      // 	       << " stcf_i = " << stcf_i
+      // 	       << " stcf_j = " << stcf_j
+      // 	       << " type_i = " << type_i
+      // 	       << " type_j = " << type_j
+      // 	       << " sigma = " << isigma << endl;
+      // 	  cout << " typep = " << typep
+      // 	       << " type = " << type 
+      // 	       << " OldEl = " << OldEl
+      // 	       << endl;
+      // 	  cout << " fd_table = "
+      // 	       << OneCh_fd_table(isigma,typep,type) 
+      // 	       << endl;
+      // 	  cout << " Qtilde = " << Qtilde << endl;
+      // 	  cout << " FermiSign = " << FermiSign << endl;
+      // 	  cout << " chi_N = " << chi_N << endl;
 
+      MatEl+=FermiSign*OldEl*OneCh_fd_table(isigma,typep,type);
+      imat++;
 
-
-	  MatEl+=FermiSign*OldEl*OneCh_fd_table(isigma,typep,type);
-	  imat++;
-
-	}
-      // End sum over isigma
-      
-      MatEl*=chi_N;
     }
+    // End sum over isigma
+      
+    MatEl*=chi_N;
+  }
   // end if i=j
 
-
-
-    return(MatEl);
+  return(MatEl);
 
 }
 
@@ -1206,44 +1218,42 @@ double OneChQS_cd_MatEl(CNRGbasisarray *pAbasis,
   auxCG[3]=CGordan(Si,Si,0.5,sigma,Sj,Sj);
 
   // Check sigma=Si-Sj
-  if (dEqual(auxCG[3],0.0))
-    {
-      sigma=Si-Sj;
-      auxCG[3]=CGordan(Si,Si,0.5,sigma,Sj,Sj);
-      if (dEqual(auxCG[3],0.0)) return(0.0);
-    }
+  if (dEqual(auxCG[3],0.0)){
+    sigma=Si-Sj;
+    auxCG[3]=CGordan(Si,Si,0.5,sigma,Sj,Sj);
+    if (dEqual(auxCG[3],0.0)) return(0.0);
+  }
 
 
   for (double Szcfj=-Scfj;
-       Szcfj<=Scfj;Szcfj+=1.0)
-    {
-      double Szcfi=Szcfj-sigma;
-      Sztildej=Sj-Szcfj;
-      Sztildei=Si-Szcfi;
-      
-      siteqnumsj[2]=Sztildej;
-      int sitestatej=pSingleSite->GetBlockFromQNumbers(siteqnumsj);
+       Szcfj<=Scfj;Szcfj+=1.0){
+    double Szcfi=Szcfj-sigma;
+    Sztildej=Sj-Szcfj;
+    Sztildei=Si-Szcfi;
+    
+    siteqnumsj[2]=Sztildej;
+    int sitestatej=pSingleSite->GetBlockFromQNumbers(siteqnumsj);
 
-      siteqnumsi[2]=Sztildei;
-      int sitestatei=pSingleSite->GetBlockFromQNumbers(siteqnumsi);
+    siteqnumsi[2]=Sztildei;
+    int sitestatei=pSingleSite->GetBlockFromQNumbers(siteqnumsi);
 
-      auxCG[0]=CGordan(Scfi,Szcfi,Stildei,Sztildei,Si,Si);
-      auxCG[1]=CGordan(Scfj,Szcfj,Stildej,Sztildej,Sj,Sj);
-      auxCG[2]=CGordan(Scfi,Szcfi,0.5,sigma,Scfj,Szcfj);
+    auxCG[0]=CGordan(Scfi,Szcfi,Stildei,Sztildei,Si,Si);
+    auxCG[1]=CGordan(Scfj,Szcfj,Stildej,Sztildej,Sj,Sj);
+    auxCG[2]=CGordan(Scfi,Szcfi,0.5,sigma,Scfj,Szcfj);
 
-      // Have to make this more clear but let's see:
-      double FermiSign=1.0;
-      // Jul 09: Does FermiSign enter here????
-      // Yes, it does.
-      if (dEqual(Qtildej,0.0)) FermiSign=-1.0;
+    // Have to make this more clear but let's see:
+    double FermiSign=1.0;
+    // Jul 09: Does FermiSign enter here????
+    // Yes, it does.
+    if (dEqual(Qtildej,0.0)) FermiSign=-1.0;
 
 
-      if (sitestatei==sitestatej)
-//       fbasis+=auxCG[0]*auxCG[1]*auxCG[2];
+    if (sitestatei==sitestatej)
+      //       fbasis+=auxCG[0]*auxCG[1]*auxCG[2];
       fbasis+=auxCG[0]*auxCG[1]*auxCG[2]*FermiSign;
 
-      //cout << " CG 1 = " << auxCG[0] << " CG 2 = " << auxCG[1] << " mat_el = " <<  OneCh_fd_table((int)(sigma/0.5),sitestatej,sitestatei) << endl;
-    }
+    //cout << " CG 1 = " << auxCG[0] << " CG 2 = " << auxCG[1] << " mat_el = " <<  OneCh_fd_table((int)(sigma/0.5),sitestatej,sitestatei) << endl;
+  }
   // end loop in Szcfj
 
   if (dNEqual(auxCG[3],0.0)) fbasis=fbasis/auxCG[3];
@@ -1255,6 +1265,73 @@ double OneChQS_cd_MatEl(CNRGbasisarray *pAbasis,
 
 ////////////////////////
 ////////////////////////
+
+double OneChQS_Sz_MatEl(CNRGbasisarray *pAbasis, 
+                        CNRGbasisarray *pSingleSite, 
+                        int ist, int jst){
+  // Calculate <Q S  a|| Sz ||Q S b>:
+  // 
+  // The trick:
+  //  
+  // <Q S Sz a| Szimp |Q S Sz b> = <S Sz 1 0| S Sz><Q S a||Szimp||Q S b>
+  //
+  // Keep only reduced matrix elements
+  //
+  //
+
+  double fbasis=0.0;
+
+  double Si=pAbasis->GetQNumberFromSt(ist,1);
+  int typei=pAbasis->iType[ist];
+  int stcfi=pAbasis->StCameFrom[ist];
+
+  double Sj=pAbasis->GetQNumberFromSt(jst,1);
+  int typej=pAbasis->iType[jst];
+  int stcfj=pAbasis->StCameFrom[jst];
+
+  double auxCG[3]={0.0,0.0,0.0};
+
+  auxCG[2]=CGordan(Si,Si,1.0,0.0,Si,Si);
+
+  if ( (typei==typej)&&(dNEqual(auxCG[2],0.0)) ){
+    double Qtildei=pSingleSite->GetQNumber(typei,0);
+    double Stildei=pSingleSite->GetQNumber(typei,1);
+    double Sztildei=pSingleSite->GetQNumber(typei,2);
+                         
+    double siteqnumsi[]={Qtildei,Stildei,Sztildei};
+  
+    double Scfi=Si-Sztildei; // Ok, I will buy that
+  
+
+    // Loop in Szold
+    for (double Szcfi=-Scfi; Szcfi<=Scfi;Szcfi+=1.0){
+      
+      Sztildei=Si-Szcfi;
+          
+      auxCG[0]=CGordan(Scfi,Szcfi,Stildei,Sztildei,Si,Si);
+      auxCG[1]=CGordan(Scfi,Szcfi,1.0,0.0,Scfi,Szcfi);
+  
+      fbasis+=auxCG[0]*auxCG[0]*auxCG[1];
+
+//       cout << " ist = " << ist << " jst = " << jst
+// 	   << " typei = " << typei << "  typej = " <<  typej << endl
+// 	   << " Scfi = " << Scfi << " Szcfi = " << Szcfi 
+// 	   << " Stildei = " << Stildei << " Sztildei = " << Sztildei << endl 
+// 	   << " CG 0 = " << auxCG[0] << " CG 1 = " << auxCG[1] << " CG 2 = " 
+// 	   << auxCG[2] << " mat_el = " <<  fbasis << endl;
+    }
+    // end loop in Szcfi
+
+    fbasis=fbasis/auxCG[2]; // reduced element
+
+  }
+  else fbasis=0.0;
+  // end if stcfi==stcfj
+
+  return(fbasis);
+
+}
+
 
 ////////////////////////
 ////////////////////////
@@ -1402,4 +1479,435 @@ double OneChQS_HN_MatEl(vector<double> Params,
 
 
 
+////////////////////////
+////////////////////////////////////////
+/////////  OneChS symmetry   ///////////
+////////////////////////////////////////
+
+// Set 2015: working on this
+
+////////////////////////
+////////////////////////
+
+double OneChS_fN_MatEl(CNRGbasisarray *pAbasis, 
+                        CNRGbasisarray *pSingleSite, 
+                        int ist, int jst){
+
+  double fbasis=0.0;
+
+  double Si=pAbasis->GetQNumberFromSt(ist,0);
+  int typei=pAbasis->iType[ist];
+  int stcfi=pAbasis->StCameFrom[ist];
+
+  double Sj=pAbasis->GetQNumberFromSt(jst,0);
+  int typej=pAbasis->iType[jst];
+  int stcfj=pAbasis->StCameFrom[jst];
+
+  // Debug
+  bool disp=false;
+//   if (   ( (ist==5)&&(jst==1) )||
+// 	 ( (ist==6)&&(jst==3) )||
+// 	 ( (ist==7)&&(jst==4) )
+// 	 )
+//     disp=true;
+
+  if (stcfi==stcfj){
+  
+    if (disp) 
+      cout << "I'm in: " 
+	   << " ist=" << ist << " jst= " << jst 
+	   << " typei=" << typei << " typej= " << typej
+	   << " Si= " << Si << " Sj= " << Sj
+	   << " stcfi=" << stcfi << " stcfj= " << stcfj 
+	   << endl; 
+    // New approach
+    double Stildei=pSingleSite->GetQNumberFromSt(typei,0);
+    double Sztildei=pSingleSite->GetQNumberFromSt(typei,1);
+                         
+    double Stildej=pSingleSite->GetQNumberFromSt(typej,0);
+    double Sztildej=pSingleSite->GetQNumberFromSt(typej,1);
+
+    double siteqnumsi[]={Stildei,Sztildei};
+    double siteqnumsj[]={Stildej,Sztildej};
+  
+    double Scfi=Si-Sztildei;
+    double Scfj=Sj-Sztildej;
+  
+    double auxBasis[2]={0.0,0.0};
+    double auxCG[2]={0.0,0.0};
+
+    // Let me try this... Works!
+    double sigma=Sj-Si;
+
+    if (disp) 
+      cout << " Stildei=" << Stildei << " Sztildei= " << Sztildei
+	   << " Stildej=" << Stildej << " Sztildej= " << Sztildej
+	   << endl 
+	   << " Scfi=" << Scfi << " Scfj= " << Scfj << " sigma= " << sigma
+	   << endl; 
+
+
+
+    for (Sztildej=-Stildej;
+	 Sztildej<=Stildej;Sztildej+=1.0){
+      siteqnumsj[1]=Sztildej;
+      int sitestatej=typej; // Ok if Stildej=0
+      if ((typej==2)||(typej==3)) // If not...
+	sitestatej=pSingleSite->GetBlockFromQNumbers(siteqnumsj)+1;
+      if (disp) cout << " Sz~j = "<<Sztildej << " ssj =  "<< sitestatej << endl; 
+      int i1=0;
+
+
+      siteqnumsi[1]=Sztildej-sigma;
+      int sitestatei=typei; // Ok if Stildei=0
+      if ((typei==2)||(typei==3))
+	sitestatei=pSingleSite->GetBlockFromQNumbers(siteqnumsi)+1;
+          
+      auxCG[0]=CGordan(Scfi,Si-Sztildej+sigma,Stildei,Sztildej-sigma,Si,Si);
+      auxCG[1]=CGordan(Scfj,Sj-Sztildej,Stildej,Sztildej,Sj,Sj);
+      // Check this below!!
+      auxBasis[i1]+=OneChS_fd_table((int)(sigma/0.5),sitestatej,sitestatei)*auxCG[0]*auxCG[1];
+
+      if (disp) cout << " CG 1 = " << auxCG[0] << " CG 2 = " << auxCG[1] << " mat_el = " <<  OneCh_fd_table((int)(sigma/0.5),sitestatej,sitestatei) << endl;
+      i1++;
+    }
+    // end loop in Sztildej
+    // Check to see which of them is non-zero
+    auxCG[0]=CGordan(Si,Si,0.5,sigma,Sj,Sj);
+    if (disp) cout << " auxBasis = " << auxBasis[0] << " auxGC0 = " << auxCG[0] << endl;
+    if ( !(dEqual(auxCG[0],0.0)) ) 
+      fbasis=auxBasis[0]/auxCG[0];
+    else{
+      if ( !(dEqual(auxCG[1],0.0)) ) 
+	fbasis=auxBasis[1]/auxCG[1];
+      else fbasis=0.0;
+    }
+  }
+  else fbasis=0.0;
+  // end if stcfi==stcfj
+
+  return(fbasis);
+
+}
+
+////////////////////////
+////////////////////////
+
+double OneChS_cd_MatEl(CNRGbasisarray *pAbasis, 
+                        CNRGbasisarray *pSingleSite, 
+                        int ist, int jst){
+
+  double fbasis=0.0;
+
+  double Si=pAbasis->GetQNumberFromSt(ist,0);
+  int typei=pAbasis->iType[ist];
+  int stcfi=pAbasis->StCameFrom[ist];
+
+  double Sj=pAbasis->GetQNumberFromSt(jst,0);
+  int typej=pAbasis->iType[jst];
+  int stcfj=pAbasis->StCameFrom[jst];
+
+  // Not one block per state!!
+  double Stildei=pSingleSite->GetQNumberFromSt(typei,0);
+  double Sztildei=pSingleSite->GetQNumberFromSt(typei,1);
+                         
+  double Stildej=pSingleSite->GetQNumberFromSt(typej,0);
+  double Sztildej=pSingleSite->GetQNumberFromSt(typej,1);
+
+
+  double siteqnumsi[]={Stildei,Sztildei};
+  double siteqnumsj[]={Stildej,Sztildej};
+  
+  double Scfi=Si-Sztildei;
+  double Scfj=Sj-Sztildej;
+  
+  double auxCG[4]={0.0,0.0,0.0,0.0};
+
+  // Let me try this... Works!
+  double sigma=Sj-Si;
+
+
+  // Debug
+  bool disp=false;
+//    if (   ( (ist==5)&&(jst==9) ) )
+//      disp=true;
+
+
+  auxCG[3]=CGordan(Si,Si,0.5,sigma,Sj,Sj);
+
+  // Check sigma=Si-Sj
+  if (dEqual(auxCG[3],0.0)){
+    sigma=Si-Sj;
+    auxCG[3]=CGordan(Si,Si,0.5,sigma,Sj,Sj);
+    if (dEqual(auxCG[3],0.0)) return(0.0);
+  }
+
+
+  for (double Szcfj=-Scfj;
+       Szcfj<=Scfj;Szcfj+=1.0){
+    double Szcfi=Szcfj-sigma;
+    Sztildej=Sj-Szcfj;
+    Sztildei=Si-Szcfi;
+      
+    siteqnumsj[1]=Sztildej;
+    //int sitestatej=pSingleSite->GetBlockFromQNumbers(siteqnumsj); // Does not work
+    int sitestatej=typej; // Ok if Stildej=0
+    if ((typej==2)||(typej==3)) // If not...
+      sitestatej=pSingleSite->GetBlockFromQNumbers(siteqnumsj)+1;
+
+
+    siteqnumsi[1]=Sztildei;
+    int sitestatei=typei; // Ok if Stildei=0
+    if ((typei==2)||(typei==3))
+      sitestatei=pSingleSite->GetBlockFromQNumbers(siteqnumsi)+1;
+
+
+   if (disp) 
+      cout << "I'm in: " 
+	   << " ist=" << ist << " jst= " << jst 
+	   << " typei=" << typei << " typej= " << typej
+	   << " Si= " << Si << " Sj= " << Sj 
+	   << " Scfi= " << Scfi << " Scfj= " << Scfj 
+	   << " sigma= " << sigma << endl 
+	   << " Szcfi=" << Szcfi << " Szcfj= " << Szcfj 
+	   << " Sztildei=" << Sztildei << " Sztildej= " << Sztildej 
+	   << " sitestatei=" << sitestatei << " sitestatei= " << sitestatej 
+	   << endl; 
+
+
+    auxCG[0]=CGordan(Scfi,Szcfi,Stildei,Sztildei,Si,Si);
+    auxCG[1]=CGordan(Scfj,Szcfj,Stildej,Sztildej,Sj,Sj);
+    auxCG[2]=CGordan(Scfi,Szcfi,0.5,sigma,Scfj,Szcfj);
+
+    // Have to make this more clear but let's see:
+    double FermiSign=1.0;
+    // Jul 09: Does FermiSign enter here????
+    // Yes, it does
+    // OK, need to check this!!!
+    //
+    if ((typej==2)||(typej==3)) FermiSign=-1.0;
+    // Fermi sign appears IF there is an
+    // odd number of fermionic ops in site state
+    // if (dEqual(Stildej,0.5)) FermiSign=-1.0;
+
+
+    if (sitestatei==sitestatej)
+      fbasis+=auxCG[0]*auxCG[1]*auxCG[2]*FermiSign;
+
+
+    if (disp) cout << " CG 0= " << auxCG[0] 
+		   << " CG 1= " << auxCG[1] 
+		   << " CG 2= " << auxCG[2] 
+		   << " CG 3= " << auxCG[3] 
+		   << " Fermi Sign= " <<  FermiSign
+		   << " fbasis= " <<  fbasis
+		   << endl;
+
+  }
+  // end loop in Szcfj
+
+  
+
+  if (dNEqual(auxCG[3],0.0)) fbasis=fbasis/auxCG[3];
+  else fbasis=0.0;
+
+  return(fbasis);
+
+}
+
+////////////////////////
+////////////////////////
+
+////////////////////////
+////////////////////////
+
+///////////////////////////////////////////
+/////////  <S' | HN | S>   ///////////
+///////////////////////////////////////////
+
+
+
+double OneChS_HNsc_MatEl(vector<double> Params,
+                          CNRGbasisarray* pAbasis,
+                          CNRGbasisarray* pSingleSite,
+                          CNRGmatrix* MatArray,
+                          int ist, int jst){
+
+  // Calculates matrix elements for HN in the S basis
+  //
+  // Parameters: 
+  //  Lambda        - Params[0]
+  //  chi_N         - Params[1]
+  //  eN            - Params[2]
+  //  DeltaSC       - Params[3]
+  //  <S'||fN||S>   - MatArray[0] (reduced)
+
+
+  // Need to add the superconducting term HERE!!
+
+  double MatEl=0.0;
+
+  double Lambda=Params[0];
+  double chi_N=Params[1];
+  double eN=Params[2]; 
+  double DeltaSC=Params[3]; 
+
+
+  double Si=pAbasis->GetQNumberFromSt(ist,0);
+
+  double Sj=pAbasis->GetQNumberFromSt(jst,0);
+
+  if (dNEqual(Si,Sj)) return(0.0);
+
+  if (ist==jst){
+    MatEl=sqrt(Lambda)*pAbasis->dEn[ist];
+    // add eN term here
+    int type_i=pAbasis->iType[ist];
+    // Charge in basis |0>, |up dn>, |up>, |dn>
+    double auxN[4]={0.0,2.0,1.0,1.0};
+    MatEl+=eN*auxN[type_i];
+
+  }else{
+    
+    int type_i=pAbasis->iType[ist];
+    int type_j=pAbasis->iType[jst];
+
+    int stcf_i=pAbasis->StCameFrom[ist];
+    int stcf_j=pAbasis->StCameFrom[jst];
+
+    //Adding the SC term.
+    if(stcf_i==stcf_j){
+      MatEl-=DeltaSC*OneChS_fdupfddn_table(type_i,type_j);
+      MatEl-=DeltaSC*OneChS_fdupfddn_table(type_j,type_i); // h.c.
+    }else{
+      // Matrix element from <istcf|| fN ||jstcf>
+      double OldEl=MatArray[0].GetMatEl(stcf_i,stcf_j);
+      int typep=type_i;
+      int type=type_j;
+
+      // if zero, try the h.c term
+//       if (dEqual(OldEl,0.0)){
+// 	OldEl=MatArray[0].GetMatEl(stcf_j,stcf_i);
+// 	typep=type_j;
+// 	type=type_i;
+//       }
+      // ALSO: if both basis are zero, try the h.c.
+      if (   (dEqual(OldEl,0.0))||
+	     (  (dEqual(OneChS_fd_table(1,type_i,type_j),0.0))&&
+		(dEqual(OneChS_fd_table(-1,type_i,type_j),0.0)) )   ){
+	OldEl=MatArray[0].GetMatEl(stcf_j,stcf_i);
+	typep=type_j;
+	type=type_i;
+      }
+      //
+
+      // Get SingleSite QNumbers (watch out! NOT a single state per block!)
+
+      double Stildep=pSingleSite->GetQNumberFromSt(typep,0);
+      double Sztildep=pSingleSite->GetQNumberFromSt(typep,1);
+
+      double Stilde=pSingleSite->GetQNumberFromSt(type,0);
+      double Sztilde=pSingleSite->GetQNumberFromSt(type,1);
+
+      double Scfp=Si-Sztildep;
+      double Scf=Si-Sztilde;
+
+      // Check Fermi Sign
+      double FermiSign=1.0;
+      if ((type==2)||(type==3)) FermiSign=-1.0;
+      // Fermi sign appears IF there is an
+      // odd number of fermionic ops in site state
+
+      double CoefMatEl=0.0;
+      double auxCG[]={0.0,0.0,0.0,0.0};
+      double siteqnumsp[]={Stildep,Sztildep};
+      double siteqnums[]={Stilde,Sztilde};
+      // Sum in Sztilde
+      for (Sztilde=-Stilde;Sztilde<=Stilde;Sztilde+=1.0){
+	// Sum in sigma: Note that Sztildep=Sztilde+sigma
+	siteqnums[1]=Sztilde;
+	// Problem: more that one state per block in 1chS single site
+	int sitestate=type; // Ok if Stilde=0
+	if ((type==2)||(type==3)) // If not...
+	  sitestate=pSingleSite->GetBlockFromQNumbers(siteqnums)+1; 
+
+	for (int sigma=-1;sigma<=1;sigma+=2){
+	  double dSigma=0.5*(double)sigma;
+	  double Szcf=Si-Sztilde;
+	  double Szcfp=Szcf-dSigma;
+	  Sztildep=Sztilde+dSigma;
+
+	  siteqnumsp[1]=Sztildep;
+	  // Test Find site state
+	  int sitestatep=pSingleSite->GetBlockFromQNumbers(siteqnumsp)+1;
+	  if (dEqual(Sztildep,0.0))
+	    sitestatep=typep; // Ok if Sztildep=0
+
+	  //cout << "Sz~ = " << Sztilde 
+	  //   << " dSigma = " << dSigma << endl;
+	
+	  auxCG[0]=CGordan(Scf,Szcf,
+			   Stilde,Sztilde,Si,Si);
+
+	  auxCG[1]=CGordan(Scfp,Szcfp,
+			   Stildep,Sztildep,Si,Si);
+
+	  auxCG[2]=CGordan(Scfp,Szcfp,0.5,dSigma,Scf,Szcf);
+ 
+	  auxCG[3]=OneChS_fd_table(sigma,sitestatep,sitestate);
+	  //cout << "<sitestp|f|sitest> = " << auxCG[3] << endl;
+	  CoefMatEl+=auxCG[0]*auxCG[1]*auxCG[2]*auxCG[3];
+
+	  // Debugging
+// 	  if ((jst==0)&&(ist==1)){
+//        	  cout << " ist = " << ist 
+//        	       << " jst = " << jst
+//        	       << " stcf_i = " << stcf_i
+//        	       << " stcf_j = " << stcf_j
+//        	       << " type_i = " << type_i
+//        	       << " type_j = " << type_j
+// 	       << endl;
+//        	  cout << " typep = " << typep
+//        	       << " type = " << type 
+//        	       << " OldEl = " << OldEl
+//        	       << endl;
+//        	  cout << " sigma, Si = " << sigma << " " << Si
+//        	       << " sitestatep = " << sitestatep
+//        	       << " sitestate = " << sitestate
+// 	       << " fd_table = "
+//        	       << OneChS_fd_table(sigma,sitestatep,sitestate) 
+//        	       << endl;
+// 	  cout << " Scf, Szcf = " << Scf << "  " << Szcf
+// 	       << " Stilde,Sztilde = " << Stilde << "  " << Sztilde
+// 	       << " Scfp, Szcfp = " << Scfp << "  " << Szcfp
+// 	       << " Stildep,Sztildep = " << Stildep << "  " << Sztildep
+// 	       << endl;
+//       	  cout << " CG0 = " << auxCG[0]
+// 	       << " CG1 = " << auxCG[1] 
+// 	       << " CG2 = " << auxCG[2] 
+// 	       << endl;
+// 	  cout << " chi_N = " << chi_N 
+// 	       << " OldEl = " << OldEl 
+// 	       << " CoefMatEl = " << CoefMatEl
+// 	       << " FermiSign = " << FermiSign 
+// 	       << endl;
+// 	  }
+	  //////////////////////
+				
+	}
+	// end loop in sigma
+      }
+      // end loop in Sztilde
+
+      //auxEl*=CoefMatEl;
+      MatEl+=chi_N*OldEl*CoefMatEl*FermiSign;
+    }
+    // end if stcf_i=stcf_j
+  }
+  // end if i=j
+
+  return(MatEl);
+}
+
+////////////////////////
 ////////////////////////

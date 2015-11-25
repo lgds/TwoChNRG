@@ -60,8 +60,15 @@ double OneChQS_fN_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite,
 double OneChQS_cd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
 			int ist, int jst);
 
-// Not included in OpMatRules.cpp
+
+double OneChQS_Sz_MatEl(CNRGbasisarray *pAbasis, 
+                        CNRGbasisarray *pSingleSite, 
+                        int ist, int jst);
+
+
+// Deprecated: Not included in OpMatRules.cpp (it's in OneChQS_OpMatRules.cpp)
 double OneChQS_nd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 		int ist, int jst);
+
 
 
 #endif
@@ -72,6 +79,29 @@ double OneChQS_nd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 		
 bool OneChNupPdn_cdup_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
 
 bool OneChNupPdn_cddn_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
+
+
+#endif
+
+
+
+#ifndef _ONECHSOPMATRULES_ 
+#define _ONECHSOPMATRULES_
+
+bool OneChS_cd_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
+
+// Not included in OpMatRules.cpp
+//bool OneChQS_nd_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
+
+
+double OneChS_fN_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst);
+
+double OneChS_cd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst);
+
+// Not included in OpMatRules.cpp
+//double OneChS_nd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 		int ist, int jst);
 
 
 #endif
@@ -285,4 +315,13 @@ double OneChNupPdn_HN_MatEl(vector<double> Params,
 
 
 
+#endif
+
+#ifndef _ONECHS_HN_MATEL_
+#define _ONECHS_HN_MATEL_ 
+double OneChS_HNsc_MatEl(vector<double> Params,
+		       CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       CNRGmatrix* MatArray,
+		       int ist, int jst);
 #endif

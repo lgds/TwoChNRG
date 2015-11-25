@@ -1093,22 +1093,44 @@ double CSpecFunction::DMNRG_SpecDens_M(double omegabar,int Nshell, bool CalcNorm
 
     // OpB: auxCG1[1]= sum_Szilb1 CGordan(Sibl1, Szibl1, 0.5, sigma, Sibl2, Szibl2=sigma+Szibl1)
     //  They are the same!!
+    // 2015: Need to add the possibility of < ||Sz|| > reduced!
+    // In this case,
+    // auxCG1[0]= sum_Szilb1 CGordan(Sibl1, Szibl1, 1.0, 0.0, Sibl2, Szibl2=Szibl1)
+    // Since it is DIAGONAL in the blocks!
+      // So, I need a variable in the matrix WignerEckartL=1.0 (for instance)
+
     double CGfactor=1.0;
     // Get S from ibl
     double Sbl1=0.0;
     double Sbl2=0.0;
     if (AcutN[Nshell].totalS){
       CGfactor=0.0;
-      Sbl1=AcutN[Nshell].GetQNumber(ibl1,AcutN[Nshell].Sqnumbers[0]); 
-      Sbl2=AcutN[Nshell].GetQNumber(ibl2,AcutN[Nshell].Sqnumbers[0]); 
+      Sbl1=AcutN[Nshell].GetQNumber(ibl1,AcutN[Nshell].Sqnumbers[0]);
+      double L1=Op1N[Nshell].WignerEckartL; // Usually 0.5
+      Sbl2=AcutN[Nshell].GetQNumber(ibl2,AcutN[Nshell].Sqnumbers[0]);
+      double L2=L1;
+      if (NonDiagGF) L2=Op2N[Nshell].WignerEckartL;
       // only a single SU(2) for now
       for (double Szbl1=-Sbl1;Szbl1<=Sbl1;Szbl1+=1.0){
-	double dSigma=0.5; 
-	double Szbl2=Szbl1+dSigma;
-	double auxCG=CGordan(Sbl1,Szbl1, 0.5, dSigma, Sbl2, Szbl2);
-	CGfactor+=auxCG*auxCG;
+// 	double dSigma=0.5; // NOT NECESSARILY!!!!
+// 	double Szbl2=Szbl1+dSigma;
+// 	double auxCG=CGordan(Sbl1,Szbl1, 0.5, dSigma, Sbl2, Szbl2);
+// 	CGfactor+=auxCG*auxCG;
+	double dSigmaOp1=0.5; 
+	if (dEqual(L1,1.0)) dSigmaOp1=0.0; // Sz for instance
+	double dSigmaOp2=0.5; 
+	if (dEqual(L2,1.0)) dSigmaOp2=0.0; // Sz for instance
+	double Szbl2=Szbl1+dSigmaOp1;
+	double auxCG1=CGordan(Sbl1,Szbl1, L1, dSigmaOp1, Sbl2, Szbl2);
+	Szbl2=Szbl1+dSigmaOp2;
+	double auxCG2=CGordan(Sbl1,Szbl1, L2, dSigmaOp2, Sbl2, Szbl2);
+	CGfactor+=auxCG1*auxCG2;
       }
-      if (dEqual(CGfactor,0.0)){cout << "Ops. CGfactor = 0.0 " << endl;}
+      if (dEqual(CGfactor,0.0)){cout << "Ops. CGfactor = 0.0 L1= " 
+				     << L1 << " L2 = " << L2 
+				     << " Sbl1 = " << Sbl1
+				     << " Sbl2 = " << Sbl2
+				     << endl;}
     }
     // end if totalS
 

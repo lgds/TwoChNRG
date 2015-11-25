@@ -75,11 +75,10 @@ void BuildBasis(vector<int> CommonQNs, vector<int> totSpos,
 
   int NoCommon=CommonQNs[0];
 
-  if (NoCommon==0)
-    {
-      cout << "Cant build basis: No common Qnumbers" <<endl;
-      exit(0);
-    }
+  if (NoCommon==0){
+    cout << "Cant build basis: No common Qnumbers" <<endl;
+    exit(0);
+  }
 
 
   if (CommonQNs.size()<2*NoCommon+1) return;
@@ -127,33 +126,29 @@ void BuildBasis(vector<int> CommonQNs, vector<int> totSpos,
   // MatchOld: whether a common QN in AeigOld matches one in SingleSite
   int itotS=0;
   int iParity=0;
-  for (int ii=0;ii<NoCommon;ii++)
-    {
-      PosInOld[ii]=CommonQNs[ii+1];
-      PosInSingleSite[ii]=CommonQNs[ii+1+NoCommon];
+  for (int ii=0;ii<NoCommon;ii++){
+    PosInOld[ii]=CommonQNs[ii+1];
+    PosInSingleSite[ii]=CommonQNs[ii+1+NoCommon];
 
-      // TotalS
-      TotalS[ii]=0;
-      if ( (itotS<totSpos.size())&&(PosInOld[ii]==totSpos[itotS]) )
-	{TotalS[ii]=1;itotS++;}
+    // TotalS
+    TotalS[ii]=0;
+    if ( (itotS<totSpos.size())&&(PosInOld[ii]==totSpos[itotS]) )
+      {TotalS[ii]=1;itotS++;}
 
-      // Parity
-      ParityQN[ii]=0;
-      if ((UseParity)&&(iParity<NoParityQNs))
-	{
-	 if (PosInOld[ii]==CommonQNs[iParity+2*NoCommon+1])
-	   {ParityQN[ii]=1;iParity++;}
-	}
-
-      // Match
-      if ((PosInSingleSite[ii]>=0)&&(PosInSingleSite[ii]<NoQNumsChain) )
-	MatchOld[ii]=1;
-      else
-	MatchOld[ii]=0;      
+    // Parity
+    ParityQN[ii]=0;
+    if ((UseParity)&&(iParity<NoParityQNs)){
+      if (PosInOld[ii]==CommonQNs[iParity+2*NoCommon+1])
+	{ParityQN[ii]=1;iParity++;}
     }
+
+    // Match
+    if ((PosInSingleSite[ii]>=0)&&(PosInSingleSite[ii]<NoQNumsChain) )
+      MatchOld[ii]=1;
+    else
+      MatchOld[ii]=0;      
+  }
   //end set MatchOld 
-
-
 
   cout << " NoCommon = " << NoCommon << endl;
 
@@ -198,8 +193,8 @@ void BuildBasis(vector<int> CommonQNs, vector<int> totSpos,
     pAbasis->totalS=true;
     int pos=0;
     for (iit=totSpos.begin();iit<totSpos.end();iit++){
-      if (*iit!=0)
-	pAbasis->Sqnumbers.push_back(*iit);
+      //if (*iit!=0) // WHY??? THIS CREATES A PROBLEM FOR OneChS!
+      pAbasis->Sqnumbers.push_back(*iit);
       pos++;
     }
   }
@@ -211,64 +206,57 @@ void BuildBasis(vector<int> CommonQNs, vector<int> totSpos,
   // Generate basis
   //
 
-  for (int ibl=0;ibl<pAeigCut->NumBlocks();ibl++)
-    {
-      //
-      // Get old QNumbers
-      //
-      for (int ii=0;ii<NoCommon;ii++)
-	QNold[ii]=pAeigCut->GetQNumber(ibl,PosInOld[ii]);
+  for (int ibl=0;ibl<pAeigCut->NumBlocks();ibl++){
+    //
+    // Get old QNumbers
+    //
+    for (int ii=0;ii<NoCommon;ii++)
+      QNold[ii]=pAeigCut->GetQNumber(ibl,PosInOld[ii]);
 
-      //
-      // Get site qnumbers
-      //
+    //
+    // Get site qnumbers
+    //
 
-      for (int ibls=0; ibls<pSingleSite->NumBlocks(); ibls++)
-	{
+    for (int ibls=0; ibls<pSingleSite->NumBlocks(); ibls++){
 
-	  for (int ii=0;ii<NoCommon;ii++)
-	    {
-	      if (MatchOld[ii]==1)
-		QNsite[ii]=pSingleSite->GetQNumber(ibls,PosInSingleSite[ii]);
-	      else{
-		if (ParityQN[ii]==1) QNsite[ii]=1.0; else QNsite[ii]=0.0; 
-	      }
-	      // Changed to accomodate parity
-// 	      QNnew[ii]=QNsite[ii]+QNold[ii];
-// 	      pAbasis->QNumbers.push_back(QNsite[ii]+QNold[ii]);
-	      if (ParityQN[ii]==1)
-		QNnew[ii]=QNsite[ii]*QNold[ii];
-	      else
-		QNnew[ii]=QNsite[ii]+QNold[ii];
-	      pAbasis->QNumbers.push_back(QNnew[ii]);
-	    }
-	  // end loop in NoCommon
-	  // If there are SU(2) symmetries, add extra blocks
-	  // right now works for only one SU(2) symmetry!
-	  if (totSpos.size()>0)
-	    {
-	      for (int ii=0;ii<NoCommon;ii++)
-		{
-		  if (TotalS[ii]==1)
-		    {
-		      double Snew=QNold[ii]+QNsite[ii]-1.0;
-		      while (Snew>=fabs(QNold[ii]-QNsite[ii]))
-			{
-			  QNnew[ii]=Snew;
-			  for (int ii1=0;ii1<NoCommon;ii1++)		       
-			    pAbasis->QNumbers.push_back(QNnew[ii1]);
-			  Snew-=1.0;
-			}
-		      // end loop in Snew
-		    }
-		  // end if TotalS==1
-		}
-	      // end 1st loop in iiNcommon
-	    }
-	  // end if SU(2) symmtries are present
+      for (int ii=0;ii<NoCommon;ii++){
+	if (MatchOld[ii]==1)
+	  QNsite[ii]=pSingleSite->GetQNumber(ibls,PosInSingleSite[ii]);
+	else{
+	  if (ParityQN[ii]==1) QNsite[ii]=1.0; else QNsite[ii]=0.0; 
 	}
-      // end loop in pSingleSite
+	// Changed to accomodate parity
+	// 	      QNnew[ii]=QNsite[ii]+QNold[ii];
+	// 	      pAbasis->QNumbers.push_back(QNsite[ii]+QNold[ii]);
+	if (ParityQN[ii]==1)
+	  QNnew[ii]=QNsite[ii]*QNold[ii];
+	else
+	  QNnew[ii]=QNsite[ii]+QNold[ii];
+	pAbasis->QNumbers.push_back(QNnew[ii]);
+      }
+      // end loop in NoCommon
+      // If there are SU(2) symmetries, add extra blocks
+      // right now works for only one SU(2) symmetry!
+      if (totSpos.size()>0){
+	for (int ii=0;ii<NoCommon;ii++){
+	  if (TotalS[ii]==1){
+	    double Snew=QNold[ii]+QNsite[ii]-1.0;
+	    while (Snew>=fabs(QNold[ii]-QNsite[ii])){
+	      QNnew[ii]=Snew;
+	      for (int ii1=0;ii1<NoCommon;ii1++)		       
+		pAbasis->QNumbers.push_back(QNnew[ii1]);
+	      Snew-=1.0;
+	    }
+	    // end loop in Snew
+	  }
+	  // end if TotalS==1
+	}
+	// end 1st loop in iiNcommon
+      }
+      // end if SU(2) symmtries are present
     }
+    // end loop in pSingleSite
+  }
   //End loop in AeigCutblocks
 
   //pAbasis->PrintQNumbers();
@@ -283,140 +271,137 @@ void BuildBasis(vector<int> CommonQNs, vector<int> totSpos,
   // Set Type, StCameFrom, dEn, BlockBegEnd
 
   int istnew=0;
-  for (int ibl=0;ibl<pAbasis->NumBlocks();ibl++)
-    {
-      // set Qnew
-      for (int inew=0;inew<pAbasis->NQNumbers;inew++)
-	 QNnew[inew]=pAbasis->GetQNumber(ibl,inew);
+  for (int ibl=0;ibl<pAbasis->NumBlocks();ibl++){
+    // set Qnew
+    for (int inew=0;inew<pAbasis->NQNumbers;inew++)
+      QNnew[inew]=pAbasis->GetQNumber(ibl,inew);
 
-     // Mark block begin
-      pAbasis->BlockBegEnd.push_back(istnew);
+    // Mark block begin
+    pAbasis->BlockBegEnd.push_back(istnew);
 
-      // Loop in old block
-      for (int ibl_old=0;ibl_old<pAeigCut->NumBlocks();ibl_old++)
-	{
-	  //
-	  // Get old QNumbers
-	  //
-	  for (int ii=0;ii<NoCommon;ii++)
-	    QNold[ii]=pAeigCut->GetQNumber(ibl_old,PosInOld[ii]);
-	  //
-	  // Get SingleSite Numbers and check if blocks match
-	  //
-	  for (int ibls=0; ibls<pSingleSite->NumBlocks(); ibls++)
-	    {
-	      int ok_match=1;
-	      for (int icom=0;icom<NoCommon;icom++)
-		{
-		  if (MatchOld[icom]==1)
-		    QNsite[icom]=pSingleSite->GetQNumber(ibls,PosInSingleSite[icom]);
-		  else
-		    QNsite[icom]=0.0;
+    // Loop in old block
+    for (int ibl_old=0;ibl_old<pAeigCut->NumBlocks();ibl_old++){
+      //
+      // Get old QNumbers
+      //
+      for (int ii=0;ii<NoCommon;ii++)
+	QNold[ii]=pAeigCut->GetQNumber(ibl_old,PosInOld[ii]);
+      //
+      // Get SingleSite Numbers and check if blocks match
+      //
+      for (int ibls=0; ibls<pSingleSite->NumBlocks(); ibls++){
+	int ok_match=1;
+	for (int icom=0;icom<NoCommon;icom++)
+	  {
+	    if (MatchOld[icom]==1)
+	      QNsite[icom]=pSingleSite->GetQNumber(ibls,PosInSingleSite[icom]);
+	    else
+	      QNsite[icom]=0.0;
 
-// 		  cout << "icom = " << icom 
-// 		       << " Qold = " << QNold[icom]
-// 		       << " Qsite = " << QNsite[icom]
-// 		       << " Qnew = " << QNnew[icom]
-// 		       << " TotalS = " << TotalS[icom]
-// 		       << " Parity = " <<  ParityQN[icom]
-// 		       << endl;
+	    // 		  cout << "icom = " << icom 
+	    // 		       << " Qold = " << QNold[icom]
+	    // 		       << " Qsite = " << QNsite[icom]
+	    // 		       << " Qnew = " << QNnew[icom]
+	    // 		       << " TotalS = " << TotalS[icom]
+	    // 		       << " Parity = " <<  ParityQN[icom]
+	    // 		       << endl;
 
-		  if (TotalS[icom]==0){
-// 		      if (!dEqual(QNnew[icom],QNsite[icom]+QNold[icom]))
-// 			ok_match=0;
-		    if (ParityQN[icom]==1){
-		      if (!dEqual(QNnew[icom],QNsite[icom]*QNold[icom]))
-			ok_match=0;
-		    }
-		    else{
-		      if (!dEqual(QNnew[icom],QNsite[icom]+QNold[icom]))
-			ok_match=0;
-		    }
-		  }
-		  else{
-		    double Sold=QNold[icom];
-		    double Ssite=pSingleSite->GetQNumber(ibls,PosInSingleSite[icom]);
-		    // Take Sz
-		    double Szsite=pSingleSite->GetQNumber(ibls,PosInSingleSite[icom]+1);
-		    double Snew=QNnew[icom];
-
-		    if ( (!dEqual(Snew,Szsite+Sold))||
-			 (!TriangIneq(Sold,Ssite,Snew)))
-		      ok_match=0;
-// 		    cout << " Sold = " << Sold
-// 			 << " Ssite = " << Ssite
-// 			 << " Szsite = " << Szsite
-// 			 << " Snew = " << Snew
-// 			 << " ok_match = " << ok_match
-// 			 << endl;
-
-		  }
-		  // end if totalS==0
-
-		}
-	      // end loop in QNums
-
-
-
-	      if (ok_match==1){
-//  		  cout << " Got a match! " << endl;
-//  		  cout << " Old QNs : ";
-//  		  for (int iqn = 0; iqn<pAeigCut->NQNumbers; iqn++)
-//  		    cout << pAeigCut->GetQNumber(ibl_old,iqn) << "  ";
-//  		  cout << endl;
-//  		  cout << "  -- QNold: ";
-//  		  for (int ii=0;ii<NoCommon;ii++) cout << QNold[ii] << " ";
-//  		  cout << endl;
-//  		  cout << " Site QNs : ";
-//  		  for (int iqn = 0; iqn<pSingleSite->NQNumbers; iqn++)
-//  		    cout << pSingleSite->GetQNumber(ibls,iqn) << "  ";
-//  		  cout << endl;
-// 		  cout << "  -- QNsite: ";
-// 		  for (int inew=0;inew<NoQNnew;inew++) cout << QNsite[PosInSingleSite[inew]] << " ";
-// 		  cout << endl;
-//  		  cout << " New QNs : ";
-//  		  for (int iqn = 0; iqn<pAbasis->NQNumbers; iqn++)
-//  		    cout << pAbasis->GetQNumber(ibl,iqn) << "  ";
-//  		  cout << endl;
-// 		  cout << "  -- QNnew: ";
-// 		  for (int inew=0;inew<NoQNnew;inew++) cout << QNnew[inew] << " ";
-// 		  cout << endl;
-
-
-
-		for (int istbl=pAeigCut->BlockBegEnd[2*ibl_old];
-		     istbl<=pAeigCut->BlockBegEnd[2*ibl_old+1];istbl++){
-		  for (int ists=pSingleSite->GetBlockLimit(ibls,0);
-		       ists<=pSingleSite->GetBlockLimit(ibls,1);ists++){
-		    pAbasis->iType.push_back(pSingleSite->iType[ists]);
-		    pAbasis->dEn.push_back(pAeigCut->dEn[istbl]);
-		    // Has to be in the uncut basis if BefCut=1!
-		    if (BefCut==1)
-		      pAbasis->StCameFrom.push_back(pAeigCut->StCameFrom[istbl]);
-		    else
-		      pAbasis->StCameFrom.push_back(istbl);
-		    // New: if RedSym, keep old QNumbers
-
-		    if (RedSym){
-		      for (int whichqn=0;
-			   whichqn<pAeigCut->NQNumbers;
-			   whichqn++)
-			pAbasis->StCameFromQNumbers.push_back(pAeigCut->GetQNumberFromSt(istbl,whichqn));
-		    }
-		    istnew++;
-		  }
-		  // end loop in SingleSite block states
-		}
-		// end in loop in old states
+	    if (TotalS[icom]==0){
+	      // 		      if (!dEqual(QNnew[icom],QNsite[icom]+QNold[icom]))
+	      // 			ok_match=0;
+	      if (ParityQN[icom]==1){
+		if (!dEqual(QNnew[icom],QNsite[icom]*QNold[icom]))
+		  ok_match=0;
 	      }
-	      // end if match is good
+	      else{
+		if (!dEqual(QNnew[icom],QNsite[icom]+QNold[icom]))
+		  ok_match=0;
+	      }
 	    }
-	  // end loop in pSingleSite
-	}
-      //Loop in AeigCut blocks
-      pAbasis->BlockBegEnd.push_back(istnew-1);     
+	    else{
+	      double Sold=QNold[icom];
+	      double Ssite=pSingleSite->GetQNumber(ibls,PosInSingleSite[icom]);
+	      // Take Sz
+	      double Szsite=pSingleSite->GetQNumber(ibls,PosInSingleSite[icom]+1);
+	      double Snew=QNnew[icom];
 
+	      if ( (!dEqual(Snew,Szsite+Sold))||
+		   (!TriangIneq(Sold,Ssite,Snew)))
+		ok_match=0;
+	      // 		    cout << " Sold = " << Sold
+	      // 			 << " Ssite = " << Ssite
+	      // 			 << " Szsite = " << Szsite
+	      // 			 << " Snew = " << Snew
+	      // 			 << " ok_match = " << ok_match
+	      // 			 << endl;
+
+	    }
+	    // end if totalS==0
+
+	  }
+	// end loop in QNums
+
+
+
+	if (ok_match==1){
+	  //  		  cout << " Got a match! " << endl;
+	  //  		  cout << " Old QNs : ";
+	  //  		  for (int iqn = 0; iqn<pAeigCut->NQNumbers; iqn++)
+	  //  		    cout << pAeigCut->GetQNumber(ibl_old,iqn) << "  ";
+	  //  		  cout << endl;
+	  //  		  cout << "  -- QNold: ";
+	  //  		  for (int ii=0;ii<NoCommon;ii++) cout << QNold[ii] << " ";
+	  //  		  cout << endl;
+	  //  		  cout << " Site QNs : ";
+	  //  		  for (int iqn = 0; iqn<pSingleSite->NQNumbers; iqn++)
+	  //  		    cout << pSingleSite->GetQNumber(ibls,iqn) << "  ";
+	  //  		  cout << endl;
+	  // 		  cout << "  -- QNsite: ";
+	  // 		  for (int inew=0;inew<NoQNnew;inew++) cout << QNsite[PosInSingleSite[inew]] << " ";
+	  // 		  cout << endl;
+	  //  		  cout << " New QNs : ";
+	  //  		  for (int iqn = 0; iqn<pAbasis->NQNumbers; iqn++)
+	  //  		    cout << pAbasis->GetQNumber(ibl,iqn) << "  ";
+	  //  		  cout << endl;
+	  // 		  cout << "  -- QNnew: ";
+	  // 		  for (int inew=0;inew<NoQNnew;inew++) cout << QNnew[inew] << " ";
+	  // 		  cout << endl;
+
+
+
+	  for (int istbl=pAeigCut->BlockBegEnd[2*ibl_old];
+	       istbl<=pAeigCut->BlockBegEnd[2*ibl_old+1];istbl++){
+	    for (int ists=pSingleSite->GetBlockLimit(ibls,0);
+		 ists<=pSingleSite->GetBlockLimit(ibls,1);ists++){
+	      pAbasis->iType.push_back(pSingleSite->iType[ists]);
+	      pAbasis->dEn.push_back(pAeigCut->dEn[istbl]);
+	      // Has to be in the uncut basis if BefCut=1!
+	      if (BefCut==1)
+		pAbasis->StCameFrom.push_back(pAeigCut->StCameFrom[istbl]);
+	      else
+		pAbasis->StCameFrom.push_back(istbl);
+	      // New: if RedSym, keep old QNumbers
+
+	      if (RedSym){
+		for (int whichqn=0;
+		     whichqn<pAeigCut->NQNumbers;
+		     whichqn++)
+		  pAbasis->StCameFromQNumbers.push_back(pAeigCut->GetQNumberFromSt(istbl,whichqn));
+	      }
+	      istnew++;
+	    }
+	    // end loop in SingleSite block states
+	  }
+	  // end in loop in old states
+	}
+	// end if match is good
+      }
+      // end loop in pSingleSite
     }
+    //Loop in AeigCut blocks
+    pAbasis->BlockBegEnd.push_back(istnew-1);     
+
+  }
   // Loop in new block structure
 
 
