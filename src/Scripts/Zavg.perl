@@ -361,7 +361,13 @@ open(OUTFILE,"> ".$OutFileName);
 ##  for ($ii=0;$ii<=$#BaseXtemps-20;$ii++){
   for ($ii=0;$ii<=$#BaseXtemps-1;$ii++){
     if (abs($BaseXtemps[$ii])>=$LowTempCutOff){
-    printf(OUTFILE "%20.20e %20.20e %20.20e %20.20e\n",$BaseXtemps[$ii],$YAvg[$ii],$YAvg[$ii],$YAvg[$ii]);
+      if ($PrefixFile =~ m/rho/){
+       ## 5 cols and integer in rho
+    printf(OUTFILE "%20.20e %20.20e %20.20e %20.20e %20.20e %i\n",$BaseXtemps[$ii],$YAvg[$ii],$YAvg[$ii],$YAvg[$ii],$YAvg[$ii],0);
+       } else {
+       ## 4 cols in Suscep
+    printf(OUTFILE "%20.20e %20.20e %20.20e %20.20e\n",$BaseXtemps[$ii],$YAvg[$ii],$YAvg[$ii],$YAvg[$ii]); 
+      } ## end if PrefixFile is rho (density)
     }
     ## only save energies above than cut-off
   }

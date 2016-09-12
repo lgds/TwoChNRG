@@ -306,11 +306,12 @@ double HybFunc_Cavity(double omega,
 
   double e2=VecParam[1];
   double GammacR=VecParam[2];
-  double GammadS=VecParam[3];
-  double GammadR=GammadS;
+  double GammadR=VecParam[3];
+//  double GammadS=GammadR; // not anymore
   double small_lambda=VecParam[4];
   double delta=VecParam[5];
   int Nlevels=(int)VecParam[6];
+  double GammadS=VecParam[7];
 
   double small_gamma=1e-10;
  

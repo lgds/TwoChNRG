@@ -48,6 +48,7 @@ void CNRGCodeHandler::InitialSetUp(bool ReadParamsOnly){
   case 0: // 0 - Anderson, 1 - Kondo , 2 - Phonon
     if (SymNo==2){NoInputParamsDouble=4;} // Add Bmag in Q Sz
     if (SymNo==7){NoInputParamsDouble=4;} // Add DeltaSC in S
+    if (SymNo==8){NoInputParamsDouble=5;} // Add DeltaSC and B in Sz
     break;
   case 1:
     if (SymNo==1){NoInputParamsDouble=5;} // Add J1 in TwoCh_Kondo
@@ -219,7 +220,7 @@ void CNRGCodeHandler::SetChain(){
     chain.HybFunction=HybFunc_Cavity;
     chain.HybFuncWithEn=HybFunc_Cavity_timesEn;
     chain.HybFuncParams=&dParams;
-    chain.ReadParams(LancInFileName,7);
+    chain.ReadParams(LancInFileName,8);
     cout << " Testing ..." << endl;
     cout << " Delta(-0.3)= " << chain.GetHyb_w(-0.3) << endl;
     cout << " Delta(-0.2)= " << chain.GetHyb_w(-0.2) << endl;
@@ -515,6 +516,28 @@ void CNRGCodeHandler::SetSingleSite(CNRGbasisarray* pSingleSite){
       pSingleSite->iType.push_back(ii);
     }
     break;
+  case 8:
+    cout << " Got OneChSz " << endl;
+    pSingleSite->NQNumbers=1;
+    pSingleSite->Nshell=0;
+    pSingleSite->totalS=false;
+    // |0>, |up dn>: Sz=0 
+    pSingleSite->QNumbers.push_back(0.0);
+    pSingleSite->BlockBegEnd.push_back(0);
+    pSingleSite->BlockBegEnd.push_back(1);
+    // |up>: S=0.5 Sz=0.5 
+    pSingleSite->QNumbers.push_back(0.5);
+    pSingleSite->BlockBegEnd.push_back(2);
+    pSingleSite->BlockBegEnd.push_back(2);
+    // |dn>: S=0.5 Sz=-0.5 
+    pSingleSite->QNumbers.push_back(-0.5);
+    pSingleSite->BlockBegEnd.push_back(3);
+    pSingleSite->BlockBegEnd.push_back(3);
+    for (int ii=0;ii<4;ii++){
+      // Type labels the state
+      pSingleSite->iType.push_back(ii);
+    }
+    break;
   default:
     cout << Symmetry << " symmetry not implemented. Exiting... " <<endl;
     exit(0);
@@ -681,6 +704,10 @@ void CNRGCodeHandler::SetTotS(){
     totalS=true;
     Sqnumber=0;
     break;
+  case 8: // OneChSz
+    totalS=false;
+    Sqnumber=0;
+    break;
   default:
     totalS=true;
     Sqnumber=1;
@@ -732,16 +759,22 @@ void CNRGCodeHandler::SaveGenPars(){
   OutFile << "# Nsitesmax used " << endl;
   OutFile << "# Num Ops saved " << endl;
   OutFile << "# File extension used " << endl;
-  OutFile << "# Symmetry : " << endl;
+  OutFile << "# Symmetry No " << endl;
+  OutFile << "# Model No  " << endl;
+  OutFile << "# Band No  " << endl;
+  OutFile << "# Oliveira z  " << endl;
+  OutFile << "###################" << endl;
+  OutFile << "# Symmetry Numbers: " << endl;
   OutFile << "#  0 - OneChQS " << endl;
   OutFile << "#  1 - TwoChQS " << endl;
   OutFile << "#  2 - OneChQSz " << endl;
   OutFile << "#  3 - OneChQ " << endl;
   OutFile << "#  4 - TwoChQSP " << endl;
   OutFile << "#  5 - TwoChQSz " << endl;
-  OutFile << "# Model No  " << endl;
-  OutFile << "# Band No  " << endl;
-  OutFile << "# Oliveira z  " << endl;
+  OutFile << "#  6 - OneChNupPdn " << endl;
+  OutFile << "#  7 - OneChS " << endl;
+  OutFile << "#  8 - OneChSz " << endl;
+
 
 //  
 //  

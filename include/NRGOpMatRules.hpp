@@ -107,6 +107,38 @@ double OneChS_cd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite,
 #endif
 
 
+#ifndef _ONECHSZOPMATRULES_ 
+#define _ONECHSZOPMATRULES_
+
+bool OneChSz_cdup_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
+
+bool OneChSz_cddn_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
+
+double OneChSz_fN_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst, int isigma);
+
+double OneChSz_fNup_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst);
+
+double OneChSz_fNdn_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst);
+
+
+double OneChSz_cd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst,int isigma);
+
+double OneChSz_cdup_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst);
+
+double OneChSz_cddn_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite, 
+			int ist, int jst);
+
+
+
+#endif
+
+
+
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
@@ -324,4 +356,14 @@ double OneChS_HNsc_MatEl(vector<double> Params,
 		       CNRGbasisarray* pSingleSite,
 		       CNRGmatrix* MatArray,
 		       int ist, int jst);
+#endif
+
+
+#ifndef _ONECHSZ_HN_MATEL_
+#define _ONECHSZ_HN_MATEL_ 
+double OneChSz_HNsc_MatEl(vector<double> Params,
+			  CNRGbasisarray* pAbasis, 
+			  CNRGbasisarray* pSingleSite,
+			  CNRGmatrix* MatArray,
+			  int ist, int jst);
 #endif

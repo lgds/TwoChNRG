@@ -38,22 +38,31 @@ int CNRGmatrix::FindMatBlock(int iblock1, int iblock2){
 
   vector<int>::iterator it;
 
+  int it_pos=-1;
+
   // STL search algorithm
 
-  it =search(MatBlockMap.begin(),MatBlockMap.end(),imatch,imatch+2 );
+//   it =search(MatBlockMap.begin(),MatBlockMap.end(),imatch,imatch+2 );
+//   it_pos=int(it-MatBlockMap.begin());
 
-  int it_pos=int(it-MatBlockMap.begin());
-  if ( (it!= MatBlockMap.end())&&((it_pos % 2)==0) )
-    {
+  // Dec 2015: Problems here: if MatBlockMap is
+  //MatBlockMap = 0  1  0  2  1  0  1  3  2  0  2  4  3  1  4  2  
+  //Searching "1 0" in MatBlockMap gives it_pos= 1 !!!
+  // HOWEVER, there's another "1 0" appearing later at it_pos=4.
+  // Solution: keep searching until it=MatBlockMap.end().
+ 
+  it=MatBlockMap.begin();
+  while ( (it< MatBlockMap.end())&&((it_pos % 2)!=0) ){
+    it =search(it,MatBlockMap.end(),imatch,imatch+2 );
+    it_pos=int(it-MatBlockMap.begin());
+    it++;
+  }
+
+//   if ( (it!= MatBlockMap.end())&&((it_pos % 2)==0) ){
+  if ( (it< MatBlockMap.end())&&((it_pos % 2)==0) ){
       iMatBlock=it_pos/2;
-//    cout <<  "Found iblock1 = "<< iblock1 << " iblock2 = "<< iblock2 
-//         << "at " << iMatBlock << endl;
-    }
-  else
-    {
-      iMatBlock=-1;
-//       cout <<  "Cannot find iblock1 = "<< iblock1 << " iblock2 = "<< iblock2 << endl;
-    }
+  }
+  else{iMatBlock=-1;}
 
   return(iMatBlock);
 

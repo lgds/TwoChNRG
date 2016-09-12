@@ -698,7 +698,10 @@ boost::numeric::ublas::matrix<double> CSpecFunction::MijxBDeltaEij(boost::numeri
   bool print=false;
 
   double BD=0.0;
-  double TempDN=Temp/CalcDN(pAeig->Nshell);
+  double ThisDN=CalcDN(pAeig->Nshell);
+//   double TempDN=Temp/CalcDN(pAeig->Nshell);
+  double TempDN=Temp/ThisDN;
+  double GapDN=Gap/ThisDN;
 
   for (int ii=0;ii<Nst1;ii++){
     Ei=pAeig->dEn[ist0+ii];
@@ -711,6 +714,8 @@ boost::numeric::ublas::matrix<double> CSpecFunction::MijxBDeltaEij(boost::numeri
       BD=BDelta(omega,(Ej-Ei),dBroad);
       //if (fabs(Ej-Ei)<TempDN){
       //if (fabs(Ej-Ei)<4.0*TempDN){
+      // NEW (Jan 2016): No broadening if it is inside the Gap
+      if (fabs(Ej-Ei)<GapDN) BD=0.0; // Will give zero...
       if (fabs(Ej-Ei)<TwindowFac*TempDN){
  	//BD=BDeltaTemp(omega,(Ej-Ei),0.1*TempDN); //
  	//BD=BDeltaTemp(omega,(Ej-Ei),TempDN); //
@@ -779,7 +784,12 @@ boost::numeric::ublas::matrix<complex<double> > CSpecFunction::cMijxBDeltaEij(bo
   //if ((pAeig->Nshell==0)&&(ibl1==0)&&(ibl2==2)) print=true;
 
   double BD=0.0;
-  double TempDN=Temp/CalcDN(pAeig->Nshell);
+//  double TempDN=Temp/CalcDN(pAeig->Nshell);
+  double ThisDN=CalcDN(pAeig->Nshell);
+  double TempDN=Temp/ThisDN;
+  double GapDN=Gap/ThisDN;
+
+
 
   for (int ii=0;ii<Nst1;ii++){
     Ei=pAeig->dEn[ist0+ii];
@@ -790,6 +800,8 @@ boost::numeric::ublas::matrix<complex<double> > CSpecFunction::cMijxBDeltaEij(bo
       //Maux(ii,jj)=Mat(ii,jj)*BDelta(omega,(Ej-Ei),dBroad); // correct for T=0
       // NEED TO INCLUDE TEMPERATURE HERE!
       BD=BDelta(omega,(Ej-Ei),dBroad);
+      // NEW (Jan 2016): No broadening if it is inside the Gap
+      if (fabs(Ej-Ei)<GapDN) BD=0.0; // Will give zero...
       //if (fabs(Ej-Ei)<TempDN){
       //if (fabs(Ej-Ei)<4.0*TempDN){
       if (print) cout << endl << " omega = " << omega << " BD_T0= " << BD << " Temp= " << Temp << " TempDN = " << TempDN << endl;
@@ -1384,11 +1396,14 @@ double CSpecFunction::CalcSpecDM_NRG(double omega, int UseCFS){
 
     SpecM+=AM_w/DN;
 
-//     cout << " NShell=" << Nshell
-// 	 << " DN = " << DN
-// 	 << " - A_M(w=" << omega <<") = " << AM_w 
-// 	 << " - A_M(w)/DN = " << AM_w/DN 
-// 	 << " - Accumulated: " << SpecM << endl;
+
+    // Debug (March 2016)
+//     if (fabs(fabs(omega)-0.006)<0.001)
+//       cout << " NShell=" << Nshell
+// 	   << " DN = " << DN
+// 	   << " - A_M(w=" << omega <<") = " << AM_w 
+// 	   << " - A_M(w)/DN = " << AM_w/DN 
+// 	   << " - Accumulated: " << SpecM << endl;
 
     AM_w/=DN;
   }
@@ -1491,10 +1506,16 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
       double RedFactor=((double)iomega/(2.0*NwEachN));
       double omega=pow(Lambda,-RedFactor)*WN;
       double rho_w=0.0;
-      if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
-      else {
+      if (omega<Gap){
+	cout << " Even Neg: omega < Gap -> rho_w=0 " << endl;
+	rho_w=0.0;
+      } else {
+	if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
+	else {
 	rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	}
       }
+      // end if omega<Gap
 //       Omega_Rhow_Even[0].push_back(-WN);
       Omega_Rhow_Even[0].push_back(-omega);
       Omega_Rhow_Even[1].push_back(rho_w);
@@ -1504,6 +1525,8 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
     // end loop in iomega
     LastNsh=Nsh;
   }
+
+
   // Even: positive omega
   cout << " CalcSpecDM_NRG_FixedOmegas: Even positive " << endl;
   //for (int Nsh=LastNsh;Nsh>=0;Nsh-=2){
@@ -1525,10 +1548,16 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
       double RedFactor=((double)iomega/(2.0*NwEachN));
       double omega=pow(Lambda,-RedFactor)*WN;
       double rho_w=0.0;
-      if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
-      else {
+      if (omega<Gap){
+	cout << " Even Pos: omega < Gap -> rho_w=0" << endl;
+	rho_w=0.0;
+      }else{
+	if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
+	else {
 	rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	}
       }
+      // end if omega<Gap
       Omega_Rhow_Even[0].push_back(omega);
       Omega_Rhow_Even[1].push_back(rho_w);
       Omega_Rhow[0].push_back(omega);
@@ -1558,10 +1587,16 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
       double RedFactor=((double)iomega/(2.0*NwEachN));
       double omega=pow(Lambda,-RedFactor)*WN;
       double rho_w=0.0;
-      if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
-      else {
-	rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+      if (omega<Gap){
+	cout << " Odd Neg: omega < Gap -> rho_w=0" << endl;
+	rho_w=0.0;
+      }else{
+	if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
+	else {
+	  rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	}
       }
+      // end if omega<Gap
       Omega_Rhow_Odd[0].push_back(-omega);
       Omega_Rhow_Odd[1].push_back(rho_w);
       Omega_Rhow[0].push_back(-omega);
@@ -1589,10 +1624,16 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
       double RedFactor=((double)iomega/(2.0*NwEachN));
       double omega=pow(Lambda,-RedFactor)*WN;
       double rho_w=0.0;
-      if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
-      else {
+      if (omega<Gap){
+	cout << " Odd Pos: omega < Gap -> rho_w=0 " << endl;
+	rho_w=0.0;
+      }else{
+	if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
+	else {
 	rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	}
       }
+      // end if omega<Gap
       Omega_Rhow_Odd[0].push_back(omega);
       Omega_Rhow_Odd[1].push_back(rho_w);
       Omega_Rhow[0].push_back(omega);
@@ -1773,11 +1814,16 @@ void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN, int UseCF
       double RedFactor=(double)iomega/(2.0*NwEachN);
       double omega=pow(Lambda,-RedFactor)*WN;
       double rho_w=0.0;
-      if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
-      else {
-	rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
-      }
 
+      // HERE I need to add a test to see if the energy is below the gap. If it is, we add the peaks!
+      if (omega<Gap){
+	cout << " Neg omega: omega < Gap -> rho_w=0 " << endl;
+	rho_w=0.0;
+      }else{
+	if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
+	else
+	rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+      } // end if omega<Gap
       Omega_Rhow[0].push_back(-omega);
       Omega_Rhow[1].push_back(rho_w);
     }
@@ -1799,10 +1845,15 @@ void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN, int UseCF
       double RedFactor=(double)iomega/(2.0*NwEachN);
       double omega=pow(Lambda,-RedFactor)*WN;
       double rho_w=0.0;
-      if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
-      else {
-	rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
-      }
+
+      if (omega<Gap){
+	cout << " Pos omega: omega < Gap -> rho_w=0 " << endl;
+	rho_w=0.0;
+      }else{
+	if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
+	else 
+	rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;  
+      } // end if omega<Gap
 
       Omega_Rhow[0].push_back(omega);
       Omega_Rhow[1].push_back(rho_w);
@@ -2129,7 +2180,7 @@ void CSpecFunction::SaveOmegaRhow(){
 
 //////////////////
 
-void CSpecFunction::ReadOmegaRhow(){
+void CSpecFunction::ReadOmegaRhow(char arqextension[]){
 
 
 
@@ -2139,7 +2190,9 @@ void CSpecFunction::ReadOmegaRhow(){
 
   char filename[50];
   strcpy(filename,Name);
-  strcat(filename,"_OmegaRhow.dat");
+  //  strcat(filename,"_OmegaRhow.dat");
+  // arqextension is "_OmegaRhow.dat" by default
+  strcat(filename,arqextension);
 
 
   // instream
@@ -2219,4 +2272,213 @@ void CSpecFunction::PrintOmegaEven(){
   return;
 }
 
+//////////////////
+
+
+//////////////////
+void CSpecFunction::GetSubGapData(int Nshell, 
+		     vector< double > &Eb, 
+		     vector< double > &wb,
+		     bool NegOmega){
+
+//   bool printstuff=true;
+  bool printstuff=false;
+
+  double DN=CalcDN(Nshell);
+  double GapDN=Gap/DN;
+
+
+  // Need to Check Sync!!
+  bool ChkSyncOp1Acut=Op1N[Nshell].ChkSync((&AcutN[Nshell]));
+
+  if ( (!ChkSyncOp1Acut) ){
+    cout << "GetSubGapData: Op1N not in sync with AcutN " << endl;
+    return;
+  }
+
+  for (int iMatbl=0;iMatbl<Op1N[Nshell].NumMatBlocks();iMatbl++) {
+    int ibl1=0;
+    int ibl2=0;
+
+    Op1N[Nshell].GetBlocksFromMatBlock(iMatbl,ibl1,ibl2);
+
+    if ( (NonDiagGF)&&(Op2N[Nshell].FindMatBlock(ibl1,ibl2)<0) ){
+      cout << "GetSubGapData: Op2 does not connect blocks " 
+	   << ibl2 << "  " << ibl1 << endl;
+      return;
+    } 
+
+    int Nst_bl1=Op1N[Nshell].GetBlockSize(ibl1);  
+    int Nst_bl2=Op1N[Nshell].GetBlockSize(ibl2); 
+
+    // Check block sizes
+    if ( (NonDiagGF)&&( (Nst_bl1!=Op2N[Nshell].GetBlockSize(ibl1))||
+			(Nst_bl2!=Op2N[Nshell].GetBlockSize(ibl2)) ) ){
+      cout << "GetSubGapData: Block in Op1 not the same size as block in Op2 " << endl;
+      return;
+    }
+
+    int ist0=AcutN[Nshell].GetBlockLimit(ibl1,0);
+    int jst0=AcutN[Nshell].GetBlockLimit(ibl2,0);
+
+    double Ei=0.0;
+    double Ej=0.0;
+
+    double auxM=0.0;
+    complex<double> cauxM=ZeroC;
+
+
+    double ExpEi=1.0;
+    double ExpEj=1.0;
+    double betabar=1.0e10;
+
+    // SU(2) symmetry
+    double CGfactor=1.0;
+    double Sbl1=0.0;
+    double Sbl2=0.0;
+    if (AcutN[Nshell].totalS){
+      CGfactor=0.0;
+      Sbl1=AcutN[Nshell].GetQNumber(ibl1,AcutN[Nshell].Sqnumbers[0]); 
+      Sbl2=AcutN[Nshell].GetQNumber(ibl2,AcutN[Nshell].Sqnumbers[0]); 
+      // only a single SU(2) for now
+      for (double Szbl1=-Sbl1;Szbl1<=Sbl1;Szbl1+=1.0){
+	double dSigma=0.5; 
+	double Szbl2=Szbl1+dSigma;
+	double auxCG=CGordan(Sbl1,Szbl1, 0.5, dSigma, Sbl2, Szbl2);
+	CGfactor+=auxCG*auxCG;
+      }
+      if (dEqual(CGfactor,0.0)){cout << "Ops. CGfactor = 0.0 " << endl;}
+    }
+    // end if totalS
+
+
+    for (int ii=0;ii<Nst_bl1;ii++){
+      Ei=AcutN[Nshell].dEn[ist0+ii];
+      ExpEi=exp(-betabar*Ei);
+      for (int jj=0;jj<Nst_bl2;jj++){
+	Ej=AcutN[Nshell].dEn[jst0+jj];
+	ExpEj=exp(-betabar*Ej);
+
+	if (Op1N[Nshell].IsComplex){
+	  cauxM=Op1N[Nshell].cGetMatEl(ii,jst0+jj);
+	  if (NonDiagGF)
+	    cauxM*=conj(Op2N[Nshell].cGetMatEl(ist0+ii,jst0+jj));
+	  else cauxM*=conj(cauxM);
+	  auxM=cauxM.real(); // Only takes the real part! 
+	  // Watch out for NonDiagGF AND IsComplex
+	} else {
+	  auxM=Op1N[Nshell].GetMatEl(ist0+ii,jst0+jj);
+	  if (NonDiagGF)
+	    auxM*=Op2N[Nshell].GetMatEl(ist0+ii,jst0+jj);
+	  // Is this the right thing to do?
+	  // Yes, because I always have B and not B^dagger
+	  else{auxM*=auxM;}
+	}
+	// end if Op1 is complex
+
+	if ( (ExpEi>0.5)||(ExpEj>0.5) ){
+	  // found a GS
+	  if (fabs(Ej-Ei)<GapDN){
+	    if (ExpEi>0.5){
+	      // Ei is the GS 
+	      // |<GS|Op1|Ej>|^2 delta(w-(Ej-0)) -> Positive omega
+	      // It is ALWAYS <Ei|Op1|Ej>
+	      // since we are looping in the connecting blocks 
+	      // in series of 3 to make a sharp peak
+	      if ( (!NegOmega)&&(dNEqual(auxM,0.0)) ){
+		Eb.push_back((Ej-Ei)*DN);Eb.push_back((Ej-Ei)*DN);Eb.push_back((Ej-Ei)*DN);
+		// Don't forget the 1/DN factor
+		//Msq_0i.push_back(auxM/DN);
+		// SU(2) symmetry
+		wb.push_back(0.0);wb.push_back(CGfactor*auxM);wb.push_back(0.0);
+	      }
+	      // end if positive omega
+	      if (printstuff){
+		if (!NegOmega){
+		  cout << " ibl1 (GS) = " << ibl1
+		       << " ibl2  = " << ibl2
+		       << " ist (GS) = " << ii 
+		       << " jst = " << jj 
+		       << " E_i (GS) = " << Ei
+		       << " E_j = " << Ej
+		       << " (E_j-E_i)*DN = " << (Ej-Ei)*DN
+		       << " Op1_0j = " << auxM << " similar to " << Op1N[Nshell].GetMatEl(ii,jj)
+		       << " Op1_0j(complex) = " << cauxM
+		       << endl;
+		}else{
+		  cout << " ibl1 (GS) = " << ibl1
+		       << " ibl2  = " << ibl2
+		       << " ist (GS) = " << ii 
+		       << " jst = " << jj 
+		       << " E_i (GS) = " << Ei
+		       << " E_j = " << Ej
+		       << " (E_j-E_i)*DN = " << (Ej-Ei)*DN
+		       << " is POSITIVE so does not enter Op1_0j " 
+		       << endl;
+		}
+		// end if NegOmega
+	      }
+	      // end if printstuff
+	    }
+	    // end if ExpEI>0.5  
+	    else {
+	      // Ej is the GS 
+	      // |<Ei|Op1|GS>|^2 delta(w+Ei)) -> Negative omega
+	      // It is ALWAYS <Ei|Op1|Ej>
+	      // since we are looping in the connecting blocks 
+	      // in series of 3 to make a sharp peak
+	      if ( (NegOmega)&&(dNEqual(auxM,0.0)) ){
+		Eb.push_back((Ej-Ei)*DN);Eb.push_back((Ej-Ei)*DN);Eb.push_back((Ej-Ei)*DN);
+		// Don't forget the 1/DN factor
+		//Msq_0i.push_back(auxM/DN);
+		// SU(2) symmetry
+		wb.push_back(0.0);wb.push_back(CGfactor*auxM);wb.push_back(0.0);
+	      }
+	      // end if negative omega
+	      if (printstuff){
+		if (!NegOmega){
+		  cout << " ibl1  = " << ibl1
+		       << " ibl2 (GS) = " << ibl2
+		       << " ist = " << ii 
+		       << " jst (GS) = " << jj 
+		       << " E_i = " << Ei
+		       << " E_j (GS) = " << Ej
+		       << " (E_j-E_i)*DN = " << (Ej-Ei)*DN
+		       << " is NEGATIVE so does not enter here. " 
+		       << endl;
+
+		}else{
+		  cout << " ibl1  = " << ibl1
+		       << " ibl2 (GS) = " << ibl2
+		       << " ist = " << ii 
+		       << " jst (GS) = " << jj 
+		       << " E_i = " << Ei
+		       << " E_j (GS) = " << Ej
+		       << " (E_j-E_i)*DN = " << (Ej-Ei)*DN
+		       << " Op1_i0 = " << auxM << " similar to " << Op1N[Nshell].GetMatEl(ii,jj)
+		       << " Op1_i0(complex) = " << cauxM
+		       << endl;
+		}
+		// end if NegOmega
+	      }
+	      // end if printstuff
+
+	    }
+	    // end if ExpEJ>0.5
+	  }
+	  // end if inside the gap 
+	}
+	// end if found a GS
+      }
+      // end loop in ibl2
+    }
+    // end loop in ibl1
+
+  }
+  // end loop in MatBlocks
+  /// Loop in blocks
+
+
+  return;
+}
 //////////////////

@@ -12,6 +12,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 			    double &broadtemp,
 			    double &bbroad,
 			    int &UseCFS,
+			    bool &UseGap,
 			    int &Nw){
 
   int c;
@@ -28,7 +29,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
   //broadtemp=0.8;
   //NwEachShell=1
 
-  while ((c = getopt (argc, argv, "h M: b: w: B: e: n: C")) != -1)
+  while ((c = getopt (argc, argv, "h M: b: w: B: e: n: C G")) != -1)
     switch (c){
       case 'M':
 	strcpy(cmtemp,optarg);
@@ -54,6 +55,10 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 	strcpy(cmtemp,optarg);
 	Nw = atoi(cmtemp);
 	break;
+      case 'G':
+	UseGap=true;
+	cout << " Gapped host. Adding peaks below the gap " << endl;
+	break;
       case 'C':
 	UseCFS=1;
 	cout << " Using CFS to calculate spectral functions " << endl;
@@ -64,6 +69,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 // 	cout << " Additional option: -C (uses CFS method) " << endl;
 	cout << " Additional options: " << endl;
 	cout << " -C : uses CFS method " << endl;
+	cout << " -G : gapped host (uses gap in input_nrg.dat) " << endl;
 	cout << " -n NomegasEachN : Calculates a denser mesh in omega (default=1) " << endl; 
 	exit(0);
 	return;
@@ -71,6 +77,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 	cout << "Usage: " << argv[0] << " (-M Mtemp -b betabar -w twindow -B broadtemp)" << endl;
 	cout << " Additional options: " << endl;
 	cout << " -C : uses CFS method " << endl;
+	cout << " -G : gapped host (uses gap in input_nrg.dat) " << endl;
 	cout << " -n NomegasEachN : Calculates a denser mesh in omega (default=1) " << endl; 
 	exit(0);
  	return;

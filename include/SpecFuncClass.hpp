@@ -14,7 +14,7 @@ class CSpecFunction{
 public:
 
   // Default constructor (with an initialization list!)
-  CSpecFunction(): Lambda(1.0),NshellMax(1),NshellMin(0),NonDiagGF(false),dBroad(0.3),Temp(0.0),Mtemp(1000),Betabar(0.727),dBroadTemp(0.1),TwindowFac(1.0),IsBosonic(false),z_twist(1.0)
+  CSpecFunction(): Lambda(1.0),NshellMax(1),NshellMin(0),NonDiagGF(false),dBroad(0.3),Temp(0.0),Mtemp(1000),Betabar(0.727),dBroadTemp(0.1),TwindowFac(1.0),IsBosonic(false),z_twist(1.0),Gap(-1.0)
   {
   }
 
@@ -45,6 +45,10 @@ public:
 
   double dBroadTemp;
   double TwindowFac;
+
+  // Adding Gap (no broadening)
+
+  double Gap;
 
   // Arrays of NshellMax objects
   CNRGbasisarray* AcutN;
@@ -170,7 +174,8 @@ public:
 
   void SaveOmegaRhow();
 
-  void ReadOmegaRhow();
+//   void ReadOmegaRhow();
+  void ReadOmegaRhow(char arqextension[]=(char*)"_OmegaRhow.dat");
 
   void PrintOmegaRhow();
 
@@ -182,6 +187,10 @@ public:
 
   void PrintOmegaEven();
 
+  void GetSubGapData(int Nshell, 
+		     vector< double > &Eb, 
+		     vector< double > &wb,
+		     bool NegOmega=false);
 
 };
 // Never forget the ; at the end of a class declaration!

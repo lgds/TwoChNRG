@@ -141,3 +141,15 @@ double Integrand_SideDot(double omega,
 
 
 #endif
+
+#ifndef _TMATRIXCAVITY_
+#define _TMATRIXCAVITY_
+
+gsl_complex TMatrix_Cavity(double omega,
+			   void *params);
+
+double Integrand_Cavity(double omega,
+			 void *params);
+
+
+#endif

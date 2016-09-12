@@ -75,8 +75,11 @@ int main (int argc, char* argv[]){
 
   double bbroad=0.5*log(ThisCode.Lambda);
 
+  // New (2016)
+  bool UseGap=false;
+
   // Command-line: Set Temp
-  DM_NRG_CommandLineRead(argc,argv,Mtemp,betabar,twindow,broadtemp,bbroad,UseCFS,Nw);
+  DM_NRG_CommandLineRead(argc,argv,Mtemp,betabar,twindow,broadtemp,bbroad,UseCFS,UseGap,Nw);
 
   // Set Temp
   cout << " Mtemp = " << Mtemp 
@@ -124,6 +127,7 @@ int main (int argc, char* argv[]){
   if (ThisCode.totalS){cout << " SU(2) symmetry detected. " << endl;}
   cout << "Oliveira z = " << ThisCode.chain.z_twist << endl;
 
+  if (UseGap){ThisCode.ReadParams((char *)"input_nrg.dat",1);} // Need the gap
 
   NshellMax=ThisCode.Nsitesmax-1;
   NFermiOps= ThisCode.NopsSaved;
@@ -374,10 +378,19 @@ int main (int argc, char* argv[]){
    spec1.dBroadTemp=broadtemp;
 
 
+   if (UseGap){
+     spec1.Gap=ThisCode.dInitParams[3];
+     cout << " Using gap = " << spec1.Gap << endl;
+   }
+   // end setting up the gap]
+
+   // Debug (Mar 2016)
+   //DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,1,1,UseCFS,UseGap,Nw);
+
    // Calculate ALL spectral functions!!
    // Jun 2015: Only diagonal functions for now...
    for (int iop=0; iop<NFermiOps; iop++){
-       DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseCFS,Nw);
+     DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseCFS,UseGap,Nw);
 //     if (UseCFS==1){
 //       DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseCFS,Nw);
 //     } else {

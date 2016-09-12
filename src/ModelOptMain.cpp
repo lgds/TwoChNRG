@@ -45,6 +45,7 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z:")) != -1)
     cout << "   -m 2chQS_Kondo (implenting) " << endl;
     cout << "   -m 1chNupPdn_Majorana " << endl;
     cout << "   -m 1chS_AndersonSC " << endl;
+    cout << "   -m 1chSz_AndersonSC " << endl;
     cout << " Models with chains only (no impurity): " << endl;
     cout << "   -m 1chQS_chain  " << endl;
     cout << "   -m 2chQS_chain  " << endl;
@@ -185,6 +186,12 @@ if ( (strcmp(ThisCode.ModelOption,"Anderson") == 0)||
 			    strcpy(ThisCode.Symmetry,"OneChS");
 			    ThisCode.SymNo=7;}
 		      else
+			if ( strcmp(ThisCode.ModelOption,"1chSz_AndersonSC") == 0)
+			  {cout << " Got 1chSz_AndersonSC " << endl;
+			    ThisCode.ModelNo=0;
+			    strcpy(ThisCode.Symmetry,"OneChSz");
+			    ThisCode.SymNo=8;}
+		      else
 
 			{cout << " Invalid model. Exiting... " << endl;
 			  exit(0);}
@@ -233,6 +240,8 @@ cout << " BandType : " << ThisCode.BandType << " - BandNo : " << ThisCode.BandNo
 //  4 - TwoChQSP
 //  5 - TwoChQSz
 //  6 - OneChNupPdn
+//  7 - OneChS
+//  8 - OneChSz
 
 
 // ModelNo:

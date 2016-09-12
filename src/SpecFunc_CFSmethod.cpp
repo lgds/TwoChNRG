@@ -53,7 +53,7 @@ double CSpecFunction::CFS_SpecDens_M(double omegabar,int Nshell, bool CalcNorm){
   bool printstuff=false;
 
   // Debug
-//   if ( (Nshell==48) ) printstuff=true; else printstuff=false;
+ //  if ( (Nshell==7)&&(fabs(fabs(omegabar)-0.0457)<0.001) ) printstuff=true; else printstuff=false;
 
   // Need to Check Sync!!
   bool ChkSyncRhoAcut=RhoN[Nshell].ChkSync((&AcutN[Nshell]));
@@ -518,7 +518,11 @@ boost::numeric::ublas::matrix<double> CSpecFunction::MijxBDeltaEij(boost::numeri
 		  << " dBroad = " << dBroad <<endl;
 
   double BD=0.0;
-  double TempDN=Temp/CalcDN(pAeig->Nshell);
+//   double TempDN=Temp/CalcDN(pAeig->Nshell);
+  double ThisDN=CalcDN(pAeig->Nshell);
+  double TempDN=Temp/ThisDN;
+  double GapDN=Gap/ThisDN;
+
 
   int istkp=0;
   for (int ii=0;ii<Nst1;ii++){
@@ -534,6 +538,12 @@ boost::numeric::ublas::matrix<double> CSpecFunction::MijxBDeltaEij(boost::numeri
 	//BD=BDelta(omega,(Ej-Ei),dBroad);
 	// No double counting. We can do this:
 	BD=BDelta(omega,Ej-Ei,dBroad);
+	// NEW (Jan 2016): No broadening if it is inside the Gap
+	if (fabs(Ej-Ei)<GapDN){
+// 	  cout << " MijxBDeltaEij: Inside the gap. Ei= " 
+// 	       << Ei << " Ej= " << Ej << endl;
+	  //BD=0.0; // Will give zero... Is this correct??
+	}
 	if (fabs(Ej-Ei)<TwindowFac*TempDN){
 	  //BD=BDeltaTemp(omega,Ej-Ei,dBroadTemp*TempDN); //
 	  BD=BDeltaTemp(omega,(Ej-Ei),dBroadTemp); // Anders
@@ -612,7 +622,12 @@ boost::numeric::ublas::matrix<complex<double> > CSpecFunction::cMijxBDeltaEij(bo
 		  << " dBroad = " << dBroad <<endl;
 
   double BD=0.0;
-  double TempDN=Temp/CalcDN(pAeig->Nshell);
+//   double TempDN=Temp/CalcDN(pAeig->Nshell);
+  double ThisDN=CalcDN(pAeig->Nshell);
+  double TempDN=Temp/ThisDN;
+  double GapDN=Gap/ThisDN;
+
+
 
   int istkp=0;
   for (int ii=0;ii<Nst1;ii++){
@@ -628,6 +643,8 @@ boost::numeric::ublas::matrix<complex<double> > CSpecFunction::cMijxBDeltaEij(bo
 	//BD=BDelta(omega,(Ej-Ei),dBroad);
 	// No double counting. We can do this:
 	BD=BDelta(omega,Ej-Ei,dBroad);
+	// NEW (Jan 2016): No broadening if it is inside the Gap
+	if (fabs(Ej-Ei)<GapDN) BD=0.0; // Will give zero...
 	if (fabs(Ej-Ei)<TwindowFac*TempDN){
 	  //BD=BDeltaTemp(omega,Ej-Ei,dBroadTemp*TempDN); //
 	  BD=BDeltaTemp(omega,(Ej-Ei),dBroadTemp); // Anders

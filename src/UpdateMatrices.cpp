@@ -189,22 +189,20 @@ void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut,
 	  time_elapsed=t.elapsed();
 	  if (display) cout << "    ...done. Elapsed time:" << time_elapsed << endl;
 	  // Debug
-	  if ( (display)&&(pAeigCut->Nshell<=1)&&
-	       ( (imats==1)||(imats==2) )
-     //	       ( ((ibl==1)&&(jbl==2))||((ibl==2)&&(jbl==1)) ) 
-	       ) {
-	    cout << "Z(i="<<ibl<<")  : " <<  Zibl << endl;
-	    cout << "Z(j="<<jbl<<")  : " <<  Zjbl << endl;
-	    cout << "fbasis   :" <<  fnbasis << endl;
-	    cout << "Zi.fbasis.ZjT : " <<  fnw << endl;
+// 	  if ( (display)&&(pAeigCut->Nshell<=0)&&
+// 	       ( (imats==0)||(imats==1) )
+// 	       ) {
+// 	    cout << "Z(i="<<ibl<<")  : " <<  Zibl << endl;
+// 	    cout << "Z(j="<<jbl<<")  : " <<  Zjbl << endl;
+// 	    cout << "fbasis   :" <<  fnbasis << endl;
+// 	    cout << "Zi.fbasis.ZjT : " <<  fnw << endl;
 	    ///
 // 	    cout << "cZ(i="<<ibl<<")  : " <<  cZibl << endl;
 // 	    cout << "cZ(j="<<jbl<<")  : " <<  cZjbl << endl;
 // 	    cout << "cfbasis   :" <<  cfnbasis << endl;
 // 	    cout << "cZi.cfbasis.cZjT : " <<  cfnw << endl;
 	    //cout << "faux   :" <<  faux << endl;
-
-	  }
+// 	   }
 	// end debug
 
 	  // Add to NRGMats[imats-1]

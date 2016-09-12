@@ -48,7 +48,7 @@ void CConductance::Initialize(){
 //     cout << endl;
     // I looove classes!
     ThisCode.chain.HybFuncParams=&CondParams;
-    ThisCode.chain.ReadParams((char *)"lanc.in",6);
+    ThisCode.chain.ReadParams((char *)"lanc.in",8);
     // Ok, need to re-arrange the lanc.in parameters
     ReorderParams();
     //(char *) needed to avoid the warning message here
@@ -63,6 +63,8 @@ void CConductance::Initialize(){
   int iop,jop;
   char Ciop[4],Cjop[4];
 
+  char auxname[100];
+
   int ispec=0;
   for (int iop=0;iop<Nops;iop++){
     for (int jop=0;jop<Nops;jop++){
@@ -74,11 +76,21 @@ void CConductance::Initialize(){
       strcat(EachSpec.Name,"_");
       strcat(EachSpec.Name,Cjop);
       EachSpec.ClearOmegaRhow();
-      EachSpec.ReadOmegaRhow();
+//       EachSpec.ReadOmegaRhow();
+      // Now check if zEQAVG.dat file exists
+      strcpy(auxname,EachSpec.Name);
+      strcat(auxname,"_OmegaRhow_zEQAVG.00.dat");
+      std::ifstream zavgfile(auxname);
+      if (zavgfile.good()){
+	cout << " Conductance::Initialize: zAVG file detected! " << endl;
+	strcpy(auxname,"_OmegaRhow_zEQAVG.00.dat");
+      } 
+      else strcpy(auxname,"_OmegaRhow.dat");
+      EachSpec.ReadOmegaRhow(auxname);
       //EachSpec.PrintOmegaRhow();
       // Test if Omega_Rhow is there!
       if (EachSpec.Omega_Rhow[0].size()!=0){
-	cout << " Accepting " << EachSpec.Name << "  Size = " 
+	cout << " Accepting " << EachSpec.Name << auxname << "  Size = " 
 	     << EachSpec.Omega_Rhow[0].size() 
 	     << endl;
 	SpecVec.push_back(EachSpec);
@@ -126,7 +138,7 @@ void CConductance::ReorderParams(){
   double daux=0.0;
 
   if ( (BandNo>=4)&&(BandNo<=9) ){
-  // with lanc.in, wrong order is 
+  // when lanc.in is added, wrong order is 
   // U1 Delta1 e1 whichbandtype e2 Delta2 Delta1 lambda MagField
   // 0.5 0 -0.25 4 -0.05 0.02 0 0.07 0
     if (CondParams.size()>8){
@@ -142,12 +154,25 @@ void CConductance::ReorderParams(){
   // end if 4<=BandNo<=9
   else if (BandNo==12){
     // Power-Law band (=Graphene)
-  // with lanc.in, order is 
+  // when lanc.in is added, wrong order is 
   // U1 Delta1 e1 whichbandtype  r  Gamma0 small_gamma w0
   // 0.5 0   -0.25    1         1.0 0.016      0.0    0.0
     CondParams[1]=CondParams[5]; // Sets Gamma as Gamma0
   }
-  // end if BandNo==1 
+  // end if BandNo==12
+  else if (BandNo==41){
+    // Cavity-dot band
+    // when lanc.in is added, wrong order is 
+// U1 Delta1 e1 whichbandtype  e2  GammacR GammadR small_lambda delta Nlevels GammadS
+    // it should be the same order as dInitParams
+    // whichbandtype  e2  GammacR GammadR small_lambda delta Nlevels GammadS
+    for (int ii=0;ii<=7;ii++) CondParams[ii]=CondParams[ii+3];
+    CondParams.pop_back(); // eliminate 3 first slots
+    CondParams.pop_back(); // eliminate 3 first slots
+    CondParams.pop_back(); // eliminate 3 first slots
+  }
+  // end if BandNo==41
+
 }
 
 
@@ -180,6 +205,9 @@ void CConductance::SetIntegrand(){
       break;
     case(4): // Side dot
       Integrand=Integrand_SideDot;
+      break;
+    case(41): // Multi-level cavity
+      Integrand=Integrand_Cavity;
       break;
     default:
       Integrand=Integrand_Anderson;
@@ -855,8 +883,6 @@ gsl_complex TMatrix_SideDot(double omega,
 
 
 ///////
-
-
 ///////
 
 double Integrand_SideDot(double omega,
@@ -894,4 +920,147 @@ double Integrand_SideDot(double omega,
 }
 
 ////////////////
+////////////////
 
+gsl_complex TMatrix_Cavity(double omega,
+			  void *params){
+  // Get parameters from params. Example
+  //vector<double> VecParam=*(vector<double> *)(params);
+
+  CConductance Gaux=*(CConductance *)params;
+  
+  // lanc.in params order 
+  // Same order as .dInitParams
+  double e2=Gaux.CondParams[1];
+  double GammacR=Gaux.CondParams[2];
+  double GammadR=Gaux.CondParams[3];
+  //  double GammadS=GammadR; // Not anymore
+  double small_lambda=Gaux.CondParams[4];
+  double delta=Gaux.CondParams[5];
+  int Nlevels=(int)Gaux.CondParams[6];
+  double GammadS=Gaux.CondParams[7];
+
+  double small_gamma=1e-10;
+
+
+// Function: gsl_complex gsl_complex_mul_imag (gsl_complex a, double y)
+// This function returns the product of the complex number a and the imaginary number iy, z=a*(iy).
+
+
+  // cavity level e2 in CondParams[1]
+  // Cavity-reservoir: \Gamma_{cR} in CondParams[2]
+  // dot-leads: \Gamma_{dS}=\Gamma{dR} in CondParams[3]
+  // dot-cavity: \small_lambda in CondParams[4]
+  // Level spacing: \delta in CondParams[5]
+  // Nlevels in CondParams[6]
+ 
+
+   cout << " e2= " << e2 
+        << " GammacR= " << GammacR 
+        << " GammadR= " << GammadR 
+        << " GammadS= " << GammadS 
+        << " small_lambda = " << small_lambda 
+        << " delta= " << delta
+        << " Nlevels= " << Nlevels
+	<< endl;
+
+  // Set S(w=0)
+  gsl_complex Sw;
+  gsl_complex caux;
+  double aux=0.0;
+  GSL_SET_COMPLEX(&Sw,0.0,0.0);
+
+  for (int ii=0;ii<Nlevels;ii++){
+    aux=e2+ii*delta;
+    GSL_SET_COMPLEX(&caux,0.0,small_gamma);
+//     caux=gsl_complex_add_real(caux,(omega-aux));
+    caux=gsl_complex_add_real(caux,(0.0-aux));
+    caux=gsl_complex_inverse(caux);
+    Sw=gsl_complex_add(Sw,caux);
+  }
+  // Set Stilde(w=0)
+  //
+  //  S~(w=0)=Sw/(1+i Sw Gamma_cR)
+  //
+  gsl_complex Stilde;
+
+  caux=gsl_complex_mul_real(Sw,GammacR);
+  caux=gsl_complex_mul_imag(caux,1.0);
+  caux=gsl_complex_add_real(caux,1.0);
+  Stilde=gsl_complex_div(Sw,caux);
+
+  // 
+  // Set Omegatilde
+  //
+  // Omega~=small_lambda + i . sqrt(Gamma_{dR}.Gamma_{cR})
+  //
+
+  gsl_complex Omegatilde;
+  GSL_SET_COMPLEX(&Omegatilde,small_lambda,sqrt(GammadR*GammacR));
+
+  // Calculate 
+  // 
+  //  GammaRtilde=GammadR  + sqrt{GammadR*GammacR} [ Stilde*Omegatilde + conj(Stilde*Omegatilde) ]
+  //              + GammacR |Stilde|^2 |Omegatilde|^2
+  //
+  //  GammaRtilde=GammadR  + 2*sqrt{GammadR*GammacR}*Re[Stilde*Omegatilde]
+  //              + GammacR |Stilde|^2 |Omegatilde|^2
+
+  caux=gsl_complex_mul(Stilde,Omegatilde);
+
+//   cout << " Stilde.Omegatilde  = " << GSL_REAL(caux) << " + i" << GSL_IMAG(caux) << endl;
+
+  double GammaRtilde=GammadR+2.0*sqrt(GammadR*GammacR)*GSL_REAL(caux);
+  GammaRtilde+=GammacR*gsl_complex_abs2(Stilde)*gsl_complex_abs2(Omegatilde);
+
+  cout << " GammaRtilde(0.0) = " << GammaRtilde << endl;
+
+  // Tmat=(GammadS*GammaRtilde/(GammadS + GammaRtilde))*Gd(omega)
+
+  caux=Gaux.SpecVec[0].GreensFunction(omega);
+  caux=gsl_complex_mul_real ( caux,(GammadS*GammaRtilde/(GammadS + GammaRtilde)) );
+
+  return(caux);
+
+}
+
+///////
+
+
+
+double Integrand_Cavity(double omega,
+			 void *params){
+  // Get parameters from params. Example
+  //vector<double> VecParam=*(vector<double> *)(params);
+  //double A=*(double *)params;
+
+  // Would THIS work??? Yes!!! Holy cow!
+
+  CConductance Gaux=*(CConductance *)params;
+
+  gsl_complex Tmat;
+
+  Tmat=TMatrix_Cavity(omega,params);
+
+  // testing!
+
+  double aux=-GSL_IMAG(Tmat)/M_PI; // Why is there no pi in the Anderson case???
+  double Temp=Gaux.Temp;
+  double FD=Gaux.FermiFunction(omega,Temp);
+
+  // add -df/dw =(1.0/Temp)*FD*(1.0-FD)
+
+  if (dNEqual(Temp,0.0)){aux*=(1/Temp)*FD*(1.0-FD);} 
+
+
+  // Debugging
+   cout << " rho(w=" << omega << ") = " << Gaux.SpecVec[0].RhoInterpol(omega) 
+        << endl;
+
+
+  return(aux);
+
+}
+
+
+////////////////

@@ -12,7 +12,7 @@ using namespace std;
 
 void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
 			    CNRGmatrix** OpArrayN,
-			    int iop, int jop,int UseCFS, int Nw){
+			    int iop, int jop,int UseCFS, bool UseGap, int Nw){
 
   // Nw : number of omegas in each Shell
 
@@ -20,11 +20,10 @@ void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
 
   //double rho_w=0.0;
    
-   vector < vector<double> > Rhow_Costi;
 
-   //CSpecFunction spec1;
+  //CSpecFunction spec1;
 
-   char Ciop[4],Cjop[4];
+  char Ciop[4],Cjop[4];
 
    if (iop==jop)
      pSpec->NonDiagGF=false;
@@ -74,58 +73,6 @@ void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
    
    double factorWN=pow(pSpec->Lambda,1.25);
 
-   //  Debugging: remove later
-   //int Nsh=pSpec->NshellMax-1;
-//     int Nsh=8;
-//     double DNaux=pSpec->CalcDN(Nsh);
-//    double WNaux=-factorWN*DNaux;
-//    cout << " Temp = " << pSpec->Temp 
-// 	<< " DNaux = " << DNaux 
-// 	<< " WNaux = " << WNaux 
-// 	<< endl;
-//    double betabaraux=DNaux/pSpec->Temp; // =0.727
-//    cout << " Debugging: Spec Rho for N = " << Nsh 
-// 	<< " betabar = " << betabaraux << endl;
-//    double rho_w=pSpec->DMNRG_SpecDens_M(factorWN,Nsh);
-//    cout << " rho_DMNRG(" << WNaux << ")_M=" << Nsh << " = " 
-// 	<< rho_w/DNaux << endl;
-
-   
-//    int Nsh=50;
-//    double DNaux=pSpec->CalcDN(Nsh);
-//    double DNtemp=pSpec->CalcDN(pSpec->Mtemp);
-//    double WNaux=factorWN*DNaux;
-//    double rho_w=pSpec->CFS_SpecDens_M(factorWN,pSpec->Mtemp);
-//    cout << " rho_CFS(" << WNaux << ")_M=" << pSpec->Mtemp << " = " 
-//  	<< rho_w/DNtemp << endl;
-//    rho_w=pSpec->CalcSpecDM_NRG(WNaux,1);
-//    cout << " rho_CFS(" << WNaux << ")_allM = " << rho_w << endl;
-//    exit(0);
-
-//    rho_w=pSpec->CalcSpecDM_NRG(WNaux,1);
-//    cout << " rho_CFS(" << WNaux << ")_allM = " << rho_w << endl;
-
-   // Costi's
-//    rho_w=pSpec->CalcSpecCosti_T_N(Nsh,betabaraux,factorWN);
-//    cout << " rho_Costi_T(" << WNaux << ") = " << rho_w/DNaux << endl;
-   
-
-//    if (UseCFS==1){
-//      // This will need z-averaging
-// //      cout << " Calculating Rho with CFS for Nomegas=" << 3*Nomegas << "... " << endl;
-//      cout << " Calculating Rho"<<Ciop<<"_"<<Cjop<<" with CFS... " << endl;
-//      pSpec->CalcSpec_ManyOmegas(3,factorWN,UseCFS);
-
-//    }
-//    else{
-//      cout << " Calculating Rho"<<Ciop<<"_"<<Cjop<<" with DM-NRG... " << endl;
-//      pSpec->CalcSpecDM_NRG_FixedOmegas(factorWN,UseCFS);
-
-//    }
-
-
-
-
    if (UseCFS) {
      cout << " Calculating Norm of rho_"<<iop<< "_" <<jop << endl;
      cout << " NormCFS= " << pSpec->CalcNorm(UseCFS) << endl;}
@@ -144,13 +91,54 @@ void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
 
    cout << "NormInteg= " << pSpec->CalcNormInteg() << endl;
 
+   if (UseGap){
+     // Sub-gap spectrum. Testing.
+     int LastNsh=pSpec->NshellMax-1;
 
-   // Debug
-   //pSpec->PrintOmegaEven();
+     vector < vector<double> > Rhow_SubGap;
 
-   // Costi (Need to fix the off-diagonal part)
+     Rhow_SubGap.push_back( vector<double> () ); // omegas
+     Rhow_SubGap.push_back( vector<double> () ); // rhows
 
+     // subGap data for negative omega
+     pSpec->GetSubGapData(LastNsh,Rhow_SubGap[0],Rhow_SubGap[1],true);
+     // subGap data for positive omega
+     pSpec->GetSubGapData(LastNsh,Rhow_SubGap[0],Rhow_SubGap[1],false);
 
+     cout << " DM_NRG_CalcSpec: SubGap data: " << endl;
+
+     for (int ii=0; ii<Rhow_SubGap[0].size(); ii++){
+       cout << Rhow_SubGap[0][ii] << "   " << Rhow_SubGap[1][ii] << endl;
+     }
+
+     char Zvalue[10];
+     sprintf(Zvalue,"%4.2f",pSpec->z_twist);
+
+     char filename[50];
+     strcpy(filename,"rho_");
+     strcat(filename,Ciop);
+     strcat(filename,"_");
+     strcat(filename,Cjop);
+     strcat(filename,"_SubGap");
+     if (dNEqual(pSpec->z_twist,1.0)){
+       strcat(filename,"_zEQ");
+       strcat(filename,Zvalue);
+     }
+     strcat(filename,".dat");
+
+     ofstream OutFile(filename, ios::out);
+
+     if (!OutFile){cout << "Cannot save SubGap data data in " << filename << endl; return;}
+
+     OutFile.setf(ios::scientific,ios::floatfield);
+     OutFile.precision(15);
+
+     for (int ii=0; ii<Rhow_SubGap[0].size(); ii++){
+       OutFile << Rhow_SubGap[0][ii] << "   " << Rhow_SubGap[1][ii] << endl;
+     }
+     OutFile.close();
+   }
+   // end if UseGap
 }
 // end subroutine
 

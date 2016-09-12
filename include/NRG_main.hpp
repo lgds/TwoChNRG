@@ -95,6 +95,11 @@ void OneChS_SetAnderson_Hm1(vector<double> Params,
 			    vector<CNRGmatrix> &STLNRGMats);
 
 
+void OneChSz_SetAnderson_Hm1(vector<double> Params,
+			     CNRGarray* pAeig, 
+			     vector<CNRGmatrix> &STLNRGMats);
+
+
 
 #endif
 

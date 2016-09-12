@@ -24,7 +24,7 @@ sub Print_Help(){
   print "  --usefile=Filename (--propconst=A) : gets parameters from external file (ex DFT) and multiplies by A\n";
   print "  --indir : Runs from within directory \n"; 
   print "  --options : List all choiceparam options for all possible input files \n";
-#  print "  --rename  : Rename STM.dat file \n"; 
+  print "  --noALambda=Lambda  : Reescale parameter by the 1/ALambda factor used in the NRG code \n"; 
 #  print "  --renamerho : All it does is to rename Rho_wNeven.dat and RhowBulla.dat files \n"; 
 
   exit(0);
@@ -47,7 +47,7 @@ sub ListOptions(){
   print "  Filename=Input_Phonon.dat (older TwoChQS code). In this case, choiceparam is: \n";
   print "       0 - Nph , 1- w0 ; 2 - lambda ; 3 - tp; 4 - alpha \n";
   print "  Filename=lanc.in :  use choiceparam as: \n";
-  print "       0 - whichbandtype , 1 - e2, 2 - Gamma2, 3 - Gamma1, 4 - lambda, 5 - MagFlux \n";
+  print "       0 - whichbandtype , 1 - e2, 2 - Gamma2/GammacR, 3 - Gamma1/GammadR, 4 - lambda/Omega, 5 - MagFlux/delta 6 - Nlevels (Cavity only) 7 - GammadL (Cavity only)\n";
   print "       (Pseudogap) G(w)=G0*|w-w0|^r + gamma : 1 - r , 2 - G0, 3 - gamma , 4 - w0 \n";
   print "       whichbandtype: 1 -> Pseudogap 4 -> SideDot, 5 -> Parallel Dot (see lanc.in for a description) \n";
 
@@ -74,6 +74,7 @@ if (@ARGV > 0){
            'p0=f'=>\$param0,
            'pF=f'=>\$paramF,
            'pstep=f' => \$paramstep,
+           'noALambda=f'=>\$noALambda,
            'askparam' => \$AskParam,
            'j|justcheck' => \$JustCheck,
            'usefile=s'=>\$UseFilename,
@@ -151,9 +152,19 @@ for ($nodenum=$nodenum0; $nodenum<= $nodenumF; $nodenum+=$nodeStep){
    }
    print "Dir $nodenum : Changing line $choiceparam in file $InputFileName from : @AllFile[$choiceparam] ";
 
-   if(!defined($JustCheck)){@AllFile[$choiceparam]="$param1\n";}
+   if(!defined($JustCheck)){
+     @AllFile[$choiceparam]="$param1\n";
+     if(defined($noALambda)){
+       my $ALambda=0.5*log($noALambda)*($noALambda+1.0)/($noALambda-1.0);
+       @AllFile[$choiceparam]=($param1/$ALambda)."\n";
+       print "param/ALambda= ".$param1/$ALambda." \n";
+     }
+     ## end if defined noALambda
+   }
+   ## end if not JustCheck
    my $WouldBeParam=$param1;
-    
+   if(defined($noALambda)){$WouldBeParam/=0.5*log($noALambda)*($noALambda+1.0)/($noALambda-1.0) }
+
    my $rhoJ=0;
    if(defined($UseFilename)){
     my $nDFT=GetYgivenX($UseFilename,$param1);

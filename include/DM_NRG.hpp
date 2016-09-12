@@ -9,6 +9,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 			    double &broadtemp,
 			    double &bbroad,
 			    int &UseCFS,
+			    bool &UseGap,
 			    int &Nw);
 
 #endif
@@ -85,7 +86,8 @@ void DM_NRG_CalcSpecFuncs(CNRGCodeHandler* pThisCode,
 
 void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
 			    CNRGmatrix** OpArrayN,
-			    int iop, int jop, int UseCFS=0, int Nw=1);
+			    int iop, int jop, int UseCFS=0, bool UseGap=false, 
+			    int Nw=1);
 
 
 #endif

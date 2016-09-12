@@ -214,7 +214,7 @@ int main (int argc, char* argv[]){
 
    double DeltaSC=0.0;
    // Set 2015: added SC leads
-   if (ThisCode.SymNo==7){
+   if ( (ThisCode.SymNo==7)||(ThisCode.SymNo==8) ){
      if (ThisCode.ModelNo==0){
        DeltaSC=ThisCode.dInitParams[3];
        cout << " DeltaSC = " << DeltaSC << endl;
@@ -281,8 +281,8 @@ int main (int argc, char* argv[]){
      cout << "DN = " << ThisCode.DN << " TM = " << TM << endl;
      // Debugging...
      //bool disp=(ThisCode.Nsites==3?true:false);
-     bool disp=true;
-     //bool disp=false;
+     //bool disp=true;
+     bool disp=false;
 
      // Build Basis
 
@@ -338,7 +338,6 @@ int main (int argc, char* argv[]){
      // end if UpdateBefCut
 
 
-
      // Update matrices (in either case)
 
      if (ThisCode.Nsites<ThisCode.Nsitesmax){
@@ -356,6 +355,7 @@ int main (int argc, char* argv[]){
      // end update matrices
 
      // Save stuff to files
+
 
      if (ThisCode.SaveData){ThisCode.SaveArrays();}
 
