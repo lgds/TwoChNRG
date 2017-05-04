@@ -6,7 +6,8 @@
 sub print_help(){
 
   print "Usage: ";
-  print "$0 -f file --N0=N0 --Nf=Nf (--plot --Nlevels=Nlevels) \n";
+  print "$0 -f file --N0=N0 --Nf=Nf (--plot --Nlevels=Nlevels --spec) \n";
+  print "  --spec : Generates an additional file with the output of GetEnLevels.sh for each N \n";
   exit(0);
 
 }
@@ -24,9 +25,10 @@ GetOptions('f|file=s'=>\$FileName,
 	   'Nf=i' =>\$Nf,
            'plot' =>\$plot,
            'Nlevels=i'=>\$NlevelsMax,
+           'spec'=>\$GenSpec,
 	   'h|help' =>\$help);
 
-if ((!$N0)||(!$Nf)){print_help();}
+if (!defined($N0)||!defined($Nf)){print_help();}
 if (!$FileName){$FileName="output.txt";}
 if (!$NlevelsMax){$NlevelsMax=50;}
 
@@ -50,7 +52,8 @@ for ($Ns=$N0;$Ns<=$Nf;$Ns+=2){
   my @EnLevels=();
   my $nlevels=0;
   push(@EnLevels,$Ns); ## set Ns
-  $GetEnCommand="GetEnLevels -f $FileName -N $Ns | awk \'{print \$1}\'";
+##  $GetEnCommand="GetEnLevels -f $FileName -N $Ns | awk \'{print \$1}\'";
+  $GetEnCommand="GetEnLevels.sh -f $FileName -N $Ns | awk \'{print \$1}\'";
 ##  print "Command = $GetEnCommand \n";
   open (GREPDATA,"$GetEnCommand |");
   while (<GREPDATA>){
@@ -63,6 +66,8 @@ for ($Ns=$N0;$Ns<=$Nf;$Ns+=2){
   push(@En_N,\@EnLevels);
   print "Obtaining levels: N = $Ns ; ";
   print "Nlevels = ".$nlevels." \n";
+
+
   $NumNs++;
 }
 ##end Loop in Ns
@@ -100,5 +105,23 @@ $GnuPlotCommand.="plot \"En_vs_N.dat\" with lp \n";
 print GPLOT $GnuPlotCommand;
 close(GPLOT);
 print "... done.\n";
+} # end if plot
 
-}
+if (defined($GenSpec)){
+  print "Creating EnLevels.dat ... \n"; 
+  open (OUTPUTFILE,"> EnLevels.dat");
+  for ($Ns=$N0;$Ns<=$Nf;$Ns+=2){
+    $RawGetEnCommand="GetEnLevels.sh -f $FileName -N $Ns ";
+    open (GREPDATA,"$RawGetEnCommand |");
+     while (<GREPDATA>){
+     $TheLine=$_;
+     chomp($TheLine);
+     print OUTPUTFILE "$TheLine \n";
+     }
+    close(GREPDATA);
+  } # end for
+  close(OUTPUTFILE);
+  print "... done creating EnLevels.dat  \n"; 
+} # end if spec
+
+

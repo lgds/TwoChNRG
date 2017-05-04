@@ -74,6 +74,7 @@ for dir in `seq $dir0 $dirF`; do
     rm  ./run$dir/Abasis*bin
     rm  ./run$dir/rhoDM*bin
     rm  ./run$dir/rho_*OmegaRhow*dat
+    rm  ./run$dir/rho_*SubGap*dat
     rm  ./run$dir/Mat*bin
     rm  ./run$dir/job*
     rm  ./run$dir/SLURM*

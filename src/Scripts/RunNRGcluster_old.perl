@@ -26,7 +26,7 @@ use Getopt::Long;
 
 my $Nw=1;
 
-my $DMNRGExecName="DM_NRG ";
+my $DMNRGExecName="./DM_NRG ";
 GetOptions("queue=s"=>\$QueueName,
            "i|dir0=i" =>\$Dir0,
            "f|dirF=i" =>\$DirF,
@@ -61,7 +61,6 @@ if (defined($CFS)){
       elsif (/glyph/){print "Glyph cluster. \n";}
       elsif (/wilson/){print "Wilson cluster. \n";}
       elsif (/aguia000/){print "Aguia cluster (PBS). \n";}
-      elsif (/WilsonLaptop1/){print "Laptop (testing). \n";}
       else{print "Cant recognize cluster. Exiting... \n"; exit(0);}
     }
                                                                               
@@ -202,6 +201,39 @@ if (!defined($Command)){
 ##
   if ($ChoiceCode==4){ 
     $ChoiceBand=0;
+    $Mtemp=1000;
+    $betabar=0.727;
+    $FiniteT=0;
+    $NewBBar=0;
+    $LoopMtemp=0;
+    print "Mtemp = 1000 (T=0) and betabar=0.727. Change? (y/n) ";
+    chomp($ChoiceYN = <STDIN>);
+    if ($ChoiceYN eq "y"){
+      print "Mtemp = "; chomp($Input = <STDIN> );
+      if ( ($Input ne '') && ($Input>0) && ($Input<1000) ){
+        $Mtemp=$Input;
+        $FiniteT=1;
+        print "Mtemp = $Mtemp \n";
+##        print "Loop Mtemp in each dir? (Mtemp0=$Mtemp ) (y/n) ";
+        print "Loop Mtemp (in same dir)? (Mtemp0=$Mtemp ) (y/n) ";
+        chomp($ChoiceLoopMtemp = <STDIN> );
+        if ($ChoiceLoopMtemp eq "y"){
+          $LoopMtemp=1;
+          $Mtemp0=$Mtemp;
+          print "MtempFinal = "; chomp($MtempFinal = <STDIN> );
+          print "MtempStep = "; chomp($MtempStep = <STDIN> );
+        } ## end if LoopMtemp
+      } else {print "Not valid. Keeping Mtemp = $Mtemp;"}
+      print "(default value: 0.727) betabar = "; chomp($Input = <STDIN> );
+      if ( ($Input ne '') && ($Input>0) && ($Input<1.0) ){
+        $betabar=$Input;
+        $NewBBar=1;
+        print "betabar = $betabar \n";
+      } else {print "Not valid. Keeping betabar = $betabar\n";}
+    }## end if choice=y
+##    $UseCFS=0;
+##    print "Use Complete Fock Space? (y/n) "; chomp($ChoiceYN = <STDIN>);
+##    if ($ChoiceYN eq "y"){$UseCFS=1;}
   } ## end if ChoiceCode=DM_NRG
   elsif ($ChoiceCode==5){
     $ChoiceBand=0;
@@ -247,43 +279,6 @@ if (!defined($Command)){
    }
   }
 # end for ChoiceBand
-
-##
-## Temperature
-##
-  $Mtemp=1000;
-  $betabar=0.727;
-  $FiniteT=0;
-  $NewBBar=0;
-  $LoopMtemp=0;
-  print "Mtemp = 1000 (T=0) and betabar=0.727. Change? (y/n) ";
-  chomp($ChoiceYN = <STDIN>);
-  if ($ChoiceYN eq "y"){
-    print "Mtemp = "; chomp($Input = <STDIN> );
-    if ( ($Input ne '') && ($Input>0) && ($Input<1000) ){
-      $Mtemp=$Input;
-      $FiniteT=1;
-      print "Mtemp = $Mtemp \n";
-##      print "Loop Mtemp in each dir? (Mtemp0=$Mtemp ) (y/n) ";
-      print "Loop Mtemp (in same dir)? (Mtemp0=$Mtemp ) (y/n) ";
-      chomp($ChoiceLoopMtemp = <STDIN> );
-      if ($ChoiceLoopMtemp eq "y"){
-        $LoopMtemp=1;
-        $Mtemp0=$Mtemp;
-        print "MtempFinal = "; chomp($MtempFinal = <STDIN> );
-        print "MtempStep = "; chomp($MtempStep = <STDIN> );
-      } else {
-        $Mtemp0=$Mtemp;$MtempFinal=$Mtemp;$MtempStep=2;
-      }## end if LoopMtemp
-    } else {print "Not valid. Keeping Mtemp = $Mtemp;"}
-    print "(default value: 0.727) betabar = "; chomp($Input = <STDIN> );
-    if ( ($Input ne '') && ($Input>0) && ($Input<1.0) ){
-      $betabar=$Input;
-      $NewBBar=1;
-      print "betabar = $betabar \n";
-    } else {print "Not valid. Keeping betabar = $betabar\n";}
-  }## end if choice=y
-
 ##
 ##  Ztrick: command line 
 ##
@@ -316,47 +311,45 @@ else{
 ## Executing
 ##
 
-## Setting Dir-independent variables
-   if(defined($Command)){$ExecName=$Command;}
-   else{
-     $ExecName=$CodeName;
-     if ($NewBBar==1){$DMNRGExecName.=" -b ".$betabar;}
-     if ($FiniteT==1){
-       $DMNRGExecNameTeq0=$DMNRGExecName;
-       $DMNRGExecName.=" -M ".$Mtemp;
-     }
-     if ($ChoiceCode==4) {
-       $ExecName=$DMNRGExecName;
-     } elsif ($ChoiceCode!=5) {
-       if ($ModelName ne "") {
-	 $ExecName.=" -m ".$ModelName;
-       }
-       if ($ChoiceBand != 0) {
-	 $ExecName.=" -b ".$BandName;
-       }
-     }# end if ChoiceCode=4
-   }# end if defined($Command)
- 
 for ($Dir=$Dir0;
     $Dir<=$DirF;
     $Dir+=1){
 
    $TwoChDir=$ENV{'TWOCHDIR'};
+   $LocalDir=$TwoChDir."/Runs/run$Dir";
    print "Root Dir: $TwoChDir\n"; 
+##   system("cd $TwoChDir/Runs/run$Dir/;ls");
+##   chomp($LocalDir=`/bin/pwd`);
+   print "Running from : $LocalDir \n";
    $User=$ENV{'USER'};
    $Extension="NRG_Code_".$CodeName;
    if ($UseCFS==1){$Extension.="_CFS";}
    if ($ModelName ne ""){$Extension.="_Model_".$ModelName;}
    if ($ChoiceBand != 0){$Extension.="_Band_".$BandName;}
-
-
-
-
-   $LocalDir=$TwoChDir."/Runs/run$Dir";
-   print "Running from : $LocalDir \n";
    $Extension.="_Dir".$Dir;
    if(defined($AddToName)){$Extension.=$AddToName;}
-
+   if(defined($Command)){$ExecName=$Command;}
+   else{
+     $ExecName=$CodeName;
+     if ($ChoiceCode==4){
+##       if ($NewBBar==1){$ExecName.=" -b ".$betabar;}
+       if ($NewBBar==1){$DMNRGExecName.=" -b ".$betabar;}
+##       if ($UseCFS==1){$ExecName.=" -C ";}
+##       if (defined($SubGap)){$ExecName.=" -G ";}
+       if ($FiniteT==1){
+         $DMNRGExecNameTeq0=$DMNRGExecName;
+         $DMNRGExecName.=" -M ".$Mtemp;
+##         if ($LoopMtemp==1){
+##           print "Running Mtemp = $Mtemp \n";
+##           $Mtemp+=$MtempStep;
+##         }
+       }
+       $ExecName=$DMNRGExecName;
+     } elsif ($ChoiceCode!=5) {
+       if ($ModelName ne ""){$ExecName.=" -m ".$ModelName;}
+       if ($ChoiceBand != 0){$ExecName.=" -b ".$BandName;}
+     } # end if ChoiceCode=4
+   }
 ###
 ### Preparing submission
 ###
@@ -389,7 +382,7 @@ for ($Dir=$Dir0;
       $SubCommand.="-q $QueueName " if defined $QueueName;
       $SubCommand.=" < $LocalDir/$ScriptFileName \n";
      }
-   elsif ( ($HostName =~ m/glyph/)||($HostName =~ m/wilson/)||($HostName =~ m/aguia000/)||($HostName =~ m/WilsonLaptop1/) )
+   elsif ( ($HostName =~ m/glyph/)||($HostName =~ m/wilson/)||($HostName =~ m/aguia000/) )
      {
       $ScriptFileName="PBS_".$ScriptFileName;
       $String.="\#PBS -N job".$Extension."\n\#\n";
@@ -424,61 +417,29 @@ for ($Dir=$Dir0;
        }
 ## end special
        if ($UseAllCodes==1){
-	 if ($FiniteT!=1) { ## T=0: onde file for each Z.
-	   if ($UseCFS==1) {
-	     $String.="nice ./".$DMNRGExecName."  > output_DMNRG_CFS_zEQ${zz}_Dir${Dir}.txt \n";
-	   } else {
-	     $String.="nice ./".$DMNRGExecName." -n ${Nw} > output_DMNRG_zEQ${zz}_Dir${Dir}.txt \n";
-	   }			## end if UseCFS==1
-        ## Finite-T: loop over Mtemp for each Z.
-        } else { ## else $FiniteT==1
-           for ($Mtemp=$Mtemp0;$Mtemp<=$MtempFinal;$Mtemp+=$MtempStep){
-             ##$DMNRGExecName=$DMNRGExecNameTeq0." -M ".$Mtemp;  ## Need to add -n Nw !!!
-             $DMNRGExecName=$DMNRGExecNameTeq0." -M ".$Mtemp." -n ".$Nw;  ## Need to add a CFS flag for finite-T here!
-             $ExtensionMtemp=$Extension."_MtempEQ".$Mtemp."_zEQ".$zz;
-             $String.="nice ./$DMNRGExecName > output_$ExtensionMtemp.txt \n";
-## No conductance in this mode. I would need to add another Mtemp loop;
-##             $String.="nice ./Conductance > output_Conductance";
-##             $String.="nice ./Conductance -R -G > output_Resistivity";
-##             if ($UseCFS==1){$String.="_CFS";}
-##             $String.="_Mtemp".$Mtemp."_zEQ".$zz."_Dir".$Dir.".txt \n";
-             $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
-             $String.="rm -f rhoDM\*.bin \n";
-           }
-           # end loop in Mtemp
-           $Mtemp=$Mtemp0;
-        } ## end if FInite_T==1
-
-	## Clean up NRG bin files
-        $String.="rm -f \*.bin \n";
+##         if ($UseCFS==1){$String.="nice ./DM_NRG -C -n ${Nw} > output_DMNRG_CFS_zEQ${zz}_Dir${Dir}.txt \n";}
+         if ($UseCFS==1){$String.="nice ".$DMNRGExecName."  > output_DMNRG_CFS_zEQ${zz}_Dir${Dir}.txt \n";}
+##         else {$String.="nice ./DM_NRG -n ${Nw} > output_DMNRG_zEQ${zz}_Dir${Dir}.txt \n";}
+         else {$String.="nice ".$DMNRGExecName." -n ${Nw} > output_DMNRG_zEQ${zz}_Dir${Dir}.txt \n";}
+         $String.="rm -f \*.bin \n"; 
        }
        # end if UseAllCodes=1 (using Z-trick with DM-NRG)
      }
      # end loop in Z
-
-     if ( ($UseAllCodes==1)&&($ChoiceCode != 5) ){
-       if ($FiniteT != 1) {
-	 $String.="ls rho_\*_OmegaRhow.dat \| sed \"s\/rho_\\(\.\*\\)_OmegaRhow\.dat\/cp \-p \& rho_\\1_OmegaRhow_zEQ1\.00\.dat/\" \| sh \n";
-	 ## Add a script here to average rho files
-	 $String.="./Zavg.perl --type=\"rho_0_0_OmegaRhow\" --noask \n";
-       } else {
-	 for ($Mtemp=$Mtemp0;$Mtemp<=$MtempFinal;$Mtemp+=$MtempStep){
-	   $String.="ls rhoMtemp".$Mtemp."_\*_OmegaRhow.dat \| sed \"s\/rhoMtemp".$Mtemp."_\\(\.\*\\)_OmegaRhow\.dat\/cp \-p \& rhoMtemp".$Mtemp."_\\1_OmegaRhow_zEQ1\.00\.dat/\" \| sh \n";
-	 ## Add a script here to average rho files and copy to usual rhoAVG
-	   $String.="./Zavg.perl --type=\"rhoMtemp".$Mtemp."_0_0_OmegaRhow\" --noask \n";
-	   $String.="cp -p rhoMtemp".$Mtemp."_0_0_OmegaRhow_zEQAVG.00.dat rho_0_0_OmegaRhow_zEQAVG.00.dat \n";
-         } ## end loop in Mtemp
-       } ##end if Finite-T==1
-## No conductance in this mode. I would need to add another Mtemp loop;
-##       $String.="nice ./Conductance > output_Conductance_dir$Dir.txt \n";
-     } ## end if UseAllCodes after Ztrick loop
-
+     if ( ($UseAllCodes==1)&&($ChoiceCode != 5) ){ 
+       $String.="ls rho_\*_OmegaRhow.dat \| sed \"s\/rho_\\(\.\*\\)_OmegaRhow\.dat\/cp \-p \& rho_\\1_OmegaRhow_zEQ1\.00\.dat/\" \| sh \n";
+      ## Add a script here to average rho files
+       $String.="./Zavg.perl --type=\"rho_0_0_OmegaRhow\" --noask \n";
+       $String.="nice ./Conductance > output_Conductance_dir$Dir.txt \n";
+     } 
+     ## end if UseAllCodes after Ztrick loop
      if (defined($Special)){
        $String.="./Zavg.perl --noask \n";
        $String.="ln -s SuscepImp1ChQS_Anderson_zEQAVG.dat SuscepImp_25_727.dat\n";
      }
      ## end if Special after Ztrick loop
-   } else{ ## end if Z-trick
+   }
+   else{ 
 ######
 ## no Z-trick
 ######
@@ -522,8 +483,8 @@ for ($Dir=$Dir0;
          #end if LoopMtemp==1
         } else {
           if($ChoiceCode != 4){ 
-           if ($UseCFS==1){$String.="nice ./".$DMNRGExecName." > output_DMNRG_CFS_Dir$Dir.txt \n";}
-           else {$String.="nice ./".$DMNRGExecName." -n ${Nw} > output_DMNRG_Dir$Dir.txt \n";}
+           if ($UseCFS==1){$String.="nice ".$DMNRGExecName." > output_DMNRG_CFS_Dir$Dir.txt \n";}
+           else {$String.="nice ".$DMNRGExecName." -n ${Nw} > output_DMNRG_Dir$Dir.txt \n";}
           } 
           if($ChoiceCode != 5){ $String.="nice ./Conductance > output_Conductance_dir$Dir.txt \n";}
         }

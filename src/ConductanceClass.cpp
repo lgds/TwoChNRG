@@ -992,11 +992,13 @@ gsl_complex TMatrix_Cavity(double omega,
   // 
   // Set Omegatilde
   //
-  // Omega~=small_lambda + i . sqrt(Gamma_{dR}.Gamma_{cR})
+  // Omega~=small_lambda - i . sqrt(Gamma_{dR}.Gamma_{cR})
   //
+  // CORRECTED THE SIGN: It should be a MINUS sign (Set/2016)
 
   gsl_complex Omegatilde;
-  GSL_SET_COMPLEX(&Omegatilde,small_lambda,sqrt(GammadR*GammacR));
+//    GSL_SET_COMPLEX(&Omegatilde,small_lambda,sqrt(GammadR*GammacR));
+  GSL_SET_COMPLEX(&Omegatilde,small_lambda,-sqrt(GammadR*GammacR));
 
   // Calculate 
   // 
@@ -1015,10 +1017,12 @@ gsl_complex TMatrix_Cavity(double omega,
 
   cout << " GammaRtilde(0.0) = " << GammaRtilde << endl;
 
-  // Tmat=(GammadS*GammaRtilde/(GammadS + GammaRtilde))*Gd(omega)
+  // Tmat=(4*pi*GammadS*GammaRtilde/(GammadS + GammaRtilde))*Gd(omega)
 
   caux=Gaux.SpecVec[0].GreensFunction(omega);
-  caux=gsl_complex_mul_real ( caux,(GammadS*GammaRtilde/(GammadS + GammaRtilde)) );
+//   caux=gsl_complex_mul_real ( caux,(GammadS*GammaRtilde/(GammadS + GammaRtilde)) );
+// ADDED THE 4pi (Set 2016)
+  caux=gsl_complex_mul_real ( caux,(4*M_PI*GammadS*GammaRtilde/(GammadS + GammaRtilde)) );
 
   return(caux);
 
