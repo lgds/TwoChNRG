@@ -208,6 +208,48 @@ bool OneChSz_cddn_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2){
 
 }
 
+////////////////////////
+// OneChPupPdn check
+
+////////////////////////
+bool OneChPupPdn_cdup_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2){
+  // cdup|up>=|0> (not dagger)
+  // cdup|Pup Pdn>=+/-|-Pup Pdn>
+
+  double Pupi=pAeigCut->GetQNumber(iblock1,0);
+  double Pdni=pAeigCut->GetQNumber(iblock1,1);
+
+  double Pupj=pAeigCut->GetQNumber(iblock2,0);
+  double Pdnj=pAeigCut->GetQNumber(iblock2,1);
+
+  
+  if (  (dEqual(Pupj,-1.0*Pupi))&&(dEqual(Pdni,Pdnj)) )
+    return(true);
+  else
+    return(false);
+
+}
+
+////////////////////////
+bool OneChPupPdn_cddn_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2){
+  // cddn|Pup Pdn>=+/-|Pup -Pdn>
+
+  double Pupi=pAeigCut->GetQNumber(iblock1,0);
+  double Pdni=pAeigCut->GetQNumber(iblock1,1);
+
+  double Pupj=pAeigCut->GetQNumber(iblock2,0);
+  double Pdnj=pAeigCut->GetQNumber(iblock2,1);
+
+  
+  if (  (dEqual(Pupj,Pupi))&&(dEqual(Pdni,-1.0*Pdnj)) )
+    return(true);
+  else
+    return(false);
+
+}
+
+
+////////////////////////////////////////////
 
 
 
@@ -686,8 +728,11 @@ complex<double> OneChNupPdn_HN_MatElCplx(vector<double> Params,
     double Pdntilde=pSingleSite->GetQNumberFromSt(type_i,1);
     // Calculate Qtilde
     double Qtilde=0.0;
-    if ( (dEqual(Nuptilde,0.0))&&(dEqual(Pdntilde,-1.0)) ) Qtilde=-1.0;
-    if ( (dEqual(Nuptilde,1.0))&&(dEqual(Pdntilde,1.0)) ) Qtilde=1.0;
+    // WRONG!
+//     if ( (dEqual(Nuptilde,0.0))&&(dEqual(Pdntilde,-1.0)) ) Qtilde=-1.0;
+//     if ( (dEqual(Nuptilde,1.0))&&(dEqual(Pdntilde,1.0)) ) Qtilde=1.0;
+    if ( (dEqual(Nuptilde,0.0))&&(dEqual(Pdntilde,1.0)) ) Qtilde=-1.0; //|0>
+    if ( (dEqual(Nuptilde,1.0))&&(dEqual(Pdntilde,-1.0)) ) Qtilde=1.0; // | up dn>
     MatEl+=eN*(Qtilde+1.0);
     cMatEl=complex<double>(MatEl,0.0);
   }else{
@@ -2175,5 +2220,444 @@ double OneChSz_HNsc_MatEl(vector<double> Params,
 ////////////////////////
 
 
+/////////////////////////////////////////////
+/////////  OneChPupPdn symmetry   ///////////
+/////////////////////////////////////////////
+
+////////////////////////
+
+double OneChPupPdn_cd_MatEl(CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       int ist, int jst, int isigma){
+
+  double Pupi=pAbasis->GetQNumberFromSt(ist,0);
+  double Pdni=pAbasis->GetQNumberFromSt(ist,1);
+  int stcfi=pAbasis->StCameFrom[ist];
+  int typei=pAbasis->iType[ist];
+
+  double Pupj=pAbasis->GetQNumberFromSt(jst,0);
+  double Pdnj=pAbasis->GetQNumberFromSt(jst,1);
+  int stcfj=pAbasis->StCameFrom[jst];
+  int typej=pAbasis->iType[jst];
 
 
+//   cout << " isigma = " << isigma
+//        << " stcfi = " << stcfi
+//        << " stcfj = " << stcfj
+//        << " typei = " << typei
+//        << " typej = " << typej
+//        << endl
+//        << " <ti|f+|tj> = " << 
+//     OneCh_fd_table(isigma,typej,typei)
+//        << endl;
+
+  double dSigma=((double)isigma)*0.5;
+
+  // Have to make this more clear but let's see:
+  // if |typej> = |up> or |dn>, we sign=-1
+  double FermiSign=1.0;
+  if ((typej==1)||(typej==2)) FermiSign=-1.0;
+
+  if (typei==typej){
+    if (   (  (isigma==1)&&(dEqual(Pupj,-1.0*Pupi))&&(dEqual(Pdni,Pdnj)) )||
+	   (  (isigma==-1)&&(dEqual(Pupj,Pupi))&&(dEqual(Pdni,-1.0*Pdnj)) )   )
+      return(FermiSign);
+    else return(0.0);
+  }
+  else
+    return(0.0);
+
+}
+
+//////
+double OneChPupPdn_cdup_MatEl(CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       int ist, int jst){
+  return(OneChPupPdn_cd_MatEl(pAbasis,pSingleSite,
+			 ist, jst,1));
+}
+
+double OneChPupPdn_cddn_MatEl(CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       int ist, int jst){
+  return(OneChPupPdn_cd_MatEl(pAbasis,pSingleSite,
+			 ist, jst,-1));
+}
+
+complex<double> OneChPupPdn_cdup_MatElCplx(CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       int ist, int jst){
+  double aux=OneChPupPdn_cd_MatEl(pAbasis,pSingleSite,
+				  ist, jst,1);
+  return(complex<double>(aux,0.0));
+}
+
+complex<double> OneChPupPdn_cddn_MatElCplx(CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       int ist, int jst){
+
+  double aux=OneChPupPdn_cd_MatEl(pAbasis,pSingleSite,
+				  ist, jst,-1);
+  return(complex<double>(aux,0.0));
+}
+
+
+
+//////
+
+
+
+
+double OneChPupPdn_fN_MatEl(CNRGbasisarray* pAbasis, 
+			    CNRGbasisarray* pSingleSite,
+			    int ist, int jst, int isigma){
+
+  int stcfi=pAbasis->StCameFrom[ist];
+  int typei=pAbasis->iType[ist];
+
+  int stcfj=pAbasis->StCameFrom[jst];
+  int typej=pAbasis->iType[jst];
+
+  if ( (stcfi==stcfj) ){
+      return(OneCh_fd_table(isigma,typej,typei));
+  }else return(0.0);
+
+
+
+}
+
+//////
+
+double OneChPupPdn_fNup_MatEl(CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       int ist, int jst){
+  return(OneChPupPdn_fN_MatEl(pAbasis,pSingleSite,
+			 ist, jst,1));
+}
+
+double OneChPupPdn_fNdn_MatEl(CNRGbasisarray* pAbasis, 
+		       CNRGbasisarray* pSingleSite,
+		       int ist, int jst){
+  return(OneChPupPdn_fN_MatEl(pAbasis,pSingleSite,
+			 ist, jst,-1));
+}
+
+complex<double> OneChPupPdn_fNup_MatElCplx(CNRGbasisarray* pAbasis, 
+					   CNRGbasisarray* pSingleSite,
+					   int ist, int jst){
+  double aux=OneChPupPdn_fN_MatEl(pAbasis,pSingleSite,
+				  ist, jst,1);
+  return(complex<double>(aux,0.0));
+}
+
+complex<double> OneChPupPdn_fNdn_MatElCplx(CNRGbasisarray* pAbasis, 
+					   CNRGbasisarray* pSingleSite,
+					   int ist, int jst){
+  double aux=OneChPupPdn_fN_MatEl(pAbasis,pSingleSite,
+				  ist, jst,-1);
+  return(complex<double>(aux,0.0));
+}
+//////
+
+///
+/// <Pup' Pdn'|HN|Pup Pdn> :
+///
+/////////////////////////////////
+/////////////////////////////////
+complex<double> OneChPupPdn_HN_MatElCplx(vector<double> Params,
+			    CNRGbasisarray* pAbasis, 
+			    CNRGbasisarray* pSingleSite,
+			    CNRGmatrix* MatArray,
+			    int ist, int jst){
+
+  // June 20/2017
+  // Calculates matrix elements for HN in the Pup Pdn basis
+  //
+  // Parameters: 
+  //  Lambda        - Params[0]
+  //  chi_N         - Params[1]
+  //  eN            - Params[2] (added)
+  //  <-Pup Pdn|fN_up|Pup Pdn> - MatArray[0] (not reduced)
+  //  <Pup -Pdn|fN_dn|Pup Pdn> - MatArray[1] (not reduced)
+
+  complex<double> cMatEl=(0.0,0.0);
+
+  double Lambda=Params[0];
+  double chi_N=Params[1];
+  double eN=Params[2];
+
+
+  double Pupi=pAbasis->GetQNumberFromSt(ist,0);
+  double Pdni=pAbasis->GetQNumberFromSt(ist,1);
+
+  double Pupj=pAbasis->GetQNumberFromSt(jst,0);
+  double Pdnj=pAbasis->GetQNumberFromSt(jst,1);
+
+
+
+  if ( (dNEqual(Pupi,Pupj))||(dNEqual(Pdni,Pdnj)) ) return(0.0);
+
+  if (ist==jst){
+    double MatEl=sqrt(Lambda)*pAbasis->dEn[ist];
+    // add eN term here
+    int type_i=pAbasis->iType[ist];
+    double Puptilde=pSingleSite->GetQNumberFromSt(type_i,0);
+    double Pdntilde=pSingleSite->GetQNumberFromSt(type_i,1);
+    // Calculate Qtilde
+    double Qtilde=0.0;
+    if ( (dEqual(Puptilde,1.0))&&(dEqual(Pdntilde,1.0)) ) Qtilde=-1.0;  // |0>
+    if ( (dEqual(Puptilde,-1.0))&&(dEqual(Pdntilde,-1.0)) ) Qtilde=1.0; // |up dn>
+    MatEl+=eN*(Qtilde+1.0);
+    cMatEl=complex<double>(MatEl,0.0);
+  }else{
+    int type_i=pAbasis->iType[ist];
+    int type_j=pAbasis->iType[jst];
+
+    // Sum over spins
+    int imat=0;
+    for (int isigma=1;isigma>=-1;isigma-=2){
+      int typep=type_i;
+      int type=type_j;
+
+      int stcf_i=pAbasis->StCameFrom[ist];
+      int stcf_j=pAbasis->StCameFrom[jst];
+
+      // Matrix element from <istcf| fN_sigma | jstcf>
+      complex<double> cOldEl=MatArray[imat].cGetMatEl(stcf_i,stcf_j);
+
+      complex<double> cOldEl_old=cOldEl;
+
+      // if zero, try the h.c term, meaning f+N f_N+1 in original case
+      // Ops, it can be non-zero but the wrong one!!
+//       if ( (dEqualPrec(cOldEl.real(),0.0,1e-10))&&(dEqualPrec(cOldEl.imag(),0.0,1e-10)) ){
+// 	// debug
+// 	cOldEl=MatArray[imat].cGetMatEl(stcf_j,stcf_i);
+// 	typep=type_j;
+// 	type=type_i;
+//       }
+      // end if
+      double OpTable=OneCh_fd_table(isigma,typep,type);
+      if ( dEqual(OpTable,0.0) ){
+	// debug
+	cOldEl=MatArray[imat].cGetMatEl(stcf_j,stcf_i);
+	typep=type_j;
+	type=type_i;
+      }
+      // end if
+
+      // Get SingleSite QNumbers
+
+      double Puptilde=pSingleSite->GetQNumberFromSt(type,0);
+      double Pdntilde=pSingleSite->GetQNumberFromSt(type,1);
+
+      // Fermi Sign
+      double FermiSign=1.0;
+      // 	if (dEqual(Qtilde,0.0)) FermiSign=-1.0;
+      // |tilde> is |up>=|Pup=-1 Pdn=1> or |dn>=|Pup=1 Pdn=-1>
+      if (  ( (dEqual(Puptilde,-1.0))&&(dEqual(Pdntilde,1.0)) )||
+	    ( (dEqual(Puptilde,1.0))&&(dEqual(Pdntilde,-1.0)) )
+	   )  
+	FermiSign=-1.0;
+
+      cMatEl+=FermiSign*cOldEl*OneCh_fd_table(isigma,typep,type);
+
+      // Debug 
+//       if (  (pAbasis->Nshell==0)&&
+// 	    ( ( (ist==5)&&(jst>=10)&&(jst<=10) )
+// 	      )  ){
+// 	cout << " imat = " << imat
+// 	     << " ist= " << ist
+// 	     << " jst= " << jst
+// 	     << " stcfi= " << stcf_i
+// 	     << " stcfj= " << stcf_j
+// 	     << " typei= " << type_i
+// 	     << " typej= " << type_j 
+//  	     << " typep= " << typep
+// 	     << " type= " << type 
+// 	     << endl;
+// 	if (imat==0)
+// 	  cout << " <stcfi|f_up|scfj>= " << MatArray[imat].cGetMatEl(stcf_i,stcf_j)
+// 	       << " <stcfj|f_up|scfi>= " << MatArray[imat].cGetMatEl(stcf_j,stcf_i)
+// 	       << " cOldEl_old= " << cOldEl_old
+// 	       << " cOldEl= " << cOldEl 
+// 	       << endl;
+// 	else
+// 	  cout << " <stcfi|f_dn|scfj>= " << MatArray[imat].cGetMatEl(stcf_i,stcf_j)
+// 	       << " <stcfj|f_dn|scfi>= " << MatArray[imat].cGetMatEl(stcf_j,stcf_i)
+// 	       << " cOldEl_old= " << cOldEl_old
+// 	       << " cOldEl= " << cOldEl 
+// 	       << endl;
+// 	cout << " Fermi sign= " << FermiSign
+// 	     << " |Re(cOldEl_old)| < 1e-10? " << dEqualPrec(cOldEl_old.real(),0.0,1e-10)
+// 	     << " |Im(cOldEl_old)| < 1e-10? " << dEqualPrec(cOldEl_old.imag(),0.0,1e-10)
+// 	     << " |Re(cOldEl_old)| < 1e-15? " << dEqualPrec(cOldEl_old.real(),0.0,1e-15)
+// 	     << " |Im(cOldEl_old)| < 1e-15? " << dEqualPrec(cOldEl_old.imag(),0.0,1e-15)
+// 	     << " (f_dn)^d_table= " << OneCh_fd_table(isigma,typep,type)
+// 	     << " Mat El/chi_N= " << cMatEl
+// 	     << " Mat El= " << cMatEl*chi_N 
+// 	     << endl;
+//       }
+//       ///
+
+      imat++;
+    }
+    // End sum over isigma
+      
+    cMatEl*=chi_N;
+  }
+  // end if i=j
+
+
+  return(cMatEl);
+}
+
+/////////////////////////////////
+/////////////////////////////////
+double OneChPupPdn_HN_MatEl(vector<double> Params,
+			    CNRGbasisarray* pAbasis, 
+			    CNRGbasisarray* pSingleSite,
+			    CNRGmatrix* MatArray,
+			    int ist, int jst){
+
+  // July 21/2017
+  // Calculates matrix elements for HN in the Pup Pdn basis
+  // REAL for chain calculations!
+  // Parameters: 
+  //  Lambda        - Params[0]
+  //  chi_N         - Params[1]
+  //  eN            - Params[2] (added)
+  //  <-Pup Pdn|fN_up|Pup Pdn> - MatArray[0] (not reduced)
+  //  <Pup -Pdn|fN_dn|Pup Pdn> - MatArray[1] (not reduced)
+
+  double MatEl=0.0;
+
+  double Lambda=Params[0];
+  double chi_N=Params[1];
+  double eN=Params[2];
+
+
+  double Pupi=pAbasis->GetQNumberFromSt(ist,0);
+  double Pdni=pAbasis->GetQNumberFromSt(ist,1);
+
+  double Pupj=pAbasis->GetQNumberFromSt(jst,0);
+  double Pdnj=pAbasis->GetQNumberFromSt(jst,1);
+
+
+
+  if ( (dNEqual(Pupi,Pupj))||(dNEqual(Pdni,Pdnj)) ) return(0.0);
+
+  if (ist==jst){
+    MatEl=sqrt(Lambda)*pAbasis->dEn[ist];
+    // add eN term here
+    int type_i=pAbasis->iType[ist];
+    double Puptilde=pSingleSite->GetQNumberFromSt(type_i,0);
+    double Pdntilde=pSingleSite->GetQNumberFromSt(type_i,1);
+    // Calculate Qtilde
+    double Qtilde=0.0;
+    if ( (dEqual(Puptilde,1.0))&&(dEqual(Pdntilde,1.0)) ) Qtilde=-1.0;  // |0>
+    if ( (dEqual(Puptilde,-1.0))&&(dEqual(Pdntilde,-1.0)) ) Qtilde=1.0; // |up dn>
+    MatEl+=eN*(Qtilde+1.0);
+
+  }else{
+    int type_i=pAbasis->iType[ist];
+    int type_j=pAbasis->iType[jst];
+
+    // Sum over spins
+    int imat=0;
+    for (int isigma=1;isigma>=-1;isigma-=2){
+      int typep=type_i;
+      int type=type_j;
+
+      int stcf_i=pAbasis->StCameFrom[ist];
+      int stcf_j=pAbasis->StCameFrom[jst];
+
+      // Matrix element from <istcf| fN_sigma | jstcf>
+      double OldEl=MatArray[imat].GetMatEl(stcf_i,stcf_j);
+
+      double OldEl_old=OldEl;
+
+      // if zero, try the h.c term, meaning f+N f_N+1 in original case
+      // Ops, it can be non-zero but the wrong one!!
+//       if ( (dEqualPrec(cOldEl.real(),0.0,1e-10))&&(dEqualPrec(cOldEl.imag(),0.0,1e-10)) ){
+// 	// debug
+// 	cOldEl=MatArray[imat].cGetMatEl(stcf_j,stcf_i);
+// 	typep=type_j;
+// 	type=type_i;
+//       }
+      // end if
+      double OpTable=OneCh_fd_table(isigma,typep,type);
+      if ( dEqual(OpTable,0.0) ){
+	// debug
+	OldEl=MatArray[imat].GetMatEl(stcf_j,stcf_i);
+	typep=type_j;
+	type=type_i;
+      }
+      // end if
+
+      // Get SingleSite QNumbers
+
+      double Puptilde=pSingleSite->GetQNumberFromSt(type,0);
+      double Pdntilde=pSingleSite->GetQNumberFromSt(type,1);
+
+      // Fermi Sign
+      double FermiSign=1.0;
+      // 	if (dEqual(Qtilde,0.0)) FermiSign=-1.0;
+      // |tilde> is |up>=|Pup=-1 Pdn=1> or |dn>=|Pup=1 Pdn=-1>
+      if (  ( (dEqual(Puptilde,-1.0))&&(dEqual(Pdntilde,1.0)) )||
+	    ( (dEqual(Puptilde,1.0))&&(dEqual(Pdntilde,-1.0)) )
+	   )  
+	FermiSign=-1.0;
+
+      MatEl+=FermiSign*OldEl*OneCh_fd_table(isigma,typep,type);
+
+      // Debug 
+//       if (  (pAbasis->Nshell==0)&&
+// 	    ( ( (ist==5)&&(jst>=10)&&(jst<=10) )
+// 	      )  ){
+// 	cout << " imat = " << imat
+// 	     << " ist= " << ist
+// 	     << " jst= " << jst
+// 	     << " stcfi= " << stcf_i
+// 	     << " stcfj= " << stcf_j
+// 	     << " typei= " << type_i
+// 	     << " typej= " << type_j 
+//  	     << " typep= " << typep
+// 	     << " type= " << type 
+// 	     << endl;
+// 	if (imat==0)
+// 	  cout << " <stcfi|f_up|scfj>= " << MatArray[imat].cGetMatEl(stcf_i,stcf_j)
+// 	       << " <stcfj|f_up|scfi>= " << MatArray[imat].cGetMatEl(stcf_j,stcf_i)
+// 	       << " cOldEl_old= " << cOldEl_old
+// 	       << " cOldEl= " << cOldEl 
+// 	       << endl;
+// 	else
+// 	  cout << " <stcfi|f_dn|scfj>= " << MatArray[imat].cGetMatEl(stcf_i,stcf_j)
+// 	       << " <stcfj|f_dn|scfi>= " << MatArray[imat].cGetMatEl(stcf_j,stcf_i)
+// 	       << " cOldEl_old= " << cOldEl_old
+// 	       << " cOldEl= " << cOldEl 
+// 	       << endl;
+// 	cout << " Fermi sign= " << FermiSign
+// 	     << " |Re(cOldEl_old)| < 1e-10? " << dEqualPrec(cOldEl_old.real(),0.0,1e-10)
+// 	     << " |Im(cOldEl_old)| < 1e-10? " << dEqualPrec(cOldEl_old.imag(),0.0,1e-10)
+// 	     << " |Re(cOldEl_old)| < 1e-15? " << dEqualPrec(cOldEl_old.real(),0.0,1e-15)
+// 	     << " |Im(cOldEl_old)| < 1e-15? " << dEqualPrec(cOldEl_old.imag(),0.0,1e-15)
+// 	     << " (f_dn)^d_table= " << OneCh_fd_table(isigma,typep,type)
+// 	     << " Mat El/chi_N= " << cMatEl
+// 	     << " Mat El= " << cMatEl*chi_N 
+// 	     << endl;
+//       }
+//       ///
+
+      imat++;
+    }
+    // End sum over isigma
+      
+    MatEl*=chi_N;
+  }
+  // end if i=j
+
+
+  return(MatEl);
+}
+////////////////////////
+////////////////////////

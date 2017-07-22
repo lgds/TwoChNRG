@@ -22,7 +22,10 @@ void BuildBasis(vector<int> CommonQNs, vector<int> totSpos,
   //
   // Addition (Sep08): Parity QN
   //
-  //  CommonQNs[2*NCommon+1] - Position of "parity" in the "old" basis
+  //  CommonQNs[2*NCommon+1],
+  //  CommonQNs[2*NCommon+2], etc. - Positions of "parity" QNs in the "old" basis
+  //  
+  //
   //
   // Examples: 
   // A)  |Q Sz m1> -> |Q Sz> = |Qold Szold m1>x|Q~ Sz~>
@@ -69,7 +72,13 @@ void BuildBasis(vector<int> CommonQNs, vector<int> totSpos,
   //
   // CommonQNs= 3  0 1 2  0 1 3  2
   // totSpos = 1
-
+  //
+  //
+  // H) |Pup Pdn m> -> |Pup Pdn> =  |Pupold Pdnold m1>x|Pup~ Pdn~>
+  //
+  // CommonQNs= 2  0 1  0 1  0 1
+  // totSpos (empty)
+  // Notice that there are TWO parity QNS at positions 2*Ncommon+1,2 = 5 and 6 
 
   if (CommonQNs.size()==0) return;
 

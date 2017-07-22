@@ -107,8 +107,8 @@ double OneChS_cd_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite,
 #endif
 
 
-#ifndef _ONECHSZOPMATRULES_ 
-#define _ONECHSZOPMATRULES_
+#ifndef _ONECHSZ_OPMATRULES_ 
+#define _ONECHSZ_OPMATRULES_
 
 bool OneChSz_cdup_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
 
@@ -136,6 +136,60 @@ double OneChSz_cddn_MatEl(CNRGbasisarray *pAbasis, CNRGbasisarray *pSingleSite,
 
 
 #endif
+
+#ifndef _ONECHPUPPDN_OPMATRULES_ 
+#define _ONECHPUPPDN_OPMATRULES_
+
+bool OneChPupPdn_cdup_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
+
+bool OneChPupPdn_cddn_check(CNRGbasisarray *pAeigCut, int iblock1, int iblock2);
+
+double OneChPupPdn_cd_MatEl(CNRGbasisarray* pAbasis, 
+			    CNRGbasisarray* pSingleSite,
+			    int ist, int jst, int isigma);
+
+double OneChPupPdn_cdup_MatEl(CNRGbasisarray* pAbasis, 
+			      CNRGbasisarray* pSingleSite,
+			      int ist, int jst);
+
+double OneChPupPdn_cddn_MatEl(CNRGbasisarray* pAbasis, 
+			      CNRGbasisarray* pSingleSite,
+			      int ist, int jst);
+
+complex<double> OneChPupPdn_cdup_MatElCplx(CNRGbasisarray* pAbasis, 
+					   CNRGbasisarray* pSingleSite,
+					   int ist, int jst);
+
+complex<double> OneChPupPdn_cddn_MatElCplx(CNRGbasisarray* pAbasis, 
+					   CNRGbasisarray* pSingleSite,
+					   int ist, int jst);
+
+
+double OneChPupPdn_fN_MatEl(CNRGbasisarray* pAbasis, 
+			    CNRGbasisarray* pSingleSite,
+			    int ist, int jst, int isigma);
+
+double OneChPupPdn_fNup_MatEl (CNRGbasisarray* pAbasis, 
+			       CNRGbasisarray* pSingleSite,
+			       int ist, int jst);
+
+double OneChPupPdn_fNdn_MatEl (CNRGbasisarray* pAbasis, 
+			       CNRGbasisarray* pSingleSite,
+			       int ist, int jst);
+
+
+complex<double> OneChPupPdn_fNup_MatElCplx(CNRGbasisarray* pAbasis, 
+					   CNRGbasisarray* pSingleSite,
+					   int ist, int jst);
+
+complex<double> OneChPupPdn_fNdn_MatElCplx(CNRGbasisarray* pAbasis, 
+					   CNRGbasisarray* pSingleSite,
+					   int ist, int jst);
+
+
+
+#endif
+
 
 
 
@@ -366,4 +420,24 @@ double OneChSz_HNsc_MatEl(vector<double> Params,
 			  CNRGbasisarray* pSingleSite,
 			  CNRGmatrix* MatArray,
 			  int ist, int jst);
+#endif
+
+#ifndef _ONECHPUPPDN_HN_MATEL_
+#define _ONECHPUPPDN_HN_MATEL_
+
+complex<double> OneChPupPdn_HN_MatElCplx(vector<double> Params,
+					 CNRGbasisarray* pAbasis, 
+					 CNRGbasisarray* pSingleSite,
+					 CNRGmatrix* MatArray,
+					 int ist, int jst);
+
+
+double OneChPupPdn_HN_MatEl(vector<double> Params,
+			    CNRGbasisarray* pAbasis, 
+			    CNRGbasisarray* pSingleSite,
+			    CNRGmatrix* MatArray,
+			    int ist, int jst);
+
+
+
 #endif

@@ -9,7 +9,7 @@ print_help()
   echo " job* SLURM* Finish_* NRG_end.txt"
   echo " Data*bin Data*dat  " 
   echo " -o : removes output_*.txt *Temp*.dat SuscepImp*.dat EntropyImp*.dat Rho* as well"
-  echo " -d : removes ONLY rho*.bin, output*DM*NRG*.txt output*Conductance*.txt Rho*.dat GT_x_*.dat rho_*OmegaRhow*dat files"
+  echo " -d : removes ONLY rho*.bin, output*DM*NRG*.txt output*Conductance*.txt Rho*.dat GT_x_*.dat rho*OmegaRhow*dat files"
   echo " -n : does not prompt before cleaning"
   exit 1 
 }
@@ -64,16 +64,17 @@ for dir in `seq $dir0 $dirF`; do
     rm  ./run$dir/rhoDM*bin
     rm ./run$dir/output*DM*NRG*.txt
     rm ./run$dir/output*Conductance*.txt  
+    rm ./run$dir/output*Conductance*.dat  
     rm ./run$dir/Rho*.dat 
     rm ./run$dir/GT_x*.dat 
-    rm ./run$dir/rho_*OmegaRhow*dat
+    rm ./run$dir/rho*OmegaRhow*dat
   else
     rm  ./run$dir/Data*bin
     rm  ./run$dir/Data*dat
     rm  ./run$dir/Acut*bin
     rm  ./run$dir/Abasis*bin
     rm  ./run$dir/rhoDM*bin
-    rm  ./run$dir/rho_*OmegaRhow*dat
+    rm  ./run$dir/rho*OmegaRhow*dat
     rm  ./run$dir/rho_*SubGap*dat
     rm  ./run$dir/Mat*bin
     rm  ./run$dir/job*
@@ -95,6 +96,8 @@ for dir in `seq $dir0 $dirF`; do
        rm ./run$dir/Rho*.dat 
        rm ./run$dir/Rho*.txt 
        rm ./run$dir/HybFunc.dat ./run$dir/HybDeltas.dat
+       rm ./run$dir/En_vs_N.dat
+       rm ./run$dir/EnLevels.dat
     fi
   fi
   echo "... done"

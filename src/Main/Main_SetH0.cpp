@@ -2326,7 +2326,6 @@ void OneChNupPdn_SetH0_AndersonMajorana(vector<double> Params,
 					CNRGbasisarray* pSingleSite,
 					CNRGarray* pAeig, 
 					vector<CNRGmatrix> &STLNRGMats){
-  // In construction
 
   // Set initial CNRG array (N=-1)
 
@@ -2937,6 +2936,376 @@ void OneChSz_SetAnderson_Hm1(vector<double> Params,
 /////////////////
 
 
+///////////////////////////////
+///                         ///
+///  1ch | Pup Pdn > basis  ///
+///    (Jul 2017)           ///
+///                         ///
+///////////////////////////////
+
+
+
+void OneChPupPdn_SetHm1_AndersonMajorana(vector<double> Params,
+					CNRGbasisarray* pSingleSite,
+					CNRGarray* pAeig, 
+					vector<CNRGmatrix> &STLNRGMats){
+  // In construction (05-Jul-2017)
+
+  // Set initial CNRG array (N=-1)
+
+
+  double Lambda=Params[0];
+  double HalfLambdaFactor=Params[1];
+
+  double Utilde=Params[2]/(Lambda*HalfLambdaFactor);
+  double edtilde=Params[3]/(Lambda*HalfLambdaFactor);
+  double gammatilde=Params[4];
+  double hz=0.5*Params[5]/(Lambda*HalfLambdaFactor);; // hz=g mu_B Bz: Zeeman term is:  - hz S_z 
+
+  // Remember:
+  // gamma~=(2*Gamma/pi)^1/2/(sqrt(Lambda)*HalfLambdaFactor)
+  // Why? see Wilson's paper (E. 2.18 with N=-1)
+
+  // Note that "Lambda" (and not sqrt(Lambda)) appears in the
+  // denominator of U~ and ed~.
+  // This is different than the DQD code above since we are
+  // generating only Hm1 here: H0 will be set up later by the NRG engine
+  // and there will be a \sqrt(Lambda) multiplicating factor later on. 
+
+  // Add other parameters here! t1, t2, phi, etc.
+  
+  double t1=Params[6]/(Lambda*HalfLambdaFactor);
+  double t2=Params[7]/(Lambda*HalfLambdaFactor);
+  double phi_mag=Params[8];
+//   double em=Params[9]/(Lambda*HalfLambdaFactor);
+
+  
+  cout  << " Lambda= " << Lambda
+	<< " HalfLambdaFactor= " << HalfLambdaFactor
+	<< endl
+	<< " U~= " << Utilde
+	<< " ed~= " << edtilde
+	<< " t~= " << gammatilde
+	<< " hz~= " << hz << endl
+	<< " t1~= " << t1
+	<< " t2~= " << t2
+	<< " phimag/Pi= " << phi_mag
+	<< endl;
+
+
+  // Build H_m1 (N=-1) 
+
+  CNRGbasisarray AbasisHm1(2);
+
+  // Diagonal energies
+  double ediag[4];
+  ediag[0]=0.5*Utilde;
+  ediag[1]=edtilde+0.5*Utilde-hz;
+  ediag[2]=edtilde+0.5*Utilde+hz;
+  ediag[3]=2.0*edtilde+1.5*Utilde;
+
+  // Set basis for Hm1
+  AbasisHm1.Nshell=-1;
+  AbasisHm1.NQNumbers=2; //(Pup,Pdn=(-1)^Ndn)
+  AbasisHm1.totalS=false;
+
+  // |0>d |0>f , |up>d |up>f, |dn>d |dn>f, |up dn>d |up dn>f : |Pup=+1 Pdn=+1>
+  AbasisHm1.QNumbers.push_back(1.0);
+  AbasisHm1.QNumbers.push_back(1.0);
+  for (int ii=0;ii<4;ii++){
+    AbasisHm1.dEn.push_back(ediag[ii]);
+  } // end set diagonal energies
+  AbasisHm1.BlockBegEnd.push_back(0);AbasisHm1.BlockBegEnd.push_back(3);
+
+  // |0>d |up dn>f , |up>d |dn>f, |dn>d |up>f, |up dn>d |0>f : |Pup=-1 Pdn=-1>
+  AbasisHm1.QNumbers.push_back(-1.0);
+  AbasisHm1.QNumbers.push_back(-1.0);
+  for (int ii=0;ii<4;ii++){
+    AbasisHm1.dEn.push_back(ediag[ii]);
+  } // end set diagonal energies
+  AbasisHm1.BlockBegEnd.push_back(4);AbasisHm1.BlockBegEnd.push_back(7);
+
+  // |0>d |up>f , |up>d |0>f, |dn>d |up dn>f, |up dn>d |dn>f : |Pup=-1 Pdn=+1>
+  AbasisHm1.QNumbers.push_back(-1.0);
+  AbasisHm1.QNumbers.push_back(1.0);
+  for (int ii=0;ii<4;ii++){
+    AbasisHm1.dEn.push_back(ediag[ii]);
+  } // end set diagonal energies
+  AbasisHm1.BlockBegEnd.push_back(8);AbasisHm1.BlockBegEnd.push_back(11);
+
+  // |0>d |dn>f , |up>d |0>f, |dn>d |0>f, |up dn>d |up>f : |Pup=+1 Pdn=-1>
+  AbasisHm1.QNumbers.push_back(1.0);
+  AbasisHm1.QNumbers.push_back(-1.0);
+  for (int ii=0;ii<4;ii++){
+    AbasisHm1.dEn.push_back(ediag[ii]);
+  } // end set diagonal energies
+  AbasisHm1.BlockBegEnd.push_back(12);AbasisHm1.BlockBegEnd.push_back(15);
+
+  AbasisHm1.SetEigVecToOne();
+
+  // Set up cd and fd: easier in this basis. 
+  // Will Rotate later.
+  for (int imat=0;imat<STLNRGMats.size();imat++)
+    STLNRGMats[imat].SyncNRGarray(AbasisHm1);
+
+
+  AbasisHm1.PrintAll();
+
+
+  vector<CNRGmatrix> AuxMatArray; // Arrays needed to set up H0 
+                       //(cd_up, cd_dn, f_Maj_up and f_Maj_dn)
+  CNRGmatrix auxMat;
+
+  auxMat=STLNRGMats[0]; // Same rules as fN_up
+  auxMat.SetZeroMatrix(); // Build block structure
+  AuxMatArray.push_back(auxMat); // cd_up
+  auxMat=STLNRGMats[1]; // Same rules as fN_dn
+  auxMat.SetZeroMatrix(); // Build block structure
+  AuxMatArray.push_back(auxMat); // cd_dn
+
+  // c_up|up>|k>=+|0>|k>  
+  // c_up|up dn>|k>=+|dn>|k>  
+  
+  AuxMatArray[0].PushMatEl(1.0,8,1); 
+  AuxMatArray[0].PushMatEl(1.0,12,5);
+  AuxMatArray[0].PushMatEl(1.0,0,9); 
+  AuxMatArray[0].PushMatEl(1.0,4,13); 
+  AuxMatArray[0].PushMatEl(1.0,10,3); 
+  AuxMatArray[0].PushMatEl(1.0,14,7);
+  AuxMatArray[0].PushMatEl(1.0,2,11); 
+  AuxMatArray[0].PushMatEl(1.0,6,15); 
+   
+  // c_dn|dn>|k>=+|0>|k>  
+  // c_dn|up dn>|k>=-|up>|k>  
+  AuxMatArray[1].PushMatEl(1.0,12,2); 
+  AuxMatArray[1].PushMatEl(1.0,8,6); 
+  AuxMatArray[1].PushMatEl(1.0,4,10); 
+  AuxMatArray[1].PushMatEl(1.0,0,14); 
+  AuxMatArray[1].PushMatEl(-1.0,13,3); 
+  AuxMatArray[1].PushMatEl(-1.0,9,7); 
+  AuxMatArray[1].PushMatEl(-1.0,5,11); 
+  AuxMatArray[1].PushMatEl(-1.0,1,15); 
+
+ 
+  if (	(strcmp(STLNRGMats[2].MatName,"cd_up")==0)&&
+	(strcmp(STLNRGMats[3].MatName,"cd_dn")==0) ){
+
+    AuxMatArray.push_back(auxMat); // [2] f_Maj_up
+    AuxMatArray.push_back(auxMat); // [3] f_Maj_dn
+
+    // cd1, cd2 if calcdens==1 (just use the ops defined above)
+    // Define c_up and c_dn and f_Maj_dn matrices in this basis!
+    
+    cout << " Majorana: spectral functions still at implementation stage..." << endl;
+
+    // f_up|up dn (0) >|up>=+|up dn (0)>|0>  
+    // f_up|up dn (0) >|up dn>=+|up dn (0)>|dn>  
+    // f_up|up (dn)>|up>=-|up (dn)>|0>  
+    // f_up|up (dn)>|up dn>=-|up (dn)>|dn>  
+    AuxMatArray[2].PushMatEl(1.0,0,8); 
+    AuxMatArray[2].PushMatEl(1.0,7,15); 
+    AuxMatArray[2].PushMatEl(1.0,11,3); 
+    AuxMatArray[2].PushMatEl(1.0,12,4); 
+    AuxMatArray[2].PushMatEl(-1.0,9,1); 
+    AuxMatArray[2].PushMatEl(-1.0,2,10); 
+    AuxMatArray[2].PushMatEl(-1.0,14,6); 
+    AuxMatArray[2].PushMatEl(-1.0,5,13); 
+
+
+    // f_dn|up dn (0) >|dn>=+|up dn (0)>|0>  
+    // f_dn|up (dn)>|up dn>=+|up (dn)>|up>  
+    // f_dn|up (dn)>|dn>=-|up (dn)>|0>  
+    // f_dn|up dn (0) >|up dn>=-|up dn (0)>|up>  
+    AuxMatArray[3].PushMatEl(1.0,7,11); 
+    AuxMatArray[3].PushMatEl(1.0,0,12); 
+    AuxMatArray[3].PushMatEl(1.0,6,10); 
+    AuxMatArray[3].PushMatEl(1.0,1,13); 
+    AuxMatArray[3].PushMatEl(-1.0,15,3); 
+    AuxMatArray[3].PushMatEl(-1.0,8,4); 
+    AuxMatArray[3].PushMatEl(-1.0,14,2); 
+    AuxMatArray[3].PushMatEl(-1.0,9,5); 
+    
+//     cout << " f_dn: " << endl;
+//     AuxMatArray[3].PrintAllBlocks();
+
+    // Stopped here (6/7/17)
+
+  }else if ( (strcmp(STLNRGMats[2].MatName,"Ndot")==0)&&
+	     (strcmp(STLNRGMats[3].MatName,"Szdot")==0) ){
+    //////////////////
+    
+    cout << " Setting up 1-body observables..." << endl;
+
+    auxMat=STLNRGMats[2]; // Same rules as Ndot
+    auxMat.SetZeroMatrix(); // Build block structure
+  
+    AuxMatArray.push_back(auxMat); // [2] Ndot
+    AuxMatArray.push_back(auxMat); // [3] Szdot
+    AuxMatArray.push_back(auxMat); // [4] NMaj
+  
+//    for (int imat=2; imat<=4; imat++){
+//      AuxMatArray[imat]=STLNRGMats[imat]; // Same rules as ndot, szdot, nmaj
+//      AuxMatArray[imat].SetZeroMatrix(); // Build block structure
+//     }
+ 
+    // ndot=nup+ndown [2]
+    // ndot=0 for ist=0,4,8,12 : ist mod 4 = 0
+    // ndot=1 for ist=1,5,9,13 : ist mod 4 = 1
+    // ndot=1 for ist=2,6,10,14: ist mod 4 = 2
+    // ndot=2 for ist=3,7,11,15: ist mod 4 = 3
+    // szdot          [3]
+    // szdot=0   for ist=0,4,8,12 : ist mod 4 = 0
+    // szdot=0.5 for ist=1,5,9,13 : ist mod 4 = 1
+    // szdot=-0.5 for ist=2,6,10,14: ist mod 4 = 2
+    // szdot=0 for ist=3,7,11,15: ist mod 4 = 3
+
+    int ist=0;
+    for (int ist=0;ist<16;ist++){
+      int istmod4=ist % 4;
+      switch (istmod4){
+      case 0:
+	AuxMatArray[2].PushMatEl(0.0,ist,ist); 
+	AuxMatArray[3].PushMatEl(0.0,ist,ist); 
+	break;
+      case 1:
+	AuxMatArray[2].PushMatEl(1.0,ist,ist); 
+	AuxMatArray[3].PushMatEl(0.5,ist,ist); 
+	break;
+      case 2:
+	AuxMatArray[2].PushMatEl(1.0,ist,ist); 
+	AuxMatArray[3].PushMatEl(-0.5,ist,ist); 
+	break;
+      case 3:
+	AuxMatArray[2].PushMatEl(2.0,ist,ist); 
+	AuxMatArray[3].PushMatEl(0.0,ist,ist); 
+	break;
+      default:
+	AuxMatArray[2].PushMatEl(0.0,ist,ist); 
+	AuxMatArray[3].PushMatEl(0.0,ist,ist); 
+      } // end switch
+    } //end loop in ist
+   
+    // nMaj
+    AuxMatArray[4].PushMatEl(0.0,0,0); 
+    AuxMatArray[4].PushMatEl(1.0,1,1);
+    AuxMatArray[4].PushMatEl(1.0,2,2); 
+    AuxMatArray[4].PushMatEl(2.0,3,3); 
+    AuxMatArray[4].PushMatEl(2.0,4,4); 
+    AuxMatArray[4].PushMatEl(1.0,5,5);
+    AuxMatArray[4].PushMatEl(1.0,6,6); 
+    AuxMatArray[4].PushMatEl(0.0,7,7); 
+    AuxMatArray[4].PushMatEl(1.0,8,8); 
+    AuxMatArray[4].PushMatEl(0.0,9,9); 
+    AuxMatArray[4].PushMatEl(2.0,10,10); 
+    AuxMatArray[4].PushMatEl(1.0,11,11); 
+    AuxMatArray[4].PushMatEl(1.0,12,12); 
+    AuxMatArray[4].PushMatEl(2.0,13,13); 
+    AuxMatArray[4].PushMatEl(0.0,14,14); 
+    AuxMatArray[4].PushMatEl(1.0,15,15); 
+  
+  } else { 
+    switch(STLNRGMats.size()){
+    case 2: //fd_up fd_dn
+      cout << " Thermodynamics only." << endl;
+      break;
+
+    default:
+      cout << " Can't figure out what to do with the STLNRGMats... Exiting." << endl;
+      exit(0);
+    }
+    // end switch STLNRGMats.size()
+  }
+  // end if MatName==Ndot, Sz
+
+//    cout << " Ndot: " << endl;
+//    AuxMatArray[2].PrintAllBlocks();
+//    cout << " NMaj: " << endl;
+//    AuxMatArray[4].PrintAllBlocks();
+
+  /////
+  // set up and diagonalize Hm1 16x16 matrix
+  /////
+  auxMat.CheckForMatEl=Diag_check;
+  auxMat.CalcHNMatElCplx=OneChPupPdn_Hm1_Majorana_MatEl;
+  auxMat.IsComplex=true;
+  //  Block Structure
+  auxMat.SyncNRGarray(AbasisHm1);
+  auxMat.NeedOld=false;
+  auxMat.UpperTriangular=true;
+
+  //CNRGarray AeigHm1; // will be AeigHm1
+  vector<double> ParamsHm1;
+  ParamsHm1.push_back(t1);
+  ParamsHm1.push_back(t2);
+  ParamsHm1.push_back(phi_mag*pi); //actual phi 
+  //ParamsHm1.push_back(em);
+
+  //auxMat.DiagHN(ParamsHm1,&AbasisHm1,pSingleSite,&AuxMatArray[0],&AeigHm1);
+  //AeigHm1.PrintEn();
+
+  auxMat.DiagHN(ParamsHm1,&AbasisHm1,pSingleSite,&AuxMatArray[0],pAeig,true);
+  
+  pAeig->PrintEn();
+
+//   cout << " Main_SetHm1 c_up BEFORE rotation: " << endl;
+//   AuxMatArray[0].PrintAllBlocks();
+//   cout << " Main_SetHm1 c_dn BEFORE rotation: " << endl;
+//   AuxMatArray[1].PrintAllBlocks();
+
+  // Rotate c1,c2 (in the UnCut basis!)
+  // Matrices are complex!
+
+  // Check the loop below. Getting there!
+  for (int imat=0;imat<AuxMatArray.size();imat++){
+    //RotateMatrix((&AuxMatArray[imat]),(&AeigHm1),&auxMat);
+    //RotateMatrix_NoCut((&AuxMatArray[imat]),(&AeigHm1),&auxMat,1);
+    RotateMatrix_NoCut((&AuxMatArray[imat]),pAeig,&auxMat,1);
+    AuxMatArray[imat].CopyData(&auxMat);
+  }
+  // end loop in matrices
+
+//    cout << " Main_SetHm1 c_up rotated: " << endl;
+//    AuxMatArray[0].PrintAllBlocks();
+//    cout << " Main_SetHm1 c_dn rotated: " << endl;
+//    AuxMatArray[1].PrintAllBlocks();
+
+
+  // Set up operators in the Hm1 basis
+  // ndot, Sz, S1 dot S2 if calcdens==0
+
+  STLNRGMats[0].CopyData(&AuxMatArray[0]);  //f_{-1 up}
+  STLNRGMats[1].CopyData(&AuxMatArray[1]);  //f_{-1 dn}
+
+  if (	(strcmp(STLNRGMats[2].MatName,"cd_up")==0)&&
+	(strcmp(STLNRGMats[3].MatName,"cd_dn")==0) ){
+    // spectral functions
+    STLNRGMats[2].CopyData(&AuxMatArray[0]); //c_up
+    STLNRGMats[3].CopyData(&AuxMatArray[1]); //c_dn
+    STLNRGMats[4].CopyData(&AuxMatArray[2]);  //f_up
+    STLNRGMats[5].CopyData(&AuxMatArray[3]);  //f_dn
+  } else if ( (strcmp(STLNRGMats[2].MatName,"Ndot")==0)&&
+	     (strcmp(STLNRGMats[3].MatName,"Szdot")==0) ){
+    STLNRGMats[2].CopyData(&AuxMatArray[2]); //Ndot  (rotated)
+    STLNRGMats[3].CopyData(&AuxMatArray[3]); //Szdot (rotated)
+    STLNRGMats[4].CopyData(&AuxMatArray[4]); //NMaj (rotated)
+ 
+  }
+
+  // Ok up to here.
+ 
+  // Finally, build and diagonalize H_0 (N=0) and take it from there. 
+  // Perhaps this can be done in the code itself.
+  
+
+}
+// end OneChPupPdn_SetAndersonMajorana_Hm1
+///////////////////
+///////////////////
+///////////////////
+///////////////////
+
+
+
 
 
 
@@ -3298,7 +3667,93 @@ void OneChNupPdn_SetChainH0(CNRGarray* pAeig,
   STLNRGMats[1].MatBlockBegEnd.push_back(1);
 
 }
-// end OneChQSz_SetChain
+// end OneChNupPdn_SetChain
+
+
+////
+// OneChPupPdn
+////
+
+void OneChPupPdn_SetChainH0(CNRGarray* pAeig, 
+			vector<CNRGmatrix> &STLNRGMats){
+
+  pAeig->NQNumbers=2;
+  pAeig->Nshell=0;
+  pAeig->totalS=false;
+  
+  // |0> = |Pup=1, Pdn=1>
+  pAeig->QNumbers.push_back(1.0);
+  pAeig->QNumbers.push_back(1.0);
+  pAeig->iDegen.push_back(0);   
+
+  // |up> = |Pup=-1, Pdn=1>
+  pAeig->QNumbers.push_back(-1.0);
+  pAeig->QNumbers.push_back(1.0);
+  pAeig->iDegen.push_back(0);
+
+  // |dn> = |Pup=1, Pdn=-1>
+  pAeig->QNumbers.push_back(1.0);
+  pAeig->QNumbers.push_back(-1.0);
+  pAeig->iDegen.push_back(0);
+
+  // |up dn> = |Pup=-1, Pdn=-1>
+  pAeig->QNumbers.push_back(-1.0);
+  pAeig->QNumbers.push_back(-1.0);
+  pAeig->iDegen.push_back(0); 
+
+  // One state per block
+  pAeig->BlockBegEnd.push_back(0);pAeig->BlockBegEnd.push_back(0);
+  pAeig->BlockBegEnd.push_back(1);pAeig->BlockBegEnd.push_back(1);
+  pAeig->BlockBegEnd.push_back(2);pAeig->BlockBegEnd.push_back(2);
+  pAeig->BlockBegEnd.push_back(3);pAeig->BlockBegEnd.push_back(3);
+
+  pAeig->dEn.push_back(0.0);
+  pAeig->dEn.push_back(0.0);
+  pAeig->dEn.push_back(0.0);
+  pAeig->dEn.push_back(0.0);
+
+  // Eigenvectors
+  pAeig->dEigVec.push_back(1.0);
+  pAeig->dEigVec.push_back(1.0);
+  pAeig->dEigVec.push_back(1.0);
+  pAeig->dEigVec.push_back(1.0);
+
+  // Set Matrix elements
+
+  // fN_up
+
+  STLNRGMats[0].SyncNRGarray(*pAeig);
+  STLNRGMats[0].UpperTriangular=false;
+  STLNRGMats[0].MatEl.push_back(1.0);
+  STLNRGMats[0].MatBlockMap.push_back(0);
+  STLNRGMats[0].MatBlockMap.push_back(1);
+  STLNRGMats[0].MatBlockBegEnd.push_back(0);
+  STLNRGMats[0].MatBlockBegEnd.push_back(0);
+
+  STLNRGMats[0].MatEl.push_back(1.0);
+  STLNRGMats[0].MatBlockMap.push_back(2);
+  STLNRGMats[0].MatBlockMap.push_back(3);
+  STLNRGMats[0].MatBlockBegEnd.push_back(1);
+  STLNRGMats[0].MatBlockBegEnd.push_back(1);
+
+
+  // fN_dn
+  STLNRGMats[1].SyncNRGarray(*pAeig);
+  STLNRGMats[1].UpperTriangular=false;
+  STLNRGMats[1].MatEl.push_back(1.0);
+  STLNRGMats[1].MatBlockMap.push_back(0);
+  STLNRGMats[1].MatBlockMap.push_back(2);
+  STLNRGMats[1].MatBlockBegEnd.push_back(0);
+  STLNRGMats[1].MatBlockBegEnd.push_back(0);
+
+  STLNRGMats[1].MatEl.push_back(-1.0);
+  STLNRGMats[1].MatBlockMap.push_back(1);
+  STLNRGMats[1].MatBlockMap.push_back(3);
+  STLNRGMats[1].MatBlockBegEnd.push_back(1);
+  STLNRGMats[1].MatBlockBegEnd.push_back(1);
+
+}
+// end OneChPupPdn_SetChain
 
 
 

@@ -67,7 +67,8 @@ void CNRGCodeHandler::InitialSetUp(bool ReadParamsOnly){
     if (SymNo==2){NoInputParamsDouble=9;} // Add lambda, B1, B2
     break;
   case 7: // Majorana
-    NoInputParamsDouble=10;
+    //NoInputParamsDouble=10; // Why 10 ??? 8 is fine!  
+    NoInputParamsDouble=8; // U,ed,Gamma + Bmag,t1,t2,phi_mag,en 
     break;
 
   }
@@ -538,6 +539,36 @@ void CNRGCodeHandler::SetSingleSite(CNRGbasisarray* pSingleSite){
       pSingleSite->iType.push_back(ii);
     }
     break;
+  case 9:
+    cout << " Got OneChPupPdn " << endl;
+    // Pup=(-1)^Nup , Pdn=(-1)^Ndn 
+    pSingleSite->NQNumbers=2;
+    pSingleSite->Nshell=0;
+    // |0>: Nup=0 Ndn=0 -> Pup=+1 Pdn=+1
+    pSingleSite->QNumbers.push_back(1.0);
+    pSingleSite->QNumbers.push_back(1.0);
+    pSingleSite->BlockBegEnd.push_back(0);
+    pSingleSite->BlockBegEnd.push_back(0);
+    // |up>: Nup=1 Ndn=0 -> Pup=-1 Pdn=+1
+    pSingleSite->QNumbers.push_back(-1.0);
+    pSingleSite->QNumbers.push_back(1.0);
+    pSingleSite->BlockBegEnd.push_back(1);
+    pSingleSite->BlockBegEnd.push_back(1);
+    // |dn>: Nup=0 Ndn=1 -> Pup=+1 Pdn=-1
+    pSingleSite->QNumbers.push_back(1.0);
+    pSingleSite->QNumbers.push_back(-1.0);
+    pSingleSite->BlockBegEnd.push_back(2);
+    pSingleSite->BlockBegEnd.push_back(2);
+    // |up dn>: Nup=1 Ndn=1 -> Pup=-1 Pdn=-1
+    pSingleSite->QNumbers.push_back(-1.0);
+    pSingleSite->QNumbers.push_back(-1.0);
+    pSingleSite->BlockBegEnd.push_back(3);
+    pSingleSite->BlockBegEnd.push_back(3);
+    for (int ii=0;ii<4;ii++){
+      // Type labels the state
+      pSingleSite->iType.push_back(ii);
+    }
+    break;
   default:
     cout << Symmetry << " symmetry not implemented. Exiting... " <<endl;
     exit(0);
@@ -708,6 +739,10 @@ void CNRGCodeHandler::SetTotS(){
     totalS=false;
     Sqnumber=0;
     break;
+  case 9: // OneChPupPdn
+    totalS=false;
+    Sqnumber=-1; // no spin whatsoever
+    break;
   default:
     totalS=true;
     Sqnumber=1;
@@ -774,6 +809,7 @@ void CNRGCodeHandler::SaveGenPars(){
   OutFile << "#  6 - OneChNupPdn " << endl;
   OutFile << "#  7 - OneChS " << endl;
   OutFile << "#  8 - OneChSz " << endl;
+  OutFile << "#  9 - OneChPupPdn " << endl;
 
 
 //  
@@ -996,7 +1032,7 @@ bool CNRGCodeHandler::CheckFileExists(char arqname[]){
   // ifstream
   ifstream InFile(arqname);
 
-  return(InFile); // casts InFile into bool
+  return((bool)InFile); // casts InFile into bool
 
 }
 

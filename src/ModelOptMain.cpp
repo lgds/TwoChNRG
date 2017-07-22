@@ -46,6 +46,7 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z:")) != -1)
     cout << "   -m 1chNupPdn_Majorana " << endl;
     cout << "   -m 1chS_AndersonSC " << endl;
     cout << "   -m 1chSz_AndersonSC " << endl;
+    cout << "   -m 1chPupPdn_Majorana " << endl;
     cout << " Models with chains only (no impurity): " << endl;
     cout << "   -m 1chQS_chain  " << endl;
     cout << "   -m 2chQS_chain  " << endl;
@@ -191,6 +192,15 @@ if ( (strcmp(ThisCode.ModelOption,"Anderson") == 0)||
 			    ThisCode.ModelNo=0;
 			    strcpy(ThisCode.Symmetry,"OneChSz");
 			    ThisCode.SymNo=8;}
+
+		      else
+			if ( strcmp(ThisCode.ModelOption,"1chPupPdn_Majorana") == 0)
+			  {cout << " Got 1chPupPdn_Majorana " << endl;
+			    ThisCode.ModelNo=7;
+			    strcpy(ThisCode.Symmetry,"OneChPupPdn");
+			    ThisCode.SymNo=9;}
+
+
 		      else
 
 			{cout << " Invalid model. Exiting... " << endl;
@@ -242,7 +252,7 @@ cout << " BandType : " << ThisCode.BandType << " - BandNo : " << ThisCode.BandNo
 //  6 - OneChNupPdn
 //  7 - OneChS
 //  8 - OneChSz
-
+//  9 - OneChPupPdn
 
 // ModelNo:
 //  0 - Anderson
@@ -252,7 +262,7 @@ cout << " BandType : " << ThisCode.BandType << " - BandNo : " << ThisCode.BandNo
 //  4 - CM phonons (2ch only)
 //  5 - SMM (1chQ only)
 //  6 - DQD
-//  7 - Anderson+Local Majorana (1ch NupPdn only)
+//  7 - Anderson+Local Majorana (1ch NupPdn or 1chPupPdn only)
 
 
 // BandNo - BandType (BandNo values come from old lanczosNRG.for code):

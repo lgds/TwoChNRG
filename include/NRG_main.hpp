@@ -100,6 +100,15 @@ void OneChSz_SetAnderson_Hm1(vector<double> Params,
 			     vector<CNRGmatrix> &STLNRGMats);
 
 
+void OneChPupPdn_SetHm1_AndersonMajorana(vector<double> Params,
+					CNRGbasisarray* pSingleSite,
+					CNRGarray* pAeig, 
+					vector<CNRGmatrix> &STLNRGMats);
+
+void OneChPupPdn_SetChainH0(CNRGarray* pAeig, 
+			    vector<CNRGmatrix> &STLNRGMats);
+
+
 
 #endif
 
@@ -195,6 +204,13 @@ double OneChQSz_H0DQD_MatEl(vector<double> Params,
 
 
 complex<double> OneChNupPdn_Hm1_Majorana_MatEl(vector<double> Params,
+					       CNRGbasisarray* pAbasis, 
+					       CNRGbasisarray* pSingleSite,
+					       CNRGmatrix* MatArray,
+					       int ist, int jst);
+
+
+complex<double> OneChPupPdn_Hm1_Majorana_MatEl(vector<double> Params,
 					       CNRGbasisarray* pAbasis, 
 					       CNRGbasisarray* pSingleSite,
 					       CNRGmatrix* MatArray,

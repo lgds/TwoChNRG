@@ -77,6 +77,8 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 //  5 - TwoChQSz
 //  6 - OneChNupPdn
 //  7 - OneChS
+//  8 - OneChSz
+//  9 - OneChPupPdn
 
 // ModelNo:
 //  0 - Anderson
@@ -1466,7 +1468,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
       CommonQNs.push_back(1); // pos of QN 2 in old
 
       CommonQNs.push_back(0); // pos of QN 1 in SingleSite
-      CommonQNs.push_back(1); // pos of QN 1 in SingleSite
+      CommonQNs.push_back(1); // pos of QN 2 in SingleSite
 
       CommonQNs.push_back(1); // pos of Parity QN
       // No total S variables. Leave totSpos empty
@@ -1982,6 +1984,234 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	exit(0);
       }  
       // end switch ModelNo for OneChSz
+      break;
+    case 9: // OneChPuPdn
+      //////////////////////////////////
+      /////                         ////
+      ///// Symmetry: OneChPupPdn   ////
+      /////                         ////
+      //////////////////////////////////
+      // BuildBasis params
+      CommonQNs.push_back(2); // No of common QNs
+      CommonQNs.push_back(0); // pos of QN 1 in old
+      CommonQNs.push_back(1); // pos of QN 2 in old
+
+      CommonQNs.push_back(0); // pos of QN 1 in SingleSite
+      CommonQNs.push_back(1); // pos of QN 2 in SingleSite
+
+      CommonQNs.push_back(0); // pos of Parity QN
+      CommonQNs.push_back(1); // pos of Parity QN
+
+      // No total S variables. Leave totSpos empty
+
+      switch(ModelNo){
+      ///////////////////////////////////////
+      /// Models so far:                  ///
+      ///  3 - Chain only                 ///
+      ///  7 - Anderson+ 2 Local Majoranas///
+      ///////////////////////////////////////
+      case 3: // Chain only
+
+	ZeroParams();
+	Nsites0=1; // IS THIS CORRECT? Yes. H_0 is set so we start NRG from H_1
+	NumThermoMats=1; // Entropy only
+
+	// Initialize matrices (real matrices)
+	// fd_up
+	STLMatArray[0].NeedOld=false;	  
+ 	STLMatArray[0].CheckForMatEl=OneChPupPdn_cdup_check;
+  	STLMatArray[0].CalcMatEl=OneChPupPdn_fNup_MatEl;
+ 	//STLMatArray[0].CalcMatElCplx=OneChNupPdn_fNup_MatElCplx;
+	STLMatArray[0].SaveMatYN=false;
+	STLMatArray[0].IsComplex=false;
+
+	// fd_dn
+	STLMatArray[1].NeedOld=false;
+ 	STLMatArray[1].CheckForMatEl=OneChPupPdn_cddn_check;
+  	STLMatArray[1].CalcMatEl=OneChPupPdn_fNdn_MatEl;
+	STLMatArray[1].SaveMatYN=false;
+	STLMatArray[1].IsComplex=false;
+
+	STLMatArray.pop_back(); // Only TWO arrays
+	STLMatArray.pop_back(); // Only TWO arrays
+
+	OneChPupPdn_SetChainH0(pAeig,STLMatArray);
+
+	// Set pHN
+	pHN->CalcHNMatEl=OneChPupPdn_HN_MatEl; // REAL
+	// Wrap up
+	NumChannels=1;
+	NumNRGmats=STLMatArray.size();
+	MatArray=&STLMatArray[0]; // Need to do this after
+	// changes in STLMatArray!
+
+	if (BandNo==0){
+	  chi_m1=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
+	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
+	}
+	else{chi_m1=chain.GetChin(0);}
+	// Need to change chain files for ALL Models!!
+	strcpy(ThermoArray[0].ChainArqName,"EntropyChain1Ch_PupPdn");
+	strcat(ThermoArray[0].ChainArqName,zstring);
+	strcat(ThermoArray[0].ChainArqName,".dat");
+	ThermoArray[0].Calc=CalcEntropy;
+	ThermoArray[0].CalcChain=true; // Just to make sure
+
+	break;
+
+// Working on this.
+      case 7: 
+	cout << " 2 Majoranas + QD effective model " << endl;
+
+	Params.push_back(Lambda);  // Lambda
+	Params.push_back(HalfLambdaFactor); // Lambda factor
+
+	Params.push_back(dInitParams[0]); // U1
+	Params.push_back(dInitParams[2]); // ed1
+	Params.push_back(chi_m1); // sqrt(2gamma1/Pi)/sqrt(L)*HalfLambdaFactor
+
+	Params.push_back(dInitParams[3]); // Mag Field 
+
+	Params.push_back(dInitParams[4]); // lambdaL (or tL)
+	Params.push_back(dInitParams[5]); // lambdaR
+	Params.push_back(dInitParams[6]); // phi/pi
+
+	// Initialize matrices 
+	// fd_up
+	STLMatArray[0].NeedOld=false;	  
+ 	STLMatArray[0].CheckForMatEl=OneChPupPdn_cdup_check;
+ 	STLMatArray[0].CalcMatElCplx=OneChPupPdn_fNup_MatElCplx;
+	STLMatArray[0].SaveMatYN=false;
+	STLMatArray[0].IsComplex=true;
+
+	// fd_dn
+	STLMatArray[1].NeedOld=false;
+ 	STLMatArray[1].CheckForMatEl=OneChPupPdn_cddn_check;
+ 	STLMatArray[1].CalcMatElCplx=OneChPupPdn_fNdn_MatElCplx;
+	STLMatArray[1].SaveMatYN=false;
+	STLMatArray[1].IsComplex=true;
+
+
+	switch (calcdens){
+	case 0: // OpAvg: n_d(T), S_z(T) -(2014)
+	  auxNRGMat.NeedOld=true;
+	  auxNRGMat.UpperTriangular=false; // update procedure only works for 'false'
+	  auxNRGMat.CalcAvg=true;  // CalcAvg
+	  auxNRGMat.CheckForMatEl=Diag_check;
+	  auxNRGMat.CalcMatElCplx=ImpOnly_MatElCplx;
+	  auxNRGMat.IsComplex=true;
+
+	  STLMatArray[2]=auxNRGMat; // 2 - ndot (there already)
+	  STLMatArray[3]=auxNRGMat; // 3 - Sz (there already)
+	  strcpy(STLMatArray[2].MatName,"Ndot");
+	  strcpy(STLMatArray[3].MatName,"Szdot");
+	  STLMatArray.push_back(auxNRGMat);
+	  strcpy(STLMatArray[4].MatName,"Nf"); // 4 -Nf
+	  // changes in STLMatArray!
+	  SaveData=false;
+	  // No Thermo
+	  NumThermoMats=0;
+	  break;
+ 	case 1: //Spectral density
+	  // cd_up and cd_dn (OneChQSz_SetAnderson equals 
+	  // MatArray[2,3] to MatArray[0,1]
+	  STLMatArray[2].NeedOld=true;
+	  STLMatArray[2].CheckForMatEl=OneChPupPdn_cdup_check;
+	  STLMatArray[2].CalcMatElCplx=OneChPupPdn_cdup_MatElCplx;
+	  STLMatArray[2].SaveMatYN=true;
+	  STLMatArray[2].IsComplex=true;
+	  strcpy(STLMatArray[2].MatName,"cd_up");
+
+
+	  STLMatArray[3].NeedOld=true;
+	  STLMatArray[3].CheckForMatEl=OneChPupPdn_cddn_check;
+	  STLMatArray[3].CalcMatElCplx=OneChPupPdn_cddn_MatElCplx;
+	  STLMatArray[3].SaveMatYN=true;
+	  STLMatArray[3].IsComplex=true;
+	  strcpy(STLMatArray[3].MatName,"cd_dn");
+
+	  // f_Maj_up (this looks ok)
+	  auxNRGMat=STLMatArray[2];
+	  STLMatArray.push_back(auxNRGMat);
+	  strcpy(STLMatArray[4].MatName,"f_MajUp");
+
+	  // f_Maj_dn (this looks ok)
+	  auxNRGMat=STLMatArray[3];
+	  STLMatArray.push_back(auxNRGMat);
+	  strcpy(STLMatArray[5].MatName,"f_MajDn");
+
+	  // TODO: Add other spectral functions??
+
+	  cout << " N = -1: Nothing here" << endl;
+// 	  cout << " fdN_up : " << endl;
+// 	  STLMatArray[0].PrintAllBlocks();
+// 	  cout << " fdN_dn : " << endl;
+// 	  STLMatArray[1].PrintAllBlocks();
+// 	  cout << " cdN_up : " << endl;
+// 	  STLMatArray[2].PrintAllBlocks();
+// 	  cout << " cdN_dn : " << endl;
+// 	  STLMatArray[3].PrintAllBlocks();
+// 	  cout << " f_MajUp : " << endl;
+// 	  STLMatArray[4].PrintAllBlocks();
+// 	  cout << " f_MajDn : " << endl;
+// 	  STLMatArray[5].PrintAllBlocks();
+
+	  SaveData=true;
+
+ 	  break;
+	case 2:
+	  cout << "Entropy calculation (implementing it...)" << endl;
+
+	  STLMatArray.pop_back(); // Only TWO arrays
+	  STLMatArray.pop_back(); // Only TWO arrays
+
+	  // Need to change chain files for ALL Models!!
+	  strcpy(ThermoArray[0].ArqName,"EntropyImp1ChPupPdn_Majorana");
+	  strcat(ThermoArray[0].ArqName,zstring);
+	  strcat(ThermoArray[0].ArqName,".dat");
+	  strcpy(ThermoArray[0].ChainArqName,"EntropyChain1Ch_PupPdn");
+	  strcat(ThermoArray[0].ChainArqName,zstring);
+	  strcat(ThermoArray[0].ChainArqName,".dat");
+	  ThermoArray[0].Calc=CalcEntropy;
+	  ThermoArray[0].dImpValue=4.0*log(2.0); // log(16) (check)
+	  ThermoArray[0].CalcChain=false;
+	  NumThermoMats=1;
+	  SaveData=false;
+
+	  break;
+	default:
+	  cout << " calcdens = " << calcdens << " not implemented. Exiting. " << endl;
+	  exit(0);
+	}
+	// end switch calcdens
+
+	// actually SetHm1 !
+	OneChPupPdn_SetHm1_AndersonMajorana(Params,pSingleSite,pAeig,STLMatArray);
+
+// 	// BuildBasis params (already out of here)
+	// Set pHN
+	pHN->IsComplex=true;
+	pHN->CalcHNMatElCplx=OneChPupPdn_HN_MatElCplx;
+
+	// Wrap up
+	NumChannels=1;
+	Nsites0=0;
+	NumNRGmats=STLMatArray.size();
+	MatArray=&STLMatArray[0]; // Need to do this after
+	                          // changes in STLMatArray!
+
+	cout << " N=-1 ok. Going to N=0... " << endl;
+	
+	cout << " pAeig is complex ? " << pAeig->CheckComplex() << endl;
+
+
+	//exit(0);
+	break;
+      default:
+	cout << " Model not implemented for this symmetry. Exiting... " << endl;
+	exit(0);
+      }  
+      // end switch ModelNo for OneChPupPdn
       break;
 /////////////////////////////    
     default:

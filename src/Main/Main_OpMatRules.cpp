@@ -905,3 +905,110 @@ complex<double> OneChNupPdn_Hm1_Majorana_MatEl(vector<double> Params,
 }
 // end OneChNupPdn_Hm1_Majorana_MatEl
 /////////////////////////
+
+
+/////////////////////////////////
+/////////////////////////////////
+///
+/// <Pup Pdn | H_Majorana | Pup Pdn>_N=-1> :
+///
+/// Complex Params BUT double!
+
+complex<double> OneChPupPdn_Hm1_Majorana_MatEl(vector<double> Params,
+					       CNRGbasisarray* pAbasis, 
+					       CNRGbasisarray* pSingleSite,
+					       CNRGmatrix* MatArray,
+					       int ist, int jst){
+
+  complex<double> cMatEl=ZeroC;
+
+  // define tR and tL (complex variables)
+
+  double lambdaL=Params[0];
+  double lambdaR=Params[1];
+  double phi=Params[2];
+  //double en=Params[3];
+
+  double re_tR  = (lambdaR*sin(phi/2.0))/sqrt(2.0);
+  double im_tR  = (lambdaR*cos(phi/2.0))/sqrt(2.0);
+
+  complex<double> tR  = complex<double>(re_tR , im_tR );
+  complex<double> tL  = complex<double>(lambdaL/sqrt(2.0), 0.0);
+
+  // Matrix elements
+
+  double Pupi=pAbasis->GetQNumberFromSt(ist,0);
+  double Pdni=pAbasis->GetQNumberFromSt(ist,1);
+
+  double Pupj=pAbasis->GetQNumberFromSt(jst,0);
+  double Pdnj=pAbasis->GetQNumberFromSt(jst,1);
+
+  if (   ( dNEqual(Pupi,Pupj) )||( dNEqual(Pdni,Pdnj) )  )return(ZeroC);
+
+  //
+  if (ist==jst){ // Diagonal terms
+//     cMatEl.real()=pAbasis->dEn[ist];
+//     cMatEl.imag()=0.0;
+    cMatEl=complex<double>(pAbasis->dEn[ist],0.0);
+  }
+  else{
+    // (+1,+1)
+    if ( (ist==1)&&(jst==0) ) cMatEl=tR;
+    if ( (ist==0)&&(jst==1) ) cMatEl=std::conj(tR);
+
+    if ( (ist==2)&&(jst==0) ) cMatEl=tL;
+    if ( (ist==0)&&(jst==2) ) cMatEl=std::conj(tL);
+
+    if ( (ist==3)&&(jst==1) ) cMatEl=(-1.0)*tL;
+    if ( (ist==1)&&(jst==3) ) cMatEl=std::conj((-1.0)*tL);
+
+    if ( (ist==3)&&(jst==2) ) cMatEl=(-1.0)*tR;
+    if ( (ist==2)&&(jst==3) ) cMatEl=std::conj((-1.0)*tR);
+
+    // (-1,-1)
+    if ( (ist==5)&&(jst==4) ) cMatEl=tR;
+    if ( (ist==4)&&(jst==5) ) cMatEl=std::conj(tR);
+
+    if ( (ist==6)&&(jst==4) ) cMatEl=(-1.0)*tL;
+    if ( (ist==4)&&(jst==6) ) cMatEl=std::conj((-1.0)*tL);
+
+    if ( (ist==7)&&(jst==5) ) cMatEl=tL;
+    if ( (ist==5)&&(jst==7) ) cMatEl=std::conj(tL);
+
+    if ( (ist==7)&&(jst==6) ) cMatEl=(-1.0)*tR;
+    if ( (ist==6)&&(jst==7) ) cMatEl=std::conj((-1.0)*tR);
+
+    // (-1,+1)
+    if ( (ist==9)&&(jst==8) ) cMatEl=tR;
+    if ( (ist==8)&&(jst==9) ) cMatEl=std::conj(tR);
+
+    if ( (ist==10)&&(jst==8) ) cMatEl=(-1.0)*tL;
+    if ( (ist==8)&&(jst==10) ) cMatEl=std::conj((-1.0)*tL);
+
+    if ( (ist==11)&&(jst==9) ) cMatEl=tL;
+    if ( (ist==9)&&(jst==11) ) cMatEl=std::conj(tL);
+
+    if ( (ist==11)&&(jst==10) ) cMatEl=(-1.0)*tR;
+    if ( (ist==10)&&(jst==11) ) cMatEl=std::conj((-1.0)*tR);
+
+    // (+1,-1)
+    if ( (ist==13)&&(jst==12) ) cMatEl=tR;
+    if ( (ist==12)&&(jst==13) ) cMatEl=std::conj(tR);
+
+    if ( (ist==14)&&(jst==12) ) cMatEl=tL;
+    if ( (ist==12)&&(jst==14) ) cMatEl=std::conj(tL);
+
+    if ( (ist==15)&&(jst==13) ) cMatEl=(-1.0)*tL;
+    if ( (ist==13)&&(jst==15) ) cMatEl=std::conj((-1.0)*tL);
+
+    if ( (ist==15)&&(jst==14) ) cMatEl=(-1.0)*tR;
+    if ( (ist==14)&&(jst==15) ) cMatEl=std::conj((-1.0)*tR);
+
+
+  }
+  // end if ist==jst
+
+  return(cMatEl);
+}
+// end OneChPupPdn_Hm1_Majorana_MatEl
+/////////////////////////
