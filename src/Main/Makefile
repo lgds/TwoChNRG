@@ -1,11 +1,10 @@
+##
 
-NRGANDDIR=$(HOME)/Cprogs/NRG/Anderson/
-CLIBDIR=$(HOME)/Cprogs/Clibrary/
-ANDLIBDIR=$(NRGANDDIR)lib/
-DATSDIR=$(NRGANDDIR)Dats/
+## Add the location of the TwoChNRG directory and uncomment the next line!!
+#TWOCHDIR=$(HOME)/MyCodes/TwoChNRG/
 
-TWOCHDIR=$(HOME)/Cprogs/TwoChNRG/
-LAPACKDIR=/usr/src/lapack-3.0-5/lapack-3.0/SRC/
+## Add the location of the LAPACK directory in the next line
+#LAPACKDIR=/usr/src/lapack-3.0-5/lapack-3.0/SRC/
 
 
 ##OBJS_PREV=ProcReadParms.o \

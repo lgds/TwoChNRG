@@ -24,7 +24,7 @@ Each line correponds to a parameter. A typical file looks like this:
 2.82691E-2
 -2.5E-1
 2.5
-1.0
+0
 0
 0
 2
@@ -41,8 +41,8 @@ where the basic parameters (say, for the Anderson model calculations) are:
 2.82691E-2  <-- Gamma/D
 -2.5E-1 <-- e_d/D
 2.5     <-- Lambda
-1.0     <-- D (always =1.0)
-0       <-- tela (always=0)
+0       <-- chemical potential (band goes from 1-mu to 1+mu  (0 by default)
+0       <-- screen (always=0)
 0       <-- Update Before Cutting? [0- no (default), 1- yes]
 2       <-- calculate spectral density/susceptibility 
         [0 -no, 1- spec density, 2 -chi_imp 3-chi^{(0)}]
@@ -110,6 +110,13 @@ A technical detail: the data above are, in the notation of Bulla:
 "Imp"=Temp.\chi_imp(Temp)
 
 (the temperature is already multiplying \chi_imp).
+
+***********
+2.1- Practical example
+***********
+
+(to be done)
+
 
 ADDED:
  
@@ -191,8 +198,10 @@ $nice ./DM_NRG -M > output_DMNRG_finiteT.txt &
 
 It will calculate the reduced density matrices and save them on "rhoDM_**_N**.bin" files but up to N=M only. The spectral densities involving impurity operators c_i and c^\dagger_j will be saved as usual in rho_[i]_[j]_OmegaRhow.dat. 
 
+***********
+3.1- Practical example
+***********
 
-== Practical example
 For instance, in the input_NRG.dat file above, we have N+1=71 and Lamda=2.5. The last site of the chain will correspond to an energy scale D_{N}=(1/2)*(1+1/Lambda)*Lambda^{-(N-1)/2} which will be D_{N=70}~1.eE-14. This is, essentially, "zero temperature" for practical purposes.
 
 If we want to calculate the spectral function for a higher temperature of the oder ~10^{-6}, for instance, we can use M=30 which gives D_{M=30}~1.18E-6.

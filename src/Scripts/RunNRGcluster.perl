@@ -152,6 +152,7 @@ if (!defined($Command)){
     print "        6.1 - DQD with Zeeman in both dots (1chQSz) (NRG_main only) \n";
     print "      7     - DM_NRG/Conductance calculation (no model) \n";
     print "      8     - Majorana model (Nup Pdn basis)  \n";
+    print "      9     - Double Majorana model (Pup Pdn basis)  \n";
     print "  choice : ";
 #    chomp($ChoiceModel = <STDIN>);
     chomp($test1 = <STDIN>);
@@ -192,6 +193,9 @@ if (!defined($Command)){
    }
    elsif (/^8/){
     $ModelName="1chNupPdn_Majorana";
+   }
+   elsif (/^9/){
+    $ModelName="1chPupPdn_Majorana";
    }
      else{print "Model not valid. Exiting... \n";exit; }
   }

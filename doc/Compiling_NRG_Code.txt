@@ -4,22 +4,27 @@ Here's a quick guide to set up the NRG code:
 1 - Untar the tar.gz file
 *********
 
-Choose a directory (for instance, "(SOME PATH)/NRGcode") and untar the file. It will store the files in 3 basic directories:
+Choose a directory (for instance, "$HOME/(SOME PATH)") and untar the file. It will create the directory "$HOME/(SOME PATH)/TwoChNRG" and store the files in 3 basic directories:
 
-./include -> C++ header files
-./src     -> C++ source codes
-./doc     -> Documentation
+./TwoChNRG/include -> C++ header files
+./TwoChNRG/src     -> C++ source codes
+./TwoChNRG/doc     -> Documentation
 
-Once you did this, set up the $TWOCHDIR enviroment variable in your .barhsc file. This variable contains the location of the directory (SOME PATH)/NRGcode. For instance, if your created "./NRGcode" directly in $HOME, you can add the following to your .bashrc file:
+Once you did this, set up the $TWOCHDIR enviroment variable in your .barhsc file. This variable contains the location of the directory where the source files of the NRG code are. 
+
+Let's say you saved the files in $HOME/(SOME DIR)/TwoChNRG . For instance, if your created the "./TwoChNRG" directory in $HOME/MyCodes/, you can add the following to your .bashrc file:
 
 if [ -z $TWOCHDIR ]; then
-  TWOCHDIR=$HOME/NRGcode
+  TWOCHDIR=$HOME/MyCodes/TwoChNRG
   export TWOCHDIR
 fi
 
 Just to make sure everything is ok, do:
 $source .bashrc
 $echo $TWOCHDIR
+
+It should return something like
+/home/yourusername/MyCodes/TwoChNRG
 
 *********
 2 - Install the required packages
@@ -52,7 +57,7 @@ The procedure is similar for all three codes so I will illustrate with the first
 
 Go in each of the folder above and edit the file called "Makefile" and set the correct value for the variable "$TWOCHDIR" defined above. For instance: 
 
-TWOCHDIR=$(HOME)/NRGcode/
+TWOCHDIR=$(HOME)/MyCodes/TwoChNRG/
 
 (note the "/" in the end. This is important) 
 
