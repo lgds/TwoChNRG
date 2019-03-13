@@ -63,8 +63,8 @@ for dir in `seq $dir0 $dirF`; do
   if [ $dmnrgonly -eq 1 ]; then
     rm  ./run$dir/rhoDM*bin
     rm ./run$dir/output*DM*NRG*.txt
-    rm ./run$dir/output*Conductance*.txt  
-    rm ./run$dir/output*Conductance*.dat  
+    rm ./run$dir/output*onductance*.txt  
+    rm ./run$dir/output*onductance*.dat  
     rm ./run$dir/Rho*.dat 
     rm ./run$dir/GT_x*.dat 
     rm ./run$dir/rho*OmegaRhow*dat
@@ -89,6 +89,7 @@ for dir in `seq $dir0 $dirF`; do
        echo "Removing output_*.txt *Temp*.dat SuscepImp[Chain]*.dat EntropyImp[Chain]*.dat files"
        rm ./run$dir/*Temp*.dat
        rm ./run$dir/output*.txt
+       rm ./run$dir/output*.dat
        rm ./run$dir/SuscepImp*.dat 
        rm ./run$dir/EntropyImp*.dat 
        rm ./run$dir/SuscepChain*.dat 

@@ -211,9 +211,9 @@ int main (int argc, char* argv[]){
   }
 
 
-  cout << " Rho Nshell = " << NshellMax << endl;
-  //if (NshellMax==48) 
-  //RhoN[NshellMax].PrintAllBlocks();
+  //if (NshellMax==48){
+  //cout << " Rho Nshell = " << NshellMax << endl;
+  //RhoN[NshellMax].PrintAllBlocks();}
   // Debugging
   double qnums[2];
   int iBl=0;
@@ -288,8 +288,8 @@ int main (int argc, char* argv[]){
 	 << " completed in " << time_elapsed << " secs " << endl;
 
     // Debugging
-     if (Nshell==48){
-       //RhoN[Nshell].PrintAllBlocks();
+//      if (Nshell==1){
+//        RhoN[Nshell].PrintAllBlocks();
 //     qnums[0]=-2.000;
 //     qnums[1]=1.000;
 //     iBl=RhoN[Nshell].GetBlockFromQNumbers(qnums);
@@ -298,7 +298,7 @@ int main (int argc, char* argv[]){
 //     qnums[1]=1.000;
 //     iBl=RhoN[Nshell].GetBlockFromQNumbers(qnums);
 //     RhoN[Nshell].PrintMatBlock(iBl,iBl);
-     }
+//      }
 
     // Update AbasisNp1
     AbasisNp1.ClearAll();

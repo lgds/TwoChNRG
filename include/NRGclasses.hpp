@@ -24,7 +24,12 @@ const  complex<double> OneImC (0.0,1.0);
 
 #endif
 
+//#ifndef _MYEPSCONST_
+// #define _MYEPSCONST_
 
+// const double MyEPS(1.0e-13);
+
+// #endif
 // Declares the classes
 ////////////////////////////////////////////////
 ////////////// Class CNRGarray \\\\\\\\\\\\\\\\\
@@ -42,7 +47,8 @@ public:
   // Default constructor
 
   //CNRGarray():totalS(false){}
-  CNRGarray(){}
+  CNRGarray():MyEPS(1.0e-18)
+  {}
   // Constructor with NQNumbers defined
   CNRGarray(int Nqns){
     NQNumbers=Nqns;
@@ -84,6 +90,7 @@ public:
   //bool ComplexEVec; // tru -> complex eigenvectors
 
 
+  double MyEPS;
  
   // Member functions
   int NumBlocks();

@@ -16,8 +16,9 @@ sub Print_Help(){
   print "\t--queue=queuename \t: sends to queue \"queuename\"\n";
   print "\t--special \t: adds special features in the script (edit it here) \n";
   print "\t--pbsresources=\"nodes=wilson01:ppn=2\" , etc\t: text for -l option in qsub (advanced). Useful to request a single node (default: nodes=1:ppn=2) \n";
+  print "\t--EPS=myEPS\t: NRG_main -E option. Sets a minimum level splitting (smaller splittings are set to zero). Default myEPS=1e-13 \n";
   print "\t--CFS\t: DM_NRG -C option: uses Complete Fock Space calculation. \n";
-  print "\t--Nw=nw \t: DM_NRG -n nw option: Number of omegas per shell (default: 1) \n";
+  print "\t--Nw=nw \t: DM_NRG -n nw option: Number of omegas per shell minus 1 (default: 0) \n";
   print "\t--SubGap\t: DM_NRG -G option: get the sub-gap spectrum \n";
   exit;
 
@@ -25,6 +26,7 @@ sub Print_Help(){
 use Getopt::Long;
 
 my $Nw=1;
+my $MyEPS="1e-13";
 
 my $DMNRGExecName="DM_NRG ";
 GetOptions("queue=s"=>\$QueueName,
@@ -34,6 +36,7 @@ GetOptions("queue=s"=>\$QueueName,
            "addtoname=s" => \$AddToName,
            "pbsresources=s" => \$PBSresources,
            "Nw=i" => \$Nw,
+           "EPS=s" => \$MyEPS,
            "SubGap" => \$SubGap,
            "CFS" => \$CFS,
            "special" => \$Special,
@@ -89,10 +92,11 @@ if (!defined($Command)){
   print "      4     - DM_NRG \n";
   print "        4.1 - DM_NRG with ./Conductance (allows for G vs T) \n";
   print "      5     - Conductance \n \n";
+  print "      6     - Conductance vs T (SIAM) \n \n";
   print "  choice : ";
 ##  chomp($ChoiceCode = <STDIN>);
   chomp($test1 = <STDIN>);
-  if ( ($test1 ne '')&&($test1>0)&&($test1<=5) ){
+  if ( ($test1 ne '')&&($test1>0)&&($test1<=6) ){
     $ChoiceCode=$test1;
   }else{print "Invalid choice. Using default (=$ChoiceCode) \n";}
 
@@ -125,13 +129,17 @@ if (!defined($Command)){
    elsif (/^5/){
     $CodeName="Conductance";
    }
+   elsif (/^6/){
+    $CodeName="CondSIAM";
+   }
    else{print "Code not valid. Exiting... \n";exit; }
   }
   print " --- Code = $CodeName \n";
 ##
 ##  Choose model:
 ##
-  if (($ChoiceCode==4)||($ChoiceCode==5)){
+##  if (($ChoiceCode==4)||($ChoiceCode==5)||($ChoiceCode==6)){
+  if (($ChoiceCode>=4)){
     $ChoiceModel=7;
   }
   else{
@@ -207,7 +215,7 @@ if (!defined($Command)){
   if ($ChoiceCode==4){ 
     $ChoiceBand=0;
   } ## end if ChoiceCode=DM_NRG
-  elsif ($ChoiceCode==5){
+  elsif (($ChoiceCode==5)||($ChoiceCode==6)){
     $ChoiceBand=0;
   }## ChoiceCode=Conductance 
   else{
@@ -331,9 +339,16 @@ else{
      }
      if ($ChoiceCode==4) {
        $ExecName=$DMNRGExecName;
-     } elsif ($ChoiceCode!=5) {
+     } 
+     elsif ($ChoiceCode==6) {
+       $ExecName.="  -n ${Nw}";
+     }
+     elsif ($ChoiceCode!=5) {
        if ($ModelName ne "") {
 	 $ExecName.=" -m ".$ModelName;
+         if ($ModelName eq "1chPupPdn_Majorana"){
+	   $ExecName.=" -E ".$MyEPS;
+         } 
        }
        if ($ChoiceBand != 0) {
 	 $ExecName.=" -b ".$BandName;
@@ -435,10 +450,13 @@ for ($Dir=$Dir0;
 	     $String.="nice ./".$DMNRGExecName." -n ${Nw} > output_DMNRG_zEQ${zz}_Dir${Dir}.txt \n";
 	   }			## end if UseCFS==1
         ## Finite-T: loop over Mtemp for each Z.
-        } else { ## else $FiniteT==1
+         } else { ## else $FiniteT==1
            for ($Mtemp=$Mtemp0;$Mtemp<=$MtempFinal;$Mtemp+=$MtempStep){
-             ##$DMNRGExecName=$DMNRGExecNameTeq0." -M ".$Mtemp;  ## Need to add -n Nw !!!
-             $DMNRGExecName=$DMNRGExecNameTeq0." -M ".$Mtemp." -n ".$Nw;  ## Need to add a CFS flag for finite-T here!
+             ##$DMNRGExecName=$DMNRGExecNameTeq0." -M ".$Mtemp." -n ".$Nw;  ## Need to add a CFS flag for finite-T here!
+             $DMNRGExecName=$DMNRGExecNameTeq0." -M ".$Mtemp;  ## Need to add -n Nw if not CFS!!!
+             if ($UseCFS!=1){
+                $DMNRGExecName=$DMNRGExecName." -n ".$Nw;
+             } # add -n Nw if not CFS
              $ExtensionMtemp=$Extension."_MtempEQ".$Mtemp."_zEQ".$zz;
              $String.="nice ./$DMNRGExecName > output_$ExtensionMtemp.txt \n";
 ## No conductance in this mode. I would need to add another Mtemp loop;
@@ -451,7 +469,7 @@ for ($Dir=$Dir0;
            }
            # end loop in Mtemp
            $Mtemp=$Mtemp0;
-        } ## end if FInite_T==1
+         } ## end if FInite_T==1
 
 	## Clean up NRG bin files
         $String.="rm -f \*.bin \n";
@@ -502,8 +520,8 @@ for ($Dir=$Dir0;
      if ($UseAllCodes==1){
         print "Adding DM_NRG and/or Conductance \n";
         if ( ($ChoiceCode==4)&&($FiniteT==1) ){
-##          $String.="nice ./Conductance > output_Conductance"; 
-          $String.="nice ./Conductance -R -G > output_Resistivity";
+          $String.="nice ./Conductance > output_Conductance"; 
+##          $String.="nice ./Conductance -R -G > output_Resistivity";
           if ($UseCFS==1){$String.="_CFS";}
           $String.="_Mtemp".$Mtemp0."_Dir".$Dir.".txt \n";
           $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";
@@ -513,8 +531,8 @@ for ($Dir=$Dir0;
              $DMNRGExecName=$DMNRGExecNameTeq0." -M ".$Mtemp;
              $ExtensionMtemp=$Extension."_MtempEQ".$Mtemp;
              $String.="nice ./$DMNRGExecName > output_$ExtensionMtemp.txt \n";
-##             $String.="nice ./Conductance > output_Conductance";
-             $String.="nice ./Conductance -R -G > output_Resistivity";
+             $String.="nice ./Conductance > output_Conductance";
+##             $String.="nice ./Conductance -R -G > output_Resistivity";
              if ($UseCFS==1){$String.="_CFS";}
              $String.="_Mtemp".$Mtemp."_Dir".$Dir.".txt \n";
              $String.="ls rho_\*_OmegaRhow\* \| sed \"s\/rho_\\\(\.\*\\)\.dat\/mv \& rhoMtemp".$Mtemp."_\\1\.dat/\" \| sh \n";

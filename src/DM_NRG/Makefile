@@ -32,6 +32,8 @@ OBJS_DMNRG=DM_NRG_SetChildSt.o DM_NRG_CalcRhoN.o DM_NRG_SetRhoNmax.o \
 
 OBJS_CONDUCTANCE=ConductanceClass.o
 
+##OBJS_CONDSIAM=CalcGTSIAM.o
+
 #CXXFLAGS =  -I$(CLIBDIR) -I$(TWOCHDIR)src/ -I$(TWOCHDIR)include/ \
 #            -I$(TWOCHDIR)src/OneChQS/ -I$(TWOCHDIR)src/TwoChQS/ \
 #            -I$(LAPACKDIR) -funroll-loops -O2
@@ -78,6 +80,9 @@ DM_NRG : DM_NRG.cpp $(OBJS) $(OBJS_DMNRG)
 ##
 
 Conductance  : Conductance.cpp $(OBJS) $(OBJS_CONDUCTANCE)
+	$(CXX)  $^ $(CXXFLAGS) $(LDFLAGS) -o $@ 
+
+CondSIAM  : CondSIAM.cpp $(OBJS) $(OBJS_CONDSIAM)
 	$(CXX)  $^ $(CXXFLAGS) $(LDFLAGS) -o $@ 
 
 clean :

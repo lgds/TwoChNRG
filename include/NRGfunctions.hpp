@@ -289,9 +289,15 @@ double QfdQm1_totS(vector<double> Params,
 #ifndef _UPDATEMATRICES_
 #define _UPDATEMATRICES_
 
-void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut, 
+void UpdateMatrices_uBLAS(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut, 
 		    CNRGbasisarray* pAbasis,
 		    CNRGmatrix* NRGMats, int NumNRGMats, bool display=false);
+
+void UpdateMatrices(CNRGbasisarray* pSingleSite,CNRGbasisarray* pAeigCut, 
+		    CNRGbasisarray* pAbasis,
+		    CNRGmatrix* NRGMats, int NumNRGMats,
+		    bool display=false);
+
 
 #endif
 

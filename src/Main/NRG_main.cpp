@@ -48,15 +48,14 @@ int main (int argc, char* argv[]){
 // Parameters for command-line passing (GetOpt)
   
   CNRGCodeHandler ThisCode;
+  CNRGarray Aeig;
 
 #include"ModelOptMain.cpp"
-
 
   ThisCode.SaveData=false;
 
   // NRG objects
   
-  CNRGarray Aeig;
   CNRGbasisarray AeigCut;
   CNRGbasisarray Abasis;
   CNRGbasisarray SingleSite;
@@ -280,7 +279,7 @@ int main (int argc, char* argv[]){
      TM=ThisCode.DN/ThisCode.betabar;
      cout << "DN = " << ThisCode.DN << " TM = " << TM << endl;
      // Debugging...
-     //bool disp=(ThisCode.Nsites==3?true:false);
+     //bool disp=(ThisCode.Nsites==1?true:false);
      //bool disp=true;
      bool disp=false;
 
@@ -348,8 +347,14 @@ int main (int argc, char* argv[]){
 			&Abasis,MatArray, ThisCode.NumNRGmats);
 
        }else{
+	 //disp=(ThisCode.Nsites==1?true:false);
+	 // UpdateMatrices_uBLAS(&SingleSite,&AeigCut, 
+	 // 		&Abasis,&STLMatArray[0],STLMatArray.size(),disp);
+	 // Testing...
 	 UpdateMatrices(&SingleSite,&AeigCut, 
-			&Abasis,&STLMatArray[0],STLMatArray.size(),disp);
+	 		&Abasis,&STLMatArray[0],STLMatArray.size(),disp);
+	 // Lightning FAST!!
+	 //disp=false;
        }
      }
      // end update matrices

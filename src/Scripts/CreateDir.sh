@@ -41,5 +41,6 @@ for ii in `seq $ni $nf`; do
     cp ./run3/lanc.in ./run$ii
 #    ln -sf $TWOCHDIR/src/GetEnLevels.sh  ./run$ii/GetEnLevels
     ln -sf $NRGANDDIR/Dats/CalcTK/CalcTK ./run$ii/CalcTK
+    ln -sf $TWOCHDIR/src/Scripts/Zavg.perl
   fi
 done

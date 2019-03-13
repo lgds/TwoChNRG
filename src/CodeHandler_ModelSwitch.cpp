@@ -2072,8 +2072,8 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 
 	Params.push_back(dInitParams[3]); // Mag Field 
 
-	Params.push_back(dInitParams[4]); // lambdaL (or tL)
-	Params.push_back(dInitParams[5]); // lambdaR
+	Params.push_back(dInitParams[4]); // lambdaR (or tR)
+	Params.push_back(dInitParams[5]); // lambdaL
 	Params.push_back(dInitParams[6]); // phi/pi
 
 	// Initialize matrices 

@@ -3237,7 +3237,8 @@ void OneChPupPdn_SetHm1_AndersonMajorana(vector<double> Params,
   vector<double> ParamsHm1;
   ParamsHm1.push_back(t1);
   ParamsHm1.push_back(t2);
-  ParamsHm1.push_back(phi_mag*pi); //actual phi 
+  //ParamsHm1.push_back(phi_mag*pi); //actual phi 
+  ParamsHm1.push_back(phi_mag); //phi/Pi 
   //ParamsHm1.push_back(em);
 
   //auxMat.DiagHN(ParamsHm1,&AbasisHm1,pSingleSite,&AuxMatArray[0],&AeigHm1);

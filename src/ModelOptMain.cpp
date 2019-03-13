@@ -20,7 +20,7 @@ ThisCode.ModelNo=0;
 ThisCode.SymNo=0;
 ThisCode.BandNo=0;
 
-while ((c = getopt (argc, argv, "h ? m: b: D: z:")) != -1)
+while ((c = getopt (argc, argv, "h ? m: b: D: z: E:")) != -1)
   switch (c){
   case 'm':
     // 	strcpy(ModelOption,optarg);
@@ -73,6 +73,11 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z:")) != -1)
 //      if (dEqual(ThisCode.chain.z_twist,0.0)) ThisCode.chain.z_twist=1.0;
      if (ThisCode.chain.z_twist<0.0) ThisCode.chain.z_twist=1.0;
      cout << " Using z-trick: z = " << ThisCode.chain.z_twist << endl;
+     break;
+  case 'E':
+     Aeig.MyEPS=atof(optarg);
+     if (Aeig.MyEPS<0.0) Aeig.MyEPS=1.0e-13;
+     cout << " Using level-degeneracy tol. MyEPS = " << Aeig.MyEPS << endl;
      break;
   case 'D':
     ThisCode.chain.DiscScheme=atof(optarg);

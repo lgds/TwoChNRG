@@ -238,28 +238,33 @@ void CNRGarray::SetE0zero(){
 
   for (int ii=0;ii<dEn.size();ii++) dEn[ii]-=Emin;
 
- 
-  
-
 }
 
 //////////////
 void CNRGarray::SetDegen(){
 
-  int nst,ii,jj;
+  // int nst,ii;
 
-  // Needs work
-  
-//   iDegen.push_back(1);
-//   ii=1;
-//   while ( ii<dEn.size() )
-//     {
-//       if (fabs(dEn[ii]-dEn[ii-1])<1.0E-10) nst=iDegen[ii-1]+1;
-//       else nst=1;
-//       iDegen.push_back(nst);
-//       ii++;
-//     }
-
+  // Search for near-degeneracies in the spectrum
+  // and set the energy of the states to be the same  
+  int ii=0;
+  while ( ii<dEn.size() ){
+    for (int jj=ii+1;jj<dEn.size();jj++){
+//     if (fabs(dEn[ii]-dEn[ii-1])<1.0E-10) nst=iDegen[ii-1]+1;
+//     else nst=1;
+//     iDegen.push_back(nst);
+      if (dEqualPrec(dEn[jj],dEn[ii],MyEPS)){ 
+	if (dEn[jj]>dEn[ii])
+	  dEn[jj]=dEn[ii];
+	else
+	  dEn[ii]=dEn[jj];
+      }
+      //end if equal
+    }
+    // end for loop in jj
+    ii++;
+  }
+  // end while loop
 }
 
 ///////////////////////
@@ -323,8 +328,12 @@ void CNRGarray::ClearAll(){
 double CNRGarray::GetQNumber(int iblock, int whichqn){
 
   int iq=iblock*NQNumbers+whichqn;
-      
-  return(QNumbers[iq]);
+
+  if (QNumbers.size()>0)      
+     return(QNumbers[iq]);
+  else
+     return(0.0);
+
 }
 
 //////////////
@@ -451,6 +460,11 @@ int CNRGarray::GetBlockEcutPos(int iblock,double Ecut){
 /////////////
 void CNRGarray::SetKept(int Ncutoff){
 
+  // New (2019)
+
+  SetDegen();
+
+  //
 
   double dEcut=Ecut(Ncutoff);
 
@@ -664,10 +678,13 @@ double CNRGarray::Ecut(int Ncut){
 	 << " Ecut+1 = " << aux2 << endl;
     //check for near-degenerate levels
     int ii=1;
-    while ( (aux2>0.0)&&(fabs((aux2-aux)/aux)<0.001)
+//     while ( (aux2>0.0)&&(fabs((aux2-aux)/aux)<0.001)
+    while ( (aux2>0.0)&&(fabs((aux2-aux)/aux)<0.01)
 	    &&(ii<Eaux.size()) ){aux2=Eaux[Ncut+ii];ii++;}
-    if (ii>1) aux=Eaux[Ncut+ii-2];
-    cout << " CNRGarray::Ecut : Ecut = "<< aux << " Nkept = " << Ncut+ii-1 << endl;
+    if (ii>1) {aux=Eaux[Ncut+ii-2];aux2=Eaux[Ncut+ii-1];}
+    cout << " CNRGarray::Ecut : New Ecut = "<< aux 
+	 << " New Ecut+1 = " << aux2 
+         << " Nkept = " << Ncut+ii-1 << endl;
   }
 
   return(aux);

@@ -102,6 +102,13 @@ public:
   double CalcSpecCosti_T_N(int Nshell, double betabar,
 			   double factorWN, bool CalcNorm=false);
 
+  // Conductance for the SIAM (Krissia's trick)
+  void  CalcCondSIAM_ManyTs(int NwEachN);
+
+  double CalcCondSIAM_T_N(int Nshell, double betabar, bool CalcNorm=false);
+
+
+
 
   double DMNRG_SpecDens_M(double omega,int Nshell, bool CalcNorm=false);
 
@@ -140,12 +147,21 @@ public:
   boost::numeric::ublas::matrix<complex<double> > cMijxBDeltaEij(CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, double omega);
 
 
-  // Aij*BDelta(Ei-Ej);
+  // Aij*BDelta(Ei-Ej); CFS method
   boost::numeric::ublas::matrix<double> MijxBDeltaEij(boost::numeric::ublas::matrix<double> Mat, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
   boost::numeric::ublas::matrix<double> MijxBDeltaEij(CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
   // complex
   boost::numeric::ublas::matrix<complex<double> > cMijxBDeltaEij(boost::numeric::ublas::matrix<complex<double> > Mat, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
   boost::numeric::ublas::matrix<complex<double> > cMijxBDeltaEij(CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
+
+
+  // Aij*(exp(betabar*Ei)+exp(betabar*Ej))^-1;
+  boost::numeric::ublas::matrix<double> AijOverexpEij(boost::numeric::ublas::matrix<double>Mat, CNRGarray* pAeig, int iblock1, int iblock2, double betabar);
+  boost::numeric::ublas::matrix<double> AijOverexpEij(CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, double betabar);
+
+  // complex
+  boost::numeric::ublas::matrix<complex<double> > cAijOverexpEij(boost::numeric::ublas::matrix<complex<double> >Mat, CNRGarray* pAeig, int iblock1, int iblock2, double betabar);
+  boost::numeric::ublas::matrix<complex<double> > cAijOverexpEij(CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, double betabar);
 
 
 

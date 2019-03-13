@@ -926,11 +926,14 @@ complex<double> OneChPupPdn_Hm1_Majorana_MatEl(vector<double> Params,
 
   double lambdaL=Params[0];
   double lambdaR=Params[1];
-  double phi=Params[2];
+  double phi_mag=Params[2];
   //double en=Params[3];
 
-  double re_tR  = (lambdaR*sin(phi/2.0))/sqrt(2.0);
-  double im_tR  = (lambdaR*cos(phi/2.0))/sqrt(2.0);
+  double re_tR  = (lambdaR*sin(M_PI*phi_mag/2.0))/sqrt(2.0);
+  double im_tR  = (lambdaR*cos(M_PI*phi_mag/2.0))/sqrt(2.0);
+
+  // Let's try this...
+  if (dEqual(fabs(phi_mag),1.0)) im_tR=0.0;
 
   complex<double> tR  = complex<double>(re_tR , im_tR );
   complex<double> tL  = complex<double>(lambdaL/sqrt(2.0), 0.0);

@@ -2445,6 +2445,9 @@ complex<double> OneChPupPdn_HN_MatElCplx(vector<double> Params,
       }
       // end if
 
+
+      // PROBLEM: There might be a non-zero Hermitian term!!
+
       // Get SingleSite QNumbers
 
       double Puptilde=pSingleSite->GetQNumberFromSt(type,0);
@@ -2462,8 +2465,8 @@ complex<double> OneChPupPdn_HN_MatElCplx(vector<double> Params,
       cMatEl+=FermiSign*cOldEl*OneCh_fd_table(isigma,typep,type);
 
       // Debug 
-//       if (  (pAbasis->Nshell==0)&&
-// 	    ( ( (ist==5)&&(jst>=10)&&(jst<=10) )
+//       if (  (pAbasis->Nshell==1)&&
+// 	    ( ( (ist==0)&&(jst>=45)&&(jst<=45) )
 // 	      )  ){
 // 	cout << " imat = " << imat
 // 	     << " ist= " << ist
@@ -2497,7 +2500,7 @@ complex<double> OneChPupPdn_HN_MatElCplx(vector<double> Params,
 // 	     << " Mat El= " << cMatEl*chi_N 
 // 	     << endl;
 //       }
-//       ///
+      ///
 
       imat++;
     }
