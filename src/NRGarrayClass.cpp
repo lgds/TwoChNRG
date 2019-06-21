@@ -1028,6 +1028,37 @@ double CNRGarray::PartitionFunc(double betabar){
 
 
 //////////////
+//////////////
+double CNRGarray::PartitionFuncDisc(double betabar){
+
+
+  double sum=0.0;
+
+  if (Kept.size()==0){
+    cout << "PartitionFuncDisc: Kept not defined. Returning -1.0 " << endl;
+    return(-1.0);
+  }
+  
+  for (int ibl=0;ibl<NumBlocks();ibl++){
+    double Si=0.0;
+    if (totalS){
+      Si=GetQNumber(ibl,Sqnumbers[0]); // only a single SU(2) for now
+    }
+    
+    for (int ist=GetBlockLimit(ibl,0);ist<=GetBlockLimit(ibl,1);ist++){
+      if (Kept[ist]==false)
+	sum+=(2.0*Si+1.0)*exp(-betabar*(dEn[ist]));
+    }
+    // end loop in states
+  }
+  // end loop in blocks
+
+  return(sum);
+}
+
+
+//////////////
+
 void CNRGarray::SetEigVecToOne(){
 
   // Sets eigenvectors to (1 0 0, 0 1 0, 0 0 1... on each block in the basis)

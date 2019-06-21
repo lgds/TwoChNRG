@@ -79,3 +79,21 @@ double HybFunc_Cavity_timesEn(double omega,
 #endif
 
 ////////
+
+////////
+#ifndef _HYBFUNC_COSILICENE_
+#define _HYBFUNC_COSILICENE_
+
+double SignF(double xin);
+
+double HeavF(double xin);
+
+double  HybFunc_CoSilicene(double omega,
+		      void *params);
+
+double  HybFunc_CoSilicene_timesEn(double omega,
+			      void *params);
+
+#endif
+
+////////

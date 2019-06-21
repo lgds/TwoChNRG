@@ -9,9 +9,9 @@
 #include <vector>
 #include <math.h>
 
-extern "C"{
-  #include <cblas.h>
-}
+// extern "C"{
+//   #include <cblas.h>
+// }
 
 #define INVALID -1
 

@@ -108,6 +108,9 @@ int main (int argc, char* argv[]){
   ofstream OutFile;
 
 
+  // Allows for several channels
+  vector <double> chi_m1;
+
   ////////////////////////////////////////////////////
   ////////////////////////////////////////////////////
   ////////////////////////////////////////////////////
@@ -134,7 +137,7 @@ int main (int argc, char* argv[]){
    ThisCode.NumChannels=1;
    ThisCode.NumNRGmats=NumNRGarrays;
    ThisCode.NumThermoMats=NumThermoArrays;
-   ThisCode.InitialSetUp();
+   ThisCode.InitialSetUp(); 
    //InFile.open("input_nrg.dat"); // Needs this here 
                                    // new MatArray after!! Why????
 
@@ -186,21 +189,24 @@ int main (int argc, char* argv[]){
    //double HalfLambdaFactor=0.5*(1.0+(1.0/Lambda)); // also defined in CNRGcodehandler
    double HalfLambdaFactor=ThisCode.HalfLambdaFactor; // fix this double counting later
 
-   double chi_m1=sqrt(2.0*Gamma/pi)/(sqrt(Lambda)*HalfLambdaFactor);
+//    double chi_m1=sqrt(2.0*Gamma/pi)/(sqrt(Lambda)*HalfLambdaFactor);
+   // NumChannels was set in ThisCode.InitialSetUp(). Set
+   chi_m1.insert(chi_m1.begin(),ThisCode.NumChannels,0.0);
+   chi_m1[0]=sqrt(2.0*Gamma/pi)/(sqrt(Lambda)*HalfLambdaFactor);
 
    // added: eN for chains away from phs (getting en for N=0)
-   double eN=ThisCode.chain.GetEn(0);
+   double eN=ThisCode.Chains[0].GetEn(0);
 
-   cout << " Fsq = " << ThisCode.chain.Fsq 
-	<< " chi_m1 = " << chi_m1 
+   cout << " Fsq = " << ThisCode.Chains[0].Fsq 
+	<< " chi_m1 = " << chi_m1[0] 
 	<< " eN(0) = " << eN << endl;
 
    // Adding A_Lambda factor (except if using Campo-Oliveira)
-   if (ThisCode.chain.DiscScheme!=1){
-     chi_m1*=sqrt(0.5*log(Lambda)*(Lambda+1)/(Lambda-1));
+   if (ThisCode.Chains[0].DiscScheme!=1){
+     chi_m1[0]*=sqrt(0.5*log(Lambda)*(Lambda+1)/(Lambda-1));
    }
 
-   cout  << " sqrt(ALambda)*chi_m1 = " << chi_m1  << endl;
+   cout  << " sqrt(ALambda)*chi_m1 = " << chi_m1[0]  << endl;
 
 
    // Sep 08: 1ChQ chain calculations diverted to Anderson (ModelNo=0)
@@ -258,7 +264,7 @@ int main (int argc, char* argv[]){
    // Parameters for HN (always the same?)
    ParamsHN.push_back(Lambda);
    for (int ich=0;ich<ThisCode.NumChannels;ich++)
-     ParamsHN.push_back(chi_m1);
+     ParamsHN.push_back(chi_m1[ich]);
    // This is not good. Depends on setting chi_m1 at ModelSwitch!!
    // Also: if Nsites0 is NOT -1, we need something like this
    //        ParamsHN[ich+1]=ThisCode.chain.GetChin(ThisCode.Nsites);
@@ -396,7 +402,7 @@ int main (int argc, char* argv[]){
      for (int ich=0;ich<ThisCode.NumChannels;ich++)
        //ParamsHN[ich+1]=chiN(ThisCode.Nsites,Lambda);
        // Try this...
-       ParamsHN[ich+1]=ThisCode.chain.GetChin(ThisCode.Nsites);
+       ParamsHN[ich+1]=ThisCode.Chains[0].GetChin(ThisCode.Nsites);
 
      
      // Update sites
@@ -404,11 +410,11 @@ int main (int argc, char* argv[]){
 
      // Adding eN: is this before or after Nsites is updated? After!
      if (ParamsHN.size()>ThisCode.NumChannels+2){
-       eN=ThisCode.chain.GetEn(ThisCode.Nsites);
+       eN=ThisCode.Chains[0].GetEn(ThisCode.Nsites);
        ParamsHN[ThisCode.NumChannels+1]=eN;
        cout << " eN_" << ThisCode.Nsites << " = " << eN << endl;
        // Adding DeltaSC RENORMALIZED
-       double ScaleFactorNm1=ThisCode.chain.ScaleFactor(ThisCode.Nsites-1);
+       double ScaleFactorNm1=ThisCode.Chains[0].ScaleFactor(ThisCode.Nsites-1);
        ParamsHN[ThisCode.NumChannels+2]=ScaleFactorNm1*DeltaSC;
        cout << " ScaleFactorN_" << ThisCode.Nsites-1 << " = " << ScaleFactorNm1
 	    << " DeltaSC_scaled = " << " DeltaSC_scaled = " << ScaleFactorNm1*DeltaSC

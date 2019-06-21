@@ -5,6 +5,11 @@
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 ////using namespace boost::numeric::ublas;
 
+extern "C"{
+  #include <cblas.h>
+}
+
+
 #include <gsl/gsl_integration.h>
 
 #include <iostream>
@@ -174,6 +179,8 @@ public:
   double PartitionFuncTeq0();
 
   double PartitionFunc(double betabar);
+
+  double PartitionFuncDisc(double betabar);
 
   // September 09
   void SetEigVecToOne();
@@ -538,6 +545,8 @@ public :
   complex<double> cGetBlockMatEl(int iblock1, int iblock2, int iel, int jel);
   complex<double> cGetMatEl(int ist, int jst);
 
+  // April 2019
+  double CalcTrace();
 
 
   int GetMatElPosition(int iblock1, int iblock2, int iel, int jel);
@@ -702,6 +711,33 @@ public :
   boost::numeric::ublas::matrix<double> RotateBlock2BLAS(CNRGbasisarray* pAcut, int iMatBlock, bool kp1, bool kp2);
 
   boost::numeric::ublas::matrix<double> RotateBlock2BLAS(CNRGbasisarray* pAcut, int ibl1, int ibl2, bool kp1, bool kp2);
+
+
+  // April 2019
+
+  void MatBlock2STL(vector<double>& Mout, int iMatBlock);
+
+
+  void MatBlock2STL(vector<double>& Mout, int ibl1, int ibl2);
+
+
+  
+  void MatBlock2STL(vector<double>& Mout, int iMatBlock, bool kp1, bool kp2);
+
+
+  void MatBlock2STL(vector<double>& Mout, int ibl1, int ibl2, bool kp1, bool kp2);
+
+
+  void cMatBlock2STL(vector<complex<double> >& cMout, int iMatBlock);
+
+
+  void cMatBlock2STL(vector<complex<double> >& cMout, int ibl1, int ibl2);
+
+  
+  void cMatBlock2STL(vector<complex<double> >& cMout, int iMatBlock, bool kp1, bool kp2);
+
+
+  void cMatBlock2STL(vector<complex<double> >& cMout, int ibl1, int ibl2, bool kp1, bool kp2);
 
 
 
@@ -949,6 +985,16 @@ class CNRGCodeHandler{
 
 public :
 
+  // Default Constructor
+  CNRGCodeHandler():NumChannels(1),Lambda(2.5){}
+
+
+  // Default  Destructor
+  ~CNRGCodeHandler(){}
+
+
+
+
   // Static members
   char ModelOption[32];
   char Symmetry[32];
@@ -1014,7 +1060,14 @@ public :
 
   bool SaveData;
 
-  CNRGchain chain;
+  // Need an array of chains
+  //CNRGchain chain;
+  vector<CNRGchain> Chains;
+  // I will have to add a general ztwist and DiscScheme
+  //ThisCode.chain.z_twist
+  double code_z_twist;
+  int code_DiscScheme; // 0- usual; 1- CampoOliveira
+  // ThisCode.chain.DiscScheme
 
   // Function members
 
@@ -1077,7 +1130,7 @@ public :
 		     CNRGmatrix* pHN, 
 		     vector<CNRGmatrix> &STLMatArray,
 		     CNRGthermo* ThermoArray,
-		     double &chi_m1);
+		     vector<double> &chi_m1);
 
   double chiN(int Nsites, double Lambda);
 

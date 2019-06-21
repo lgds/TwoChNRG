@@ -23,7 +23,7 @@ OBJS=NRGarrayClass.o NRGmatrixClass.o NRGthermoClass.o NRGchainClass.o \
      OneChQS_SetSingleSite.o \
      TwoChQS_SetSingleSite.o TwoChQS_OpTables.o TwoChQS_OpMatRules.o \
      SetSingleSite.o BroadDelta.o SpecFuncClass.o CalcDN.o RotateMatrix.o \
-     HybFuncDefs.o GSL_Integrator.o SpecFunc_CFSmethod.o
+     HybFuncDefs.o GSL_Integrator.o SpecFunc_CFSmethod.o SpecFunc_allSTL.o
 ##
 ##     TwoChQS_OpMatChecks.o # overlaps with TwoChQS_OpMatRules.o 
 
@@ -83,6 +83,10 @@ Conductance  : Conductance.cpp $(OBJS) $(OBJS_CONDUCTANCE)
 	$(CXX)  $^ $(CXXFLAGS) $(LDFLAGS) -o $@ 
 
 CondSIAM  : CondSIAM.cpp $(OBJS) $(OBJS_CONDSIAM)
+	$(CXX)  $^ $(CXXFLAGS) $(LDFLAGS) -o $@ 
+
+
+DM_NRG_old : DM_NRG_old.cpp $(OBJS) $(OBJS_DMNRG)
 	$(CXX)  $^ $(CXXFLAGS) $(LDFLAGS) -o $@ 
 
 clean :

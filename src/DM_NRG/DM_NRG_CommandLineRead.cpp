@@ -12,6 +12,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 			    double &broadtemp,
 			    double &bbroad,
 			    int &UseCFS,
+			    bool &UseFDM,
 			    bool &UseGap,
 			    int &Nw){
 
@@ -29,7 +30,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
   //broadtemp=0.8;
   //NwEachShell=1
 
-  while ((c = getopt (argc, argv, "h M: b: w: B: e: n: C G")) != -1)
+  while ((c = getopt (argc, argv, "h M: b: w: B: e: n: C F G")) != -1)
     switch (c){
       case 'M':
 	strcpy(cmtemp,optarg);
@@ -63,20 +64,29 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 	UseCFS=1;
 	cout << " Using CFS to calculate spectral functions " << endl;
 	break;
+      case 'F':
+	UseCFS=2;
+	UseFDM=true;
+// 	twindow=0.5;
+// 	broadtemp=twindow;
+	cout << " Using FDM-NRG to calculate spectral functions " << endl;
+	break;
       case 'h':
-	cout << "Usage: " << argv[0] << " (-e bbroad -M Mtemp -b betabar -w twindow -B broadtemp)" << endl;
+	cout << "Usage: " << argv[0] << " (-e bbroad -M Mtemp -b betabar -w twindow -B broadtempi -C -F)" << endl;
 	cout << " Default values: bbroad=0.5*log(Lambda); betabar=0.727 ; twindow=2 ; broadtemp=0.8 ; " << endl;
 // 	cout << " Additional option: -C (uses CFS method) " << endl;
 	cout << " Additional options: " << endl;
 	cout << " -C : uses CFS method " << endl;
+	cout << " -F : uses FDM-NRG method " << endl;
 	cout << " -G : gapped host (uses gap in input_nrg.dat) " << endl;
 	cout << " -n NomegasEachN : Calculates a denser mesh in omega (default=1) " << endl; 
 	exit(0);
 	return;
        case '?':
-	cout << "Usage: " << argv[0] << " (-M Mtemp -b betabar -w twindow -B broadtemp)" << endl;
+	cout << "Usage: " << argv[0] << " (-e bbroad -M Mtemp -b betabar -w twindow -B broadtempi -C -F)" << endl;
 	cout << " Additional options: " << endl;
 	cout << " -C : uses CFS method " << endl;
+	cout << " -F : uses FDM-NRG method " << endl;
 	cout << " -G : gapped host (uses gap in input_nrg.dat) " << endl;
 	cout << " -n NomegasEachN : Calculates a denser mesh in omega (default=1) " << endl; 
 	exit(0);

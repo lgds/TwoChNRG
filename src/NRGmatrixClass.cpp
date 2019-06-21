@@ -193,6 +193,43 @@ complex<double> CNRGmatrix::cGetMatEl(int ist, int jst){
 }
 
 //////////////
+// Calculate the trace of the matrix
+//////////////
+double CNRGmatrix::CalcTrace(){
+
+  double trace=0.0;
+ 
+  vector<int>::iterator it;
+
+  it=MatBlockMap.begin();
+  int iMatBlock=0;
+  while ( it< MatBlockMap.end() ){
+    int ibl1=*it;
+    int ibl2=*(it+1);
+    // Only diagonal blocks
+    if (ibl1==ibl2){
+      int i0=GetMatBlockLimit(iMatBlock, 0);
+      int Nbl1=CNRGarray::GetBlockSize(ibl1);
+      for (int iel=0;iel<Nbl1;iel++){
+	int rbl=ij2rNSq(Nbl1,Nbl1,iel,iel); // Gets the diagonal element
+	if (UpperTriangular){
+	  rbl=ij2rUpTr(Nbl1,iel,iel);
+	}
+	trace+=MatEl[i0+rbl];
+      } 
+      // iel index states within the block (starting from 0)
+    }
+    // if diagonal, loop over MatBlock
+    iMatBlock++;
+    it=it+2;
+  }
+  // end while
+
+  return(trace);
+}
+////
+
+//////////////
 // Replace existing matrix element by El
 
 int CNRGmatrix::GetMatElPosition(int iblock1, int iblock2, int iel, int jel){
@@ -1230,6 +1267,176 @@ boost::numeric::ublas::matrix<complex<double> > CNRGmatrix::cMatBlock2BLAS(int i
 
 }
 ///////////
+
+//////////////
+void CNRGmatrix::MatBlock2STL(vector<double>& Mout, int iMatBlock){
+
+  int ibl1=0;
+  int ibl2=0;
+
+  GetBlocksFromMatBlock(iMatBlock,ibl1,ibl2);
+
+ 
+  MatBlock2STL(Mout,ibl1,ibl2);
+
+
+}
+//////////////////
+void CNRGmatrix::MatBlock2STL(vector<double>& Mout,
+			       int ibl1, int ibl2){
+
+
+  int Nst1=CNRGarray::GetBlockSize(ibl1);
+  int Nst2=CNRGarray::GetBlockSize(ibl2);
+ 
+  Mout.clear();
+
+  int ist=0;
+  for (int ii=0;ii<Nst1;ii++){
+    int jst=0;
+    for (int jj=0;jj<Nst2;jj++){
+      Mout.push_back(GetBlockMatEl(ibl1,ibl2,ii,jj));
+      jst++;
+    }
+    //end jj
+    ist++; 
+  }
+  //end ii
+
+}
+//////////////////
+
+
+
+
+//////////////
+void CNRGmatrix::MatBlock2STL(vector<double>& Mout, 
+			       int iMatBlock,bool kpi, bool kpj){
+
+  int ibl1=0;
+  int ibl2=0;
+
+  GetBlocksFromMatBlock(iMatBlock,ibl1,ibl2);
+
+ 
+  MatBlock2STL(Mout,ibl1,ibl2,kpi,kpj);
+
+
+}
+//////////////////
+void CNRGmatrix::MatBlock2STL(vector<double>& Mout,
+			       int ibl1, int ibl2,bool kp1, bool kp2){
+
+
+  int Nst1=CNRGarray::GetBlockSize(ibl1);
+  int Nst2=CNRGarray::GetBlockSize(ibl2);
+ 
+  int Nstkp1=CNRGarray::GetBlockSize(ibl1,kp1);
+  int Nstkp2=CNRGarray::GetBlockSize(ibl2,kp2);
+  
+  Mout.clear();
+
+  int istkp=0;
+  for (int ii=0;ii<Nst1;ii++){
+    int jstkp=0;
+    for (int jj=0;jj<Nst2;jj++){
+      if ((CheckKept(ibl1,ii,kp1))&&(CheckKept(ibl2,jj,kp2))){
+	Mout.push_back(GetBlockMatEl(ibl1,ibl2,ii,jj));
+	jstkp++;
+      }
+    }
+    //end jj
+    if (CheckKept(ibl1,ii,kp1)) istkp++; 
+  }
+  //end ii
+
+}
+//////////////////
+
+//////////////
+void CNRGmatrix::cMatBlock2STL(vector<complex<double> >& cMout, 
+			       int iMatBlock){
+
+  int ibl1=0;
+  int ibl2=0;
+
+  GetBlocksFromMatBlock(iMatBlock,ibl1,ibl2);
+
+ 
+  cMatBlock2STL(cMout,ibl1,ibl2);
+
+
+}
+//////////////////
+void CNRGmatrix::cMatBlock2STL(vector<complex<double> >& cMout,
+			       int ibl1, int ibl2){
+
+
+  int Nst1=CNRGarray::GetBlockSize(ibl1);
+  int Nst2=CNRGarray::GetBlockSize(ibl2);
+ 
+
+  cMout.clear();
+
+  int ist=0;
+  for (int ii=0;ii<Nst1;ii++){
+    int jst=0;
+    for (int jj=0;jj<Nst2;jj++){
+      cMout.push_back(cGetBlockMatEl(ibl1,ibl2,ii,jj));
+      jst++;
+    }
+    //end jj
+    ist++; 
+  }
+  //end ii
+
+}
+//////////////////
+
+
+//////////////
+void CNRGmatrix::cMatBlock2STL(vector<complex<double> >& cMout, 
+			       int iMatBlock,bool kpi, bool kpj){
+
+  int ibl1=0;
+  int ibl2=0;
+
+  GetBlocksFromMatBlock(iMatBlock,ibl1,ibl2);
+
+ 
+  cMatBlock2STL(cMout,ibl1,ibl2,kpi,kpj);
+
+
+}
+//////////////////
+void CNRGmatrix::cMatBlock2STL(vector<complex<double> >& cMout,
+			       int ibl1, int ibl2,bool kp1, bool kp2){
+
+
+  int Nst1=CNRGarray::GetBlockSize(ibl1);
+  int Nst2=CNRGarray::GetBlockSize(ibl2);
+ 
+  int Nstkp1=CNRGarray::GetBlockSize(ibl1,kp1);
+  int Nstkp2=CNRGarray::GetBlockSize(ibl2,kp2);
+
+  cMout.clear();
+
+  int istkp=0;
+  for (int ii=0;ii<Nst1;ii++){
+    int jstkp=0;
+    for (int jj=0;jj<Nst2;jj++){
+      if ((CheckKept(ibl1,ii,kp1))&&(CheckKept(ibl2,jj,kp2))){
+	cMout.push_back(cGetBlockMatEl(ibl1,ibl2,ii,jj));
+	jstkp++;
+      }
+    }
+    //end jj
+    if (CheckKept(ibl1,ii,kp1)) istkp++; 
+  }
+  //end ii
+
+}
+//////////////////
 
 
 

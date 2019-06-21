@@ -14,7 +14,7 @@ class CSpecFunction{
 public:
 
   // Default constructor (with an initialization list!)
-  CSpecFunction(): Lambda(1.0),NshellMax(1),NshellMin(0),NonDiagGF(false),dBroad(0.3),Temp(0.0),Mtemp(1000),Betabar(0.727),dBroadTemp(0.1),TwindowFac(1.0),IsBosonic(false),z_twist(1.0),Gap(-1.0)
+  CSpecFunction(): Lambda(1.0),NshellMax(1),NshellMin(0),NonDiagGF(false),dBroad(0.3),Temp(0.0),Mtemp(1000),Betabar(0.727),dBroadTemp(0.1),TwindowFac(1.0),IsBosonic(false),z_twist(1.0),Gap(-1.0),UseCFS(0)
   {
   }
 
@@ -49,6 +49,11 @@ public:
   // Adding Gap (no broadening)
 
   double Gap;
+
+  // Adding UseCFS
+
+  int UseCFS;
+
 
   // Arrays of NshellMax objects
   CNRGbasisarray* AcutN;
@@ -112,14 +117,17 @@ public:
 
   double DMNRG_SpecDens_M(double omega,int Nshell, bool CalcNorm=false);
 
+  double DMNRG_SpecDens_M_STL(double omega,int Nshell, bool CalcNorm=false);
+
+  
   // Doesn't work yet... Double counting. Need FULL basis.
-  double CalcSpecDM_NRG(double omega, int UseCFS=0);
+  double CalcSpecDM_NRG(double omega);
   
 
 
-  void CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS=0,int NwEachN=1);
+  void CalcSpecDM_NRG_FixedOmegas(double factorWN,int NwEachN=1);
 
-  void CalcSpec_ManyOmegas(int NomegasEachN, double factorWN, int UseCFS);
+  void CalcSpec_ManyOmegas(int NomegasEachN, double factorWN);
 
   
   double CalcSpecDM_NRG_InterpolOddEven(double omega);
@@ -130,6 +138,16 @@ public:
   // Complete Fock Space
 
   double CFS_SpecDens_M(double omegabar,int Nshell, bool CalcNorm=false);
+
+  double CFS_SpecDens_M_STL(double omegabar,int Nshell, bool CalcNorm=false);
+
+
+  // Full Density Matrix
+
+  double FDM_SpecDens_M(double omegabar,int Nshell, bool CalcNorm=false);
+
+  double FDM_SpecDens_M_STL(double omegabar,int Nshell, bool CalcNorm=false);
+
 
   // BroadDeltaFunction
 
@@ -163,6 +181,30 @@ public:
   boost::numeric::ublas::matrix<complex<double> > cAijOverexpEij(boost::numeric::ublas::matrix<complex<double> >Mat, CNRGarray* pAeig, int iblock1, int iblock2, double betabar);
   boost::numeric::ublas::matrix<complex<double> > cAijOverexpEij(CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, double betabar);
 
+  // Aij*BDelta(Ei-Ej); - STL store
+  void MijxBDeltaEij(vector<double>& Mout, vector<double>& Min, CNRGarray* pAeig, int iblock1, int iblock2, double omega);
+
+  void MijxBDeltaEij(vector<double>& Mout, CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, double omega);
+
+  // complex (not implemented yet...)
+  void cMijxBDeltaEij(vector<complex<double> >& cMout, vector<complex<double> >& cMin, CNRGarray* pAeig, int iblock1, int iblock2, double omega);
+
+  void cMijxBDeltaEij(vector<complex<double> >& cMout, CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, double omega);
+
+
+  
+
+  // Aij*BDelta(Ei-Ej); CFS method - STL store
+  void MijxBDeltaEij(vector<double>& Mout, vector<double>& Min, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
+
+  void MijxBDeltaEij(vector<double>& Mout, CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
+
+  // complex (not implemented yet...)
+  void cMijxBDeltaEij(vector<complex<double> >& cMout, vector<complex<double> >& cMin, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
+
+  void cMijxBDeltaEij(vector<complex<double> >& cMout, CNRGmatrix* pMat, CNRGarray* pAeig, int iblock1, int iblock2, bool kp1, bool kp2, double omega);
+
+
 
 
   // KK transformation
@@ -177,7 +219,7 @@ public:
 
   // Check Normalization
 
-  double CalcNorm(int UseCFS=1);
+  double CalcNorm();
 
   double CalcNormInteg();
 

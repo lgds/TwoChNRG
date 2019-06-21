@@ -380,3 +380,95 @@ double HybFunc_Cavity_timesEn(double omega,
 }
 
 ////////////////////////////////////////////////
+
+////////////////////////////////////////////////
+
+// Sign function
+double SignF(double xin){
+  double Y = 1.0;
+  if (xin < 0.0){
+    Y = -1.0;
+  }
+  return Y;
+}
+
+// Heaviside theta function
+double HeavF(double xin){
+  double Y = 0.0;
+    if (xin >= 0.0){
+    Y = 1.0;
+  }
+  
+  return Y; 
+}
+
+
+double HybFunc_CoSilicene(double omega,
+			  void *params){
+ 
+  vector<double> VecParam=*(vector<double> *)(params);
+
+  // Parameters
+  //
+  // params contains alpha, beta, vF,
+  // lambda_SO, lEz, D, in that order
+
+  // VecParam[0] is ALWAYS whichbandtype!!
+  
+  // params[1] = alpha =  0.28*22.8 // units of eV*Angstrom
+  // params[2] = beta = -0.489     // units of eV
+  // params[3] = vF =  22.8      // units of eV*Angstrom
+  // params[4] = lambda_SO = 0.0039    // units of eV
+  // params[5] = lEz =  0.00      // units of eV, TUNABLE,
+  //                      // input as fracc. of D=22.5eV
+  // params[6] = 2*ich - 1 // ich=0->dchi=-1 ich=1->dchi=+1
+
+  // All energy parameters in units of D =  22.5 eV
+  
+  double Gamma=0.0;
+
+  
+  if (VecParam.size()<7)
+    return(1.0);
+  
+  
+
+  double alpha = VecParam[1];
+  double beta  = VecParam[2];
+  double vF    = VecParam[3];
+  double lSO   = VecParam[4];
+  double lEz   = VecParam[5];
+
+  double dchi  = VecParam[6]; // equals +/- 1.0 --> depends on channel
+
+
+  double V0Sq= (alpha/vF)*(beta)*pow((lEz - dchi*lSO),2.0);
+  double V1Sq = pow(beta,2.0) - (pow(alpha/vF,2.0))*(pow(lEz - dchi*lSO,2.0));
+  double V2Sq = -(alpha/vF)*beta;
+  double V3Sq = pow(alpha/vF,2.0);
+
+  
+  double Gamma0=SignF(omega)*V0Sq;
+  double Gamma1=fabs(omega)*V1Sq;
+  double Gamma2=SignF(omega)*(pow(omega,2.0))*V2Sq;
+  double Gamma3=fabs(pow(omega,3.0))*V3Sq;
+ 
+
+  Gamma  = (2.0*M_PI)*(Gamma0 + Gamma1 + Gamma2 + Gamma3)*HeavF(1.0-fabs(omega))*HeavF(fabs(omega)-fabs(lEz - dchi*lSO));
+
+  return(Gamma);
+  
+  // enf 
+ 
+}
+
+///////
+
+double HybFunc_CoSilicene_timesEn(double omega,
+				  void *params){
+
+  return(omega*HybFunc_CoSilicene(omega,params));
+
+}
+
+////////////////////////////////////////////////

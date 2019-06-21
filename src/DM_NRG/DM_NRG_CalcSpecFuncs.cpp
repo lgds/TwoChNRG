@@ -12,7 +12,8 @@ using namespace std;
 
 void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
 			    CNRGmatrix** OpArrayN,
-			    int iop, int jop,int UseCFS, bool UseGap, int Nw){
+			    int iop, int jop, 
+			    bool UseGap, int Nw){
 
   // Nw : number of omegas in each Shell
 
@@ -73,17 +74,17 @@ void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
    
    double factorWN=pow(pSpec->Lambda,1.25);
 
-   if (UseCFS) {
+   if (pSpec->UseCFS!=0) {
      cout << " Calculating Norm of rho_"<<iop<< "_" <<jop << endl;
-     cout << " NormCFS= " << pSpec->CalcNorm(UseCFS) << endl;}
+     cout << " NormCFS= " << pSpec->CalcNorm() << endl;}
 
    cout << " Calculating Spectral function rho_"<< iop << "_" << jop << "... " << endl;
 
 
    if (Nw>0)
-     pSpec->CalcSpec_ManyOmegas(Nw,factorWN,UseCFS);
+     pSpec->CalcSpec_ManyOmegas(Nw,factorWN);
    else
-     pSpec->CalcSpecDM_NRG_FixedOmegas(factorWN,UseCFS);
+     pSpec->CalcSpecDM_NRG_FixedOmegas(factorWN);
 
    cout << " ... done." << endl;
 

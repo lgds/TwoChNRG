@@ -70,15 +70,6 @@ int main (int argc, char* argv[]){
   int UseCFS=0;
   int Nw=0; // No of omegas in each shell
 
-  // FDM calculations
-  bool UseFDM=false;
-  double auxwN=0.0;
-  double ZN=0.0;
-  double ZTot=0.0;
-  double ZNdisc=0.0;
-  double TempBar;
-  vector<double> wN;
-
   // Read code parameters, including z_twist
   ThisCode.ReadGenPars(true); 
 
@@ -88,7 +79,7 @@ int main (int argc, char* argv[]){
   bool UseGap=false;
 
   // Command-line: Set Temp
-  DM_NRG_CommandLineRead(argc,argv,Mtemp,betabar,twindow,broadtemp,bbroad,UseCFS,UseFDM,UseGap,Nw);
+  DM_NRG_CommandLineRead(argc,argv,Mtemp,betabar,twindow,broadtemp,bbroad,UseCFS,UseGap,Nw);
 
   // Set Temp
   cout << " Mtemp = " << Mtemp 
@@ -102,7 +93,7 @@ int main (int argc, char* argv[]){
   Temp=0.0;  // Real Temperature
   //ParamsTemp.push_back(betabar); // Need to fix this today...
   if (Mtemp<ThisCode.Nsitesmax-1) {
-    if (!UseFDM) ThisCode.Nsitesmax=Mtemp+1;
+    ThisCode.Nsitesmax=Mtemp+1;
     DM=CalcDN(ThisCode.Lambda,Mtemp);
     Temp=DM/betabar;
   }
@@ -134,7 +125,7 @@ int main (int argc, char* argv[]){
     cout << " DM-NRG: Only 1chQSz and 1chQ symmetries supported at this point. Testing QS symmetry now..." << endl;
   }
   if (ThisCode.totalS){cout << " SU(2) symmetry detected. " << endl;}
-  cout << "Oliveira z = " << ThisCode.code_z_twist << endl;
+  cout << "Oliveira z = " << ThisCode.chain.z_twist << endl;
 
   if (UseGap){ThisCode.ReadParams((char *)"input_nrg.dat",1);} // Need the gap
 
@@ -183,7 +174,7 @@ int main (int argc, char* argv[]){
   strcat(arqname,ext);
   AcutN[NshellMax].ReadBin(arqname);
 
-  // Read Operators at NshellMax 
+  // Read Operators 
   for (int iop=0;iop<NFermiOps;iop++){
     sprintf(CNmat,"%d",iop);
     strcpy(arqname,"Mat");
@@ -200,92 +191,14 @@ int main (int argc, char* argv[]){
 
   cout << " NshellMax Files read "<< endl;
 
-  // FDM-NRG: Setting temperature
-  DM=CalcDN(ThisCode.Lambda,NshellMax-1); // Why????
-  TempBar=Temp/DM;
-  ZN=AcutN[NshellMax].PartitionFunc(1.0/TempBar);
-  if (!UseFDM)
-    ParamsTemp.push_back(ZN); // for NshellMax
-
-  wN.push_back(ZN);
-  ZTot=ZN;
-  cout << " Temp = " << Temp << " at N= " << NshellMax 
-       << " TempBar = " << TempBar 
-       << " DN = " << DM
-       << " ZNdisc = ZN = " << ZN 
-       << " ZwNN = " << ZN*pow(4.0,NshellMax-NshellMax)
-       << endl;
-  /////////
-
-  // Read AcutN 
-  for (int Nshell=NshellMax-1;Nshell>=ThisCode.Nsites0;Nshell--){
-
-    cout << " Reading AcutN in Nshell = " << Nshell << endl;
-
-    //AcutN[Nshell].ClearAll();
-    //AcutN[Nshell].Nshell=Nshell;
-
-    sprintf(CNsites,"%d",Nshell);
-    strcpy(ext,ThisCode.SaveArraysFileName);
-    strcat(ext,"_N");
-    strcat(ext,CNsites);
-    strcat(ext,".bin");
-
-    // Read Acut
-    strcpy(arqname,"Acut_");
-    strcat(arqname,ext);
-    AcutN[Nshell].ReadBin(arqname);
-
-    // FDM-NRG: Setting temperature
-    DM=CalcDN(ThisCode.Lambda,Nshell-1);
-    TempBar=Temp/DM;
-    // Partition function 
-    ZN=AcutN[Nshell].PartitionFunc(1.0/TempBar);
-    // Partition function for discarded states
-    ZNdisc=AcutN[Nshell].PartitionFuncDisc(1.0/TempBar);
-    wN.push_back(ZNdisc*pow(4.0,NshellMax-Nshell));
-    ZTot+=ZNdisc*pow(4.0,NshellMax-Nshell);
-    cout << " Temp = " << Temp << " at N= " << Nshell 
-  	 << " TempBar = " << TempBar 
-  	 << " DM = " << DM
-  	 << " ZN = " << ZN 
-  	 << " ZNdisc = " << ZNdisc 
-  	 << " ZwNN = " << ZNdisc*pow(4.0,NshellMax-Nshell)
-  	 << endl;
-    /////////
-  }
-  //end loop in Nshell
-
-  cout << "Ztot = " << ZTot << endl;
-
-  // Calculate wN
-  double NormwN=0.0;
-  for (int ii=0; ii<wN.size(); ii++){
-    wN[ii]/=ZTot;
-    cout << " wN[" << NshellMax-ii << "] = " << wN[ii] << endl;
-    NormwN+=wN[ii];
-  }
-  cout << " Sum_N wN = " << NormwN << endl;
-
-  // end calculate wn
-    
-  
-  if (UseFDM)
-    ParamsTemp.push_back(ZTot); // for NshellMax
-    
-  // For 1-channel only!! d=4
- 
-
   // Set density matrix at the LAST NRG iteration
 
   // Either CalcRhoN AND save it OR read it from file
   // Read RhoNmax
-  sprintf(CNsites,"%d",NshellMax);
-  strcpy(ext,ThisCode.SaveArraysFileName);
-  strcat(ext,"_N");
-  strcat(ext,CNsites);
-  strcat(ext,".bin");
-
+//    sprintf(CNmat,"%d",NshellMax);
+//    strcpy(arqname,"rhoDM_Nmax");
+//    strcat(arqname,CNmat);
+//    strcat(arqname,"_");
   strcpy(arqname,"rhoDM_");
   strcat(arqname,ext);
 
@@ -297,8 +210,6 @@ int main (int argc, char* argv[]){
     RhoN[NshellMax].SaveBin(arqname);
   }
 
-  cout << " trace(Rho[Nshell= " << NshellMax << " ]) = " << RhoN[NshellMax].CalcTrace() << endl;
-
 
   //if (NshellMax==48){
   //cout << " Rho Nshell = " << NshellMax << endl;
@@ -309,15 +220,17 @@ int main (int argc, char* argv[]){
   
   // Calculate reduced density matrices
 
+  //for (int Nshell=NshellMax-1;Nshell>=0;Nshell--){
   for (int Nshell=NshellMax-1;Nshell>=ThisCode.Nsites0;Nshell--){
 
     cout << "DM-NRG: working on Nshell = " << Nshell << endl;
 
+    AcutN[Nshell].ClearAll();
     AbasisN.ClearAll();
+    AcutN[Nshell].Nshell=Nshell;
     AbasisN.Nshell=Nshell;
-    
-    // AcutN[Nshell].ClearAll();
-    // AcutN[Nshell].Nshell=Nshell;
+    //ThisCode.ReadArrays("test"); // ReadsInto pAcutN
+    // Not too handy...
 
     sprintf(CNsites,"%d",Nshell);
     //strcpy(ext,"test_N");
@@ -331,10 +244,10 @@ int main (int argc, char* argv[]){
     strcat(arqname,ext);
     AbasisN.ReadBin(arqname);
 
-    // Read Acut (read already)
-    // strcpy(arqname,"Acut_");
-    // strcat(arqname,ext);
-    // AcutN[Nshell].ReadBin(arqname);
+    // Read Acut
+    strcpy(arqname,"Acut_");
+    strcat(arqname,ext);
+    AcutN[Nshell].ReadBin(arqname);
 
 
     // Set ChildStates in AcutN
@@ -344,28 +257,6 @@ int main (int argc, char* argv[]){
     // Set RhoN from RhoNp1
 
     MyTime.restart();
-
-    // FDM-NRG: Setting temperature
-    DM=CalcDN(ThisCode.Lambda,Nshell-1);
-    TempBar=Temp/DM;
-    // Partition function 
-    ZN=AcutN[Nshell].PartitionFunc(1.0/TempBar);
-    // Partition function for discarded states
-    ZNdisc=AcutN[Nshell].PartitionFuncDisc(1.0/TempBar);
-    cout << " Temp = " << Temp << " at N= " << Nshell 
-  	 << " TempBar = " << TempBar 
-  	 << " DN = " << DM
-  	 << " ZN = " << ZN 
-  	 << " ZNdisc = " << ZNdisc 
-  	 << endl;
-
-    ParamsTemp.clear();
-    ParamsTemp.push_back(TempBar);
-    //ParamsTemp.push_back(ZN); // NOT ZNdisc!!
-    ParamsTemp.push_back(ZTot/pow(4.0,NshellMax-Nshell)); // =ZNdisc/wN !!
-    // For 1-channel only!! d=4
-    //wN.push_back(ZNdisc*pow(4.0,NshellMax-Nshell));
-    /////////
 
     // Either CalcRhoN AND save it OR read it from file
 
@@ -378,16 +269,15 @@ int main (int argc, char* argv[]){
       RhoN[Nshell].ReadBin(arqname);
     }else{
       if (ThisCode.totalS){
-	DM_NRG_CalcRhoN_withSU2(ParamsTemp,UseFDM,
-				&AcutN[Nshell],&AcutN[Nshell+1],
-				&AbasisNp1,&SingleSite,
-				&RhoN[Nshell],&RhoN[Nshell+1]);
+	DM_NRG_CalcRhoN_withSU2(&AcutN[Nshell],&AcutN[Nshell+1],
+			  &AbasisNp1,&SingleSite,
+			  &RhoN[Nshell],&RhoN[Nshell+1]);
 
       }
       else{
-	DM_NRG_CalcRhoN(ParamsTemp,UseFDM,
-			&AcutN[Nshell],&AcutN[Nshell+1],&AbasisNp1,
-			&RhoN[Nshell],&RhoN[Nshell+1]);
+	DM_NRG_CalcRhoN(&AcutN[Nshell],&AcutN[Nshell+1],&AbasisNp1,
+			&RhoN[Nshell],
+			&RhoN[Nshell+1]);
       }
       // if SU(2) symmetry
       RhoN[Nshell].SaveBin(arqname);
@@ -397,7 +287,6 @@ int main (int argc, char* argv[]){
     cout << " Rho Nshell = " << Nshell 
 	 << " completed in " << time_elapsed << " secs " << endl;
 
-    cout << " trace(Rho[Nshell= " << Nshell << " ]) = " << RhoN[Nshell].CalcTrace() << endl;
     // Debugging
 //      if (Nshell==1){
 //        RhoN[Nshell].PrintAllBlocks();
@@ -430,12 +319,13 @@ int main (int argc, char* argv[]){
     }
     // end read operators
     
+//     cout << " Op1 : " << endl;
+//     OpArrayN[0][Nshell].PrintAllBlocks();
+//     cout << " Op2 : " << endl;
+//     OpArrayN[1][Nshell].PrintAllBlocks();
+
     // Debug
 //     if ((Nshell==0)||(Nshell==1)){
-//       cout << " Op1 : " << endl;
-//       OpArrayN[0][Nshell].PrintAllBlocks();
-//       cout << " Op2 : " << endl;
-//       OpArrayN[1][Nshell].PrintAllBlocks();
 //       cout << " DM-NRG: Abasis(Nshell="<<Nshell<<"): " << endl;
 //       AbasisN.PrintBasisAll();
 //       cout << " Op1 (Nshell="<< Nshell<<"): " << endl;
@@ -463,22 +353,19 @@ int main (int argc, char* argv[]){
    CSpecFunction spec1;
 
    spec1.Lambda=ThisCode.Lambda;
-   spec1.z_twist=ThisCode.code_z_twist;
+   spec1.z_twist=ThisCode.chain.z_twist;
    spec1.NshellMax=ThisCode.Nsitesmax;
    spec1.NshellMin=ThisCode.Nsites0;
    spec1.AcutN=AcutN;
    spec1.RhoN=RhoN;
-   spec1.UseCFS=UseCFS;
 
    // Spec Dens
-   if (UseCFS==2) spec1.BDelta=LogGaussDelta; // FDM calculation
-   else spec1.BDelta=BroadDelta;
+   spec1.BDelta=BroadDelta;
    //spec1.dBroad=0.5*log(ThisCode.Lambda);
    spec1.dBroad=bbroad;
 
    // Finite Temp stuff (need to test this!)
    if (UseCFS==1) spec1.BDeltaTemp=LorentzDeltaAnders;
-   else if (UseCFS==2) spec1.BDeltaTemp=GaussDelta;
    else spec1.BDeltaTemp=LorentzDelta;
 
    //spec1.Temp=0.0;
@@ -503,8 +390,8 @@ int main (int argc, char* argv[]){
    // Calculate ALL spectral functions!!
    // Jun 2015: Only diagonal functions for now...
    for (int iop=0; iop<NFermiOps; iop++){
-     DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseGap,Nw);
-//     if (UseCFS!=0){
+     DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseCFS,UseGap,Nw);
+//     if (UseCFS==1){
 //       DM_NRG_CalcSpecFunc_ij(&spec1,OpArrayN,iop,iop,UseCFS,Nw);
 //     } else {
 //       for (int jop=0; jop<NFermiOps; jop++){

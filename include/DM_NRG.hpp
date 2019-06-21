@@ -9,6 +9,7 @@ void DM_NRG_CommandLineRead(int argc, char* argv[], int &Mtemp,
 			    double &broadtemp,
 			    double &bbroad,
 			    int &UseCFS,
+			    bool &UseFDM,
 			    bool &UseGap,
 			    int &Nw);
 
@@ -35,6 +36,25 @@ void DM_NRG_SetChildSameType(int ist_N, int jst_N,
 #define _DM_NRG_CALCRHON_
 
 
+
+void DM_NRG_CalcRhoN(vector<double> ParamsTemp,
+		     bool UseFDM,
+		     CNRGbasisarray* pAcutN,
+		     CNRGbasisarray* pAcutNp1,
+		     CNRGbasisarray* pAbasisNp1,
+		     CNRGmatrix* pRhoN,
+		     CNRGmatrix* pRhoNp1);
+
+void DM_NRG_CalcRhoN_withSU2(vector<double> ParamsTemp,
+			     bool UseFDM,
+			     CNRGbasisarray* pAcutN,
+			     CNRGbasisarray* pAcutNp1,
+			     CNRGbasisarray* pAbasisNp1,
+			     CNRGbasisarray* pSingleSite,
+			     CNRGmatrix* pRhoN,
+			     CNRGmatrix* pRhoNp1);
+
+
 void DM_NRG_CalcRhoN_old(CNRGbasisarray* pAcutN,
 		     CNRGbasisarray* pAcutNp1,
 		     CNRGbasisarray* pAbasisNp1,
@@ -42,18 +62,6 @@ void DM_NRG_CalcRhoN_old(CNRGbasisarray* pAcutN,
 		     CNRGmatrix* pRhoNp1);
 
 
-void DM_NRG_CalcRhoN(CNRGbasisarray* pAcutN,
-		     CNRGbasisarray* pAcutNp1,
-		     CNRGbasisarray* pAbasisNp1,
-		     CNRGmatrix* pRhoN,
-		     CNRGmatrix* pRhoNp1);
-
-void DM_NRG_CalcRhoN_withSU2(CNRGbasisarray* pAcutN,
-			     CNRGbasisarray* pAcutNp1,
-			     CNRGbasisarray* pAbasisNp1,
-			     CNRGbasisarray* pSingleSite,
-			     CNRGmatrix* pRhoN,
-			     CNRGmatrix* pRhoNp1);
 
 
 #endif
@@ -86,7 +94,8 @@ void DM_NRG_CalcSpecFuncs(CNRGCodeHandler* pThisCode,
 
 void DM_NRG_CalcSpecFunc_ij(CSpecFunction* pSpec,
 			    CNRGmatrix** OpArrayN,
-			    int iop, int jop, int UseCFS=0, bool UseGap=false, 
+			    int iop, int jop,
+			    bool UseGap=false, 
 			    int Nw=1);
 
 

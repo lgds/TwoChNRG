@@ -31,7 +31,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 				    CNRGmatrix* pHN, 
 				    vector<CNRGmatrix> &STLMatArray,
 				    CNRGthermo* ThermoArray,
-				    double &chi_m1){
+				    vector<double> &chi_m1){
 
   // Ok, this can be changed later to reduce the number of parameters 
   // Leave as it is for now.
@@ -56,7 +56,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
   CNRGmatrix auxNRGMat;
   vector <double> Params;
 
-  double chi2_m1=0.0;
+  double chi2_m1=0.0; // Second coupling into the same channel!
 
   // To do: getrid of ThermoArray and STLMatArray: 
   // define them in codehandler class.
@@ -97,10 +97,10 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
     char zstring[30];
     char zvalue[8];
     strcpy(zstring,"_zEQ");
-    if (dEqual(chain.z_twist,1.0))
+    if (dEqual(code_z_twist,1.0))
       strcpy(zvalue,"1");
     else
-      sprintf(zvalue,"%4.2f",chain.z_twist);
+      sprintf(zvalue,"%4.2f",code_z_twist);
     strcat(zstring,zvalue);
     cout << "Zstring = " << zstring << endl;
 
@@ -271,7 +271,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	Params.push_back(HalfLambdaFactor);
 	Params.push_back(dInitParams[0]); // U
 	Params.push_back(dInitParams[2]); // ed
-	Params.push_back(chi_m1); // gamma
+	Params.push_back(chi_m1[0]); // gamma
 
 	OneChQS_SetAnderson_Hm1(Params,pAeig,STLMatArray);
 
@@ -344,12 +344,12 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	// Param for H0
 	Params.push_back(Lambda);
 	Params.push_back(HalfLambdaFactor);
-	Params.push_back(chi_m1); // will become Jtilde
+	Params.push_back(chi_m1[0]); // will become Jtilde
 
-	//"chi_m1"= sqrt(Fsq*rho_0*J_0/pi)/(sqrt(Lambda)*HalfLambdaFactor); 
+	//"chi_m1[0]"= sqrt(Fsq*rho_0*J_0/pi)/(sqrt(Lambda)*HalfLambdaFactor); 
 
-	cout << " Fsq = " << chain.Fsq 
-	     << " rho0 J0  = " << Lambda*HalfLambdaFactor*HalfLambdaFactor*chi_m1*chi_m1*pi/chain.Fsq << endl;
+	cout << " Fsq = " << Chains[0].Fsq 
+	     << " rho0 J0  = " << Lambda*HalfLambdaFactor*HalfLambdaFactor*chi_m1[0]*chi_m1[0]*pi/Chains[0].Fsq << endl;
 
 
 	OneChQS_SetKondoH0(Params,pAeig,pSingleSite,STLMatArray);
@@ -365,8 +365,8 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	pHN->CalcHNMatEl=OneChQS_HN_MatEl;
 	NumChannels=1;
 	// Set chi_0 to enter HN!
-	chi_m1=chain.GetChin(0); // Should be EQUAL to chiN(0,Lambda) if Square
-	cout << " chi_0= " << chi_m1 
+	chi_m1[0]=Chains[0].GetChin(0); // Should be EQUAL to chiN(0,Lambda) if Square
+	cout << " chi_0= " << chi_m1[0] 
 	     << " Square band chi_0 : " << chiN(0,Lambda)  
 	     << endl;
 
@@ -404,10 +404,10 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	pHN->CalcHNMatEl=OneChQS_HN_MatEl;
 	NumChannels=1;
 	if (BandNo==0){
-	  chi_m1=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
+	  chi_m1[0]=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
 	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
 	}
-	else{chi_m1=chain.GetChin(0);}
+	else{chi_m1[0]=Chains[0].GetChin(0);}
 	// Need to change chain files for ALL Models!!
 	//strcpy(ThermoArray[0].ChainArqName,"SuscepChain1Ch_QS.dat");
 	strcpy(ThermoArray[0].ChainArqName,"SuscepChain1Ch_QS");
@@ -429,7 +429,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	Params.push_back(HalfLambdaFactor);
 	Params.push_back(dInitParams[0]); // U1
 	Params.push_back(dInitParams[2]); // ed1
-	Params.push_back(chi_m1); // gamma1
+	Params.push_back(chi_m1[0]); // gamma1
 	Params.push_back(dInitParams[3]); // U2
 	Params.push_back(dInitParams[5]); // ed2
 	Params.push_back(chi2_m1); // gamma2
@@ -529,7 +529,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	pHN->CalcHNMatEl=OneChQS_HN_MatEl;
 	Nsites0=1;
 	NumChannels=1;
-	chi_m1=chiN(0,Lambda);
+	chi_m1[0]=chiN(0,Lambda);
       
 	break;
    
@@ -563,12 +563,11 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	//Params.push_back(Lambda);
 	//Params.push_back(HalfLambdaFactor); Do we need this??
 
-	chi2_m1=sqrt(2.0*dInitParams[4]/pi)/(sqrt(Lambda)*HalfLambdaFactor);
+	// Coupling to second channel
+// 	chi2_m1=sqrt(2.0*dInitParams[4]/pi)/(sqrt(Lambda)*HalfLambdaFactor);
+	chi_m1[1]=sqrt(2.0*dInitParams[4]/pi)/(sqrt(Lambda)*HalfLambdaFactor);
 
 	cout << " FOR NOW, not including the Lambda factor in J1,J2 " << endl;
-
-// 	Params.push_back(chi_m1); // J1
-// 	Params.push_back(chi2_m1); // J2
 
 	Params.push_back(dInitParams[1]); // J1
 	Params.push_back(dInitParams[4]); // J2
@@ -641,19 +640,22 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	pHN->CalcHNMatEl=TwoChQS_HN_MatEl;
 	Nsites0=1;
 	NumNRGmats=2;
-	NumChannels=2;
+	NumChannels=2; // Not needed...
 
-	// Is this ok? What if there is a pseudogap??
-	chi_m1=chiN(0,Lambda);
-	chi2_m1=chiN(0,Lambda);
+	// Is this ok? What if there is a pseudogap?? Solved! (2019)
+	chi_m1[0]=chiN(0,Lambda);
+// 	chi2_m1=chiN(0,Lambda);
+	chi_m1[1]=chiN(0,Lambda);
 	if (BandNo==0){
-	  chi_m1=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
-	  chi2_m1=chiN(0,Lambda);
+	  chi_m1[0]=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
+// 	  chi2_m1=chiN(0,Lambda);
+	  chi_m1[1]=chiN(0,Lambda);
 	}
 	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
 	else{
-	  chi_m1=chain.GetChin(0);
-	  chi2_m1=chain.GetChin(0);
+	  chi_m1[0]=Chains[0].GetChin(0);
+// 	  chi2_m1=Chains[1].GetChin(0);
+	  chi_m1[1]=Chains[1].GetChin(0);
 	}
 	///////////
 
@@ -707,13 +709,13 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	// Hamiltonian/Code params
 	pHN->CalcHNMatEl=TwoChQS_HN_MatEl;
 	if (BandNo==0){
-	  chi_m1=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
-	  chi2_m1=chiN(0,Lambda);
+	  chi_m1[0]=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
+	  chi_m1[1]=chiN(0,Lambda);
 	}
 	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
 	else{
-	  chi_m1=chain.GetChin(0);
-	  chi2_m1=chain.GetChin(0);
+	  chi_m1[0]=Chains[0].GetChin(0);
+	  chi_m1[1]=Chains[1].GetChin(0);
 	}
 	///////////
 	break;
@@ -975,10 +977,10 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	pHN->CalcHNMatEl=OneChQSz_HN_MatEl;
 
 	if (BandNo==0){
-	  chi_m1=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
+	  chi_m1[0]=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
 	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
 	}
-	else{chi_m1=chain.GetChin(0);}
+	else{chi_m1[0]=Chains[0].GetChin(0);}
 
 	NumNRGmats=STLMatArray.size(); // DO I STILL NEED THIS???
 	MatArray=&STLMatArray[0]; // Need to do this after
@@ -1017,7 +1019,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 
 	Params.push_back(dInitParams[0]); // U1
 	Params.push_back(dInitParams[2]); // ed1
-	Params.push_back(chi_m1); // gamma1
+	Params.push_back(chi_m1[0]); // gamma1
 	Params.push_back(dInitParams[7]); // Bmag1      
 
 	Params.push_back(dInitParams[3]); // U2
@@ -1098,10 +1100,10 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	NumNRGmats=STLMatArray.size();
 	MatArray=&STLMatArray[0]; // Need to do this after
 	if (BandNo==0)
-	  chi_m1=chiN(0,Lambda); // is actually chi0
+	  chi_m1[0]=chiN(0,Lambda); // is actually chi0
 	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
 	else
-	  chi_m1=chain.GetChin(0);
+	  chi_m1[0]=Chains[0].GetChin(0);
 	///////////
 	// BuildBasis params
 	CommonQNs.push_back(2); // No of common QNs
@@ -1237,7 +1239,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	  Params.push_back(dInitParams[10]); // B2 anisot
 
 	  double chi2_m1=sqrt(2.0*dInitParams[4]/pi)/(sqrt(Lambda)*HalfLambdaFactor);
-	  Params.push_back(chi_m1); // gamma1
+	  Params.push_back(chi_m1[0]); // gamma1
 	  Params.push_back(chi2_m1); // gamma2
 	}
 	else{
@@ -1257,7 +1259,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	  Params.push_back(0.0); // Dz      
 	  Params.push_back(0.0); // B2 anisot
 
-	  Params.push_back(chi_m1); // gamma1
+	  Params.push_back(chi_m1[0]); // gamma1
 	  Params.push_back(0.0); // gamma2
 	}
 
@@ -1345,7 +1347,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	Nsites0=1;
 	NumChannels=1;
 
-	chi_m1=chiN(0,Lambda);
+	chi_m1[0]=chiN(0,Lambda);
 
 	break;
       default:
@@ -1372,7 +1374,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	Params.push_back(dInitParams[0]); // U1
 	Params.push_back(dInitParams[2]); // ed1
 
-	Params.push_back(chi_m1); // sqrt(2gamma1/Pi)/sqrt(L)*HalfLambdaFactor
+	Params.push_back(chi_m1[0]); // sqrt(2gamma1/Pi)/sqrt(L)*HalfLambdaFactor
 
 	Params.push_back(dInitParams[3]); // w0
 	Params.push_back(dInitParams[4]); // lambda_ph
@@ -1422,7 +1424,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	// Hamiltonian/Code params
 	pHN->CalcHNMatEl=TwoChQS_HN_MatEl;
 	Nsites0=1;
-	chi_m1=chiN(0,Lambda);
+	chi_m1[0]=chiN(0,Lambda);
 	NumNRGmats=2;
 	NumChannels=2;
 	NumThermoMats=2;
@@ -1515,10 +1517,10 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	// changes in STLMatArray!
 
 	if (BandNo==0){
-	  chi_m1=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
+	  chi_m1[0]=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
 	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
 	}
-	else{chi_m1=chain.GetChin(0);}
+	else{chi_m1[0]=Chains[0].GetChin(0);}
 	// Need to change chain files for ALL Models!!
 	strcpy(ThermoArray[0].ChainArqName,"EntropyChain1Ch_NupPdn");
 	strcat(ThermoArray[0].ChainArqName,zstring);
@@ -1536,7 +1538,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 
 	Params.push_back(dInitParams[0]); // U1
 	Params.push_back(dInitParams[2]); // ed1
-	Params.push_back(chi_m1); // sqrt(2gamma1/Pi)/sqrt(L)*HalfLambdaFactor
+	Params.push_back(chi_m1[0]); // sqrt(2gamma1/Pi)/sqrt(L)*HalfLambdaFactor
 
 	Params.push_back(dInitParams[3]); // Mag Field 
 
@@ -2046,10 +2048,10 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 	// changes in STLMatArray!
 
 	if (BandNo==0){
-	  chi_m1=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
+	  chi_m1[0]=chiN(0,Lambda); // is actually chi0 // chiN is a codehandler func
 	// Valid ONLY for SquareBand, z_twist=1! Check side dot calcs...
 	}
-	else{chi_m1=chain.GetChin(0);}
+	else{chi_m1[0]=Chains[0].GetChin(0);}
 	// Need to change chain files for ALL Models!!
 	strcpy(ThermoArray[0].ChainArqName,"EntropyChain1Ch_PupPdn");
 	strcat(ThermoArray[0].ChainArqName,zstring);
@@ -2068,7 +2070,7 @@ void CNRGCodeHandler::ModelSwitch(  vector<int> &CommonQNs,
 
 	Params.push_back(dInitParams[0]); // U1
 	Params.push_back(dInitParams[2]); // ed1
-	Params.push_back(chi_m1); // sqrt(2gamma1/Pi)/sqrt(L)*HalfLambdaFactor
+	Params.push_back(chi_m1[0]); // sqrt(2gamma1/Pi)/sqrt(L)*HalfLambdaFactor
 
 	Params.push_back(dInitParams[3]); // Mag Field 
 

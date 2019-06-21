@@ -1823,7 +1823,8 @@ void CSpecFunction::DMNRG_SpecDens_ChkPHS(int Nshell){
 
 
 //////////////////
-double CSpecFunction::CalcSpecDM_NRG(double omega, int UseCFS){
+//double CSpecFunction::CalcSpecDM_NRG(double omega, int UseCFS){
+double CSpecFunction::CalcSpecDM_NRG(double omega){
 
   // Need to get the Connecting matrix elements and energies
   // to and from a given block (say, blGS)
@@ -1848,8 +1849,11 @@ double CSpecFunction::CalcSpecDM_NRG(double omega, int UseCFS){
     //SpecM+=DMNRG_SpecDens_M(omega,Nshell);
     //AM_w=DMNRG_SpecDens_M(omega/DN,Nshell);
 
-    if (UseCFS==1) AM_w=CFS_SpecDens_M(omega/DN,Nshell);
-    else AM_w=DMNRG_SpecDens_M(omega/DN,Nshell); // does NOT work.
+    if (UseCFS==0) AM_w=DMNRG_SpecDens_M(omega/DN,Nshell); // does NOT work.
+//     else if (UseCFS==1) AM_w=CFS_SpecDens_M(omega/DN,Nshell);
+//     else if (UseCFS==2) AM_w=FDM_SpecDens_M(omega/DN,Nshell);
+    else if (UseCFS==1) AM_w=CFS_SpecDens_M_STL(omega/DN,Nshell);
+    else if (UseCFS==2) AM_w=FDM_SpecDens_M_STL(omega/DN,Nshell);
 
     SpecM+=AM_w/DN;
 
@@ -1879,7 +1883,8 @@ double CSpecFunction::CalcSpecDM_NRG(double omega, int UseCFS){
 }
 
 //////////////////
-double CSpecFunction::CalcNorm(int UseCFS){
+//double CSpecFunction::CalcNorm(int UseCFS){
+double CSpecFunction::CalcNorm(){
 
   // Need to get the Connecting matrix elements and energies
   // to and from a given block (say, blGS)
@@ -1899,7 +1904,10 @@ double CSpecFunction::CalcNorm(int UseCFS){
     double DN=CalcDN(Nshell);
     double sqrtDN=sqrt(DN);
 
-    if (UseCFS==1) NormN=CFS_SpecDens_M(0.0,Nshell,true);
+    // if (UseCFS==1) NormN=CFS_SpecDens_M(0.0,Nshell,true);
+//     else if (UseCFS==2) NormN=FDM_SpecDens_M(0.0,Nshell,true);
+    if (UseCFS==1) NormN=CFS_SpecDens_M_STL(0.0,Nshell,true);
+    else if (UseCFS==2) NormN=FDM_SpecDens_M_STL(0.0,Nshell,true);
     else NormN=DMNRG_SpecDens_M(0.0,Nshell,true); // does NOT work.
 
     Norm+=NormN;
@@ -1920,7 +1928,8 @@ double CSpecFunction::CalcNorm(int UseCFS){
 
 
 
-void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int NwEachN){
+//void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int NwEachN){
+void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int NwEachN){
 
   Omega_Rhow_Even.clear();
   Omega_Rhow_Odd.clear();
@@ -1942,7 +1951,7 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
 
   // The right thing to do is to define Mmindisc.
   // Until then, this will do.
-  if (UseCFS==1){Nsh0Even+=2;Nsh0Odd+=2;}
+  if (UseCFS!=0){Nsh0Even+=2;Nsh0Odd+=2;}
 
   cout << " CalcSpecDM_NRG_FixedOmegas: Even negative " << endl;
   cout << "  Nsh0Even = " <<  Nsh0Even << endl;
@@ -1967,9 +1976,10 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
 	cout << " Even Neg: omega < Gap -> rho_w=0 " << endl;
 	rho_w=0.0;
       } else {
-	if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
+	if (UseCFS!=0) rho_w=CalcSpecDM_NRG(-omega);
 	else {
-	rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	// rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	rho_w=DMNRG_SpecDens_M_STL(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
 	}
       }
       // end if omega<Gap
@@ -2009,9 +2019,10 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
 	cout << " Even Pos: omega < Gap -> rho_w=0" << endl;
 	rho_w=0.0;
       }else{
-	if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
+	if (UseCFS!=0) rho_w=CalcSpecDM_NRG(omega);
 	else {
-	rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	// rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	rho_w=DMNRG_SpecDens_M_STL(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
 	}
       }
       // end if omega<Gap
@@ -2048,9 +2059,10 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
 	cout << " Odd Neg: omega < Gap -> rho_w=0" << endl;
 	rho_w=0.0;
       }else{
-	if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
+	if (UseCFS!=0) rho_w=CalcSpecDM_NRG(-omega);
 	else {
-	  rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	  // rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	  rho_w=DMNRG_SpecDens_M_STL(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
 	}
       }
       // end if omega<Gap
@@ -2085,9 +2097,10 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
 	cout << " Odd Pos: omega < Gap -> rho_w=0 " << endl;
 	rho_w=0.0;
       }else{
-	if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
+	if (UseCFS!=0) rho_w=CalcSpecDM_NRG(omega);
 	else {
-	rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	// rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	rho_w=DMNRG_SpecDens_M_STL(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
 	}
       }
       // end if omega<Gap
@@ -2222,7 +2235,8 @@ void CSpecFunction::CalcSpecDM_NRG_FixedOmegas(double factorWN, int UseCFS, int 
 
 //////////////////
 
-void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN, int UseCFS){
+//void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN, int UseCFS){
+void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN){
 
   // Nomegas per shell!
 
@@ -2239,7 +2253,7 @@ void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN, int UseCF
   int Nmax=NshellMax-1;
 
   int Nsh0=NshellMin;
-  if (UseCFS==1){Nsh0+=2;}
+  if (UseCFS!=0){Nsh0+=2;}
 
 
   // First omega
@@ -2277,9 +2291,10 @@ void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN, int UseCF
 	cout << " Neg omega: omega < Gap -> rho_w=0 " << endl;
 	rho_w=0.0;
       }else{
-	if (UseCFS==1) rho_w=CalcSpecDM_NRG(-omega,1);
+	if (UseCFS!=0) rho_w=CalcSpecDM_NRG(-omega);
 	else{
-	rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	// rho_w=DMNRG_SpecDens_M(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
+	rho_w=DMNRG_SpecDens_M_STL(-factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;
 	}
       } // end if omega<Gap
       Omega_Rhow[0].push_back(-omega);
@@ -2308,9 +2323,10 @@ void CSpecFunction::CalcSpec_ManyOmegas(int NwEachN,  double factorWN, int UseCF
 	cout << " Pos omega: omega < Gap -> rho_w=0 " << endl;
 	rho_w=0.0;
       }else{
-	if (UseCFS==1) rho_w=CalcSpecDM_NRG(omega,1);
+	if (UseCFS!=0) rho_w=CalcSpecDM_NRG(omega);
 	else{ 
-	rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;  
+	// rho_w=DMNRG_SpecDens_M(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;  
+	rho_w=DMNRG_SpecDens_M_STL(factorWN*pow(Lambda,RedFactor),Nsh);rho_w/=DN;  
 	}
       } // end if omega<Gap
 

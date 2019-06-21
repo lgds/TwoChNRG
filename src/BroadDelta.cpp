@@ -1,13 +1,16 @@
+
+#include <math.h>
+#include "MyStructures.h"
+#define pi 3.141592653589793238462643383279502884197169
+
 /****************************************************************************/
 /**********************     Broadened Delta Function      *******************/
 /****************************************************************************/
 
-#include <math.h>
-#include "MyStructures.h"
+
 
 double BroadDelta(double omega, double Ep, double b){
 
-#define pi 3.141592653589793238462643383279502884197169
 
 double aux[3];
  if (Ep==0.0) Ep=1.0E-100;
@@ -103,3 +106,28 @@ double aux[3];
 }
 // END GaussDelta
 
+
+/****************************************************************************/
+/************     Log-gaussian  Delta Function (Weichselbaum) ***************/
+/****************************************************************************/
+
+
+
+double LogGaussDelta(double omega, double Ep, double b){
+
+
+double aux[3];
+ if (Ep==0.0) Ep=1.0E-100;
+////////////////
+
+// omega and Ep need to have the same sign other wise, returns zero
+
+ if ( (omega*Ep)<0.0 ){return(0.0);}
+
+ aux[0]=1.0/(b*fabs(Ep)*sqrt(pi));
+ aux[1]=log(fabs(omega/Ep))/b;
+ aux[2]=aux[0]*exp(-(aux[1]-b/4.0)*(aux[1]-b/4.0));
+ 
+ return(aux[2]);
+}
+// END BroadDelta

@@ -383,6 +383,8 @@ double GaussDelta(double omega, double Ep, double b);
 double LorentzDeltaAnders(double omega, double Ep, double b);
 
 
+double LogGaussDelta(double omega, double Ep, double b);
+
 #endif
 
 

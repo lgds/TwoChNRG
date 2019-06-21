@@ -19,6 +19,7 @@ strcpy(ThisCode.BandType,"SquareWilson");
 ThisCode.ModelNo=0;
 ThisCode.SymNo=0;
 ThisCode.BandNo=0;
+ThisCode.code_z_twist=1.0;
 
 while ((c = getopt (argc, argv, "h ? m: b: D: z: E:")) != -1)
   switch (c){
@@ -60,6 +61,8 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z: E:")) != -1)
     cout << "   -b PowerLaw : DoS(w)=C*|w|^r for |w|>Gap, zero otherwise. (needs lanc.in)" << endl; 
     cout << "   -b FromFile : Reads Gamma(w) from file HybFunc.dat (format: w, DoS). Can use z-trick" << endl; 
     cout << "   -b SumDeltas : Reads Gamma(w)=pi.sum_i t^2_i.delta(w-e_i) from file HybDeltas.dat (format: e_i, pi*t(e_i)^2)." << endl; 
+    cout << "   -b CoSilicene : (2-channel) - Notes by David Ruiz-Tijerina (needs lanc.in)" << endl; 
+    cout << " To use the z-trick: " << endl;
     cout << "   -z (z value) : For instance, \"-z 0.5\". Default is z=1.0. " << endl;
     cout << "   NOTE: for z !=1, use \"-b Const\" or \"-b FromFile\" (not SquareWilson)  " << endl;
     cout << " Alternative discretization schemes:  " << endl;
@@ -69,10 +72,10 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z: E:")) != -1)
    case 'z':
      //cout << " Warning: z-trick is now in the 2nd line of lanc.in!! Use -b Const" << endl;
      //return 1;
-     ThisCode.chain.z_twist=atof(optarg);
+     ThisCode.code_z_twist=atof(optarg);
 //      if (dEqual(ThisCode.chain.z_twist,0.0)) ThisCode.chain.z_twist=1.0;
-     if (ThisCode.chain.z_twist<0.0) ThisCode.chain.z_twist=1.0;
-     cout << " Using z-trick: z = " << ThisCode.chain.z_twist << endl;
+     if (ThisCode.code_z_twist<0.0) ThisCode.code_z_twist=1.0;
+     cout << " Using z-trick: z = " << ThisCode.code_z_twist << endl;
      break;
   case 'E':
      Aeig.MyEPS=atof(optarg);
@@ -80,9 +83,9 @@ while ((c = getopt (argc, argv, "h ? m: b: D: z: E:")) != -1)
      cout << " Using level-degeneracy tol. MyEPS = " << Aeig.MyEPS << endl;
      break;
   case 'D':
-    ThisCode.chain.DiscScheme=atof(optarg);
-    if (ThisCode.chain.DiscScheme>1) ThisCode.chain.DiscScheme=0;
-    cout << " Using Discretization Scheme= " << ThisCode.chain.DiscScheme << endl;
+    ThisCode.code_DiscScheme=atof(optarg);
+    if (ThisCode.code_DiscScheme>1) ThisCode.code_DiscScheme=0;
+    cout << " Using Discretization Scheme= " << ThisCode.code_DiscScheme << endl;
     cout << " 0- usual (default) 1- CampoOliveira  " << endl;
     break;
   case '?':
@@ -237,10 +240,13 @@ if (strcmp(ThisCode.BandType,"SquareWilson")==0)
 	 else
 	   if (strcmp(ThisCode.BandType,"SumDeltas") == 0)
 	     ThisCode.BandNo=14;
-	   else{
-	     cout << " Invalid Band type. Exiting... " << endl;
-	     exit(0);
-	 }
+	   else
+             if (strcmp(ThisCode.BandType,"CoSilicene") == 0)
+	       ThisCode.BandNo=15;
+	     else{
+	       cout << " Invalid Band type. Exiting... " << endl;
+	       exit(0);
+	     }
 
 
 cout << " - Model No: " << ThisCode.ModelNo << endl;
@@ -287,4 +293,5 @@ cout << " BandType : " << ThisCode.BandType << " - BandNo : " << ThisCode.BandNo
 // 12 - PowerLaw : with or without a gap
 // 13 - FromFile : Read input file HybFunc.dat
 // 14 - SumDeltas : Read input file HybDeltas.dat
+// 15 - Cobalt-Silicene : See notes by David
 // * - Not implemented yet. 

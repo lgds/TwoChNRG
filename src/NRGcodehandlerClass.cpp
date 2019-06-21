@@ -44,6 +44,12 @@ void CNRGCodeHandler::InitialSetUp(bool ReadParamsOnly){
 
   NoInputParamsDouble=3;
  
+// Sets NumChannels HERE
+  NumChannels=1;
+  if ( (SymNo==1)||(SymNo==4)||(SymNo==5) )
+    NumChannels=2;
+
+
   switch(ModelNo){
   case 0: // 0 - Anderson, 1 - Kondo , 2 - Phonon
     if (SymNo==2){NoInputParamsDouble=4;} // Add Bmag in Q Sz
@@ -82,7 +88,8 @@ void CNRGCodeHandler::InitialSetUp(bool ReadParamsOnly){
       ModelNo=3;
       ZeroParams();
     }
-    
+
+    // Need NumChannels set.
     SetChain();
     
     SaveBegFile();
@@ -136,7 +143,7 @@ void CNRGCodeHandler::ReadParams(){
   // added May 2010
   if (Lambda>0.0)
     //HalfLambdaFactor=0.5*(1.0+(1.0/Lambda));
-    HalfLambdaFactor=0.5*(1.0+(1.0/Lambda))*pow(Lambda,-(chain.z_twist)+1.0);
+    HalfLambdaFactor=0.5*(1.0+(1.0/Lambda))*pow(Lambda,-(code_z_twist)+1.0);
   else
     HalfLambdaFactor=0.0;
 }
@@ -184,7 +191,7 @@ void CNRGCodeHandler::ReadParams(char FileName[], int NoAdditionalParams){
   // added May 2010
 //   if (Lambda>0.0)
 //     //HalfLambdaFactor=0.5*(1.0+(1.0/Lambda));
-//     HalfLambdaFactor=0.5*(1.0+(1.0/Lambda))*pow(Lambda,-(chain.z_twist)+1.0);
+//     HalfLambdaFactor=0.5*(1.0+(1.0/Lambda))*pow(Lambda,-(Chains[0].z_twist)+1.0);
 //   else
 //     HalfLambdaFactor=0.0;
 }
@@ -194,170 +201,207 @@ void CNRGCodeHandler::ReadParams(char FileName[], int NoAdditionalParams){
 
 void CNRGCodeHandler::SetChain(){
 
-  vector<double> dParams;
-  chain.Lambda=Lambda;
-  chain.HybFuncParams=&dParams;
-  // new (Jun 2013)
-  chain.BandOffset=ChemPot;
+  // One chain object for each channel
+  for (int ich=0; ich<NumChannels; ich++){
+    
+    CNRGchain chain;
 
-  double daux=0.0;
-
-  int Nsiteschain=Nsitesmax>100?Nsitesmax:100;
-
-  switch(BandNo){
-  case 0: // Square but no
-    chain.SetChainWilson(Nsiteschain);
-    break;
-  case 4: // Lorentzian
-    // Read Params from lanc.in
-    chain.HybFunction=HybFunc_Lorentzian;
-    chain.HybFuncWithEn=HybFunc_Lorentzian_timesEn;
+    vector<double> dParams;
+    chain.z_twist=code_z_twist;
+    chain.DiscScheme=code_DiscScheme;
+    chain.Lambda=Lambda;
     chain.HybFuncParams=&dParams;
-    chain.ReadParams(LancInFileName,6);
-    chain.SetChainLanczos(Nsiteschain);
-    break;
-  case 41: // Cavity: multi_peak LorenztianLorentzian
-    // Read Params from lanc.in
-    chain.HybFunction=HybFunc_Cavity;
-    chain.HybFuncWithEn=HybFunc_Cavity_timesEn;
-    chain.HybFuncParams=&dParams;
-    chain.ReadParams(LancInFileName,8);
-    cout << " Testing ..." << endl;
-    cout << " Delta(-0.3)= " << chain.GetHyb_w(-0.3) << endl;
-    cout << " Delta(-0.2)= " << chain.GetHyb_w(-0.2) << endl;
-    cout << " Delta(-0.1)= " << chain.GetHyb_w(-0.1) << endl;
-    chain.SetChainLanczos(Nsiteschain);
-    break;
-  case 11: // Const DoS/ConsHyb
-    chain.HybFunction=HybFunc_Const;
-    switch (chain.DiscScheme){
-    case 0:
-      chain.HybFuncWithEn=HybFunc_Const_timesEn;
+    // new (Jun 2013)
+    chain.BandOffset=ChemPot;
+
+    double daux=0.0;
+
+    int Nsiteschain=Nsitesmax>100?Nsitesmax:100;
+
+    switch(BandNo){
+    case 0: // Square but no
+      chain.SetChainWilson(Nsiteschain);
       break;
-    case 1: // Campo-Oliveira
-      chain.HybFuncWithEn=HybFunc_Const_divEn;
+    case 4: // Lorentzian
+      // Read Params from lanc.in
+      chain.HybFunction=HybFunc_Lorentzian;
+      chain.HybFuncWithEn=HybFunc_Lorentzian_timesEn;
+      chain.HybFuncParams=&dParams;
+      chain.ReadParams(LancInFileName,6);
+      chain.SetChainLanczos(Nsiteschain);
+      break;
+    case 41: // Cavity: multi_peak LorenztianLorentzian
+      // Read Params from lanc.in
+      chain.HybFunction=HybFunc_Cavity;
+      chain.HybFuncWithEn=HybFunc_Cavity_timesEn;
+      chain.HybFuncParams=&dParams;
+      chain.ReadParams(LancInFileName,8);
+      cout << " Testing ..." << endl;
+      cout << " Delta(-0.3)= " << chain.GetHyb_w(-0.3) << endl;
+      cout << " Delta(-0.2)= " << chain.GetHyb_w(-0.2) << endl;
+      cout << " Delta(-0.1)= " << chain.GetHyb_w(-0.1) << endl;
+      chain.SetChainLanczos(Nsiteschain);
+      break;
+    case 11: // Const DoS/ConsHyb
+      chain.HybFunction=HybFunc_Const;
+      switch (chain.DiscScheme){
+      case 0:
+	chain.HybFuncWithEn=HybFunc_Const_timesEn;
+	break;
+      case 1: // Campo-Oliveira
+	chain.HybFuncWithEn=HybFunc_Const_divEn;
+	break;
+      default:
+	chain.HybFuncWithEn=HybFunc_Const_timesEn;
+      }
+      // end switch disc scheme
+      chain.HybFuncParams=&dParams; // HybFuncParams points to dParams.
+      if ( (dInitParams.size()>1)&&(dNEqual(dInitParams[1],0.0)) )
+	dParams.push_back(dInitParams[1]); // Parameter is Gamma
+      else
+	dParams.push_back(1.0);
+      // z_twist comes from command line
+      cout << " z_twist = " << chain.z_twist << endl;
+      chain.SetChainLanczos(Nsiteschain); // Should use z_twist...
+      break;
+    case 12: // PowerLaw
+      // Read Params from lanc.in
+      chain.HybFunction=HybFunc_PowerLaw;
+      chain.HybFuncWithEn=HybFunc_PowerLaw_timesEn;
+      chain.HybFuncParams=&dParams; // HybFuncParams points to dParams.
+      chain.ReadParams(LancInFileName,5);
+      cout << " Power-law band: Gamma(w)=Gamma0*|w-w0|^r + small_gamma " << endl;
+      cout << " whichbandtype = " << dParams[0]
+	   << " r = " << dParams[1]
+	   << " Gamma0 = " << dParams[2]
+	   << " small_gamma = " << dParams[3]
+	   << " w0 = " << dParams[4]
+	   << endl;
+      // Setting HybRef (will always be Gamma0). Needs to change!!
+      //     chain.HybRef=dParams[2];
+      //     chain.HybRefIsSet=true;
+      daux=chain.GetHyb_w(0.0);
+      if (dEqual(daux,0.0)){
+	cout << "  SetChain: Hyb(0)=0. Setting HybRef to " << dParams[2] << endl;
+	chain.HybRef=dParams[2];
+      }else{chain.HybRef=daux;}
+      chain.HybRefIsSet=true;
+      // Set Nsiteschain according with Delta!!
+      chain.SetChainLanczos(Nsiteschain);
+      break;
+    case 13: // From File
+      // Read Params from lanc.in
+      chain.HybFunction=HybFunc_FromFile;
+      //     chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
+      switch (chain.DiscScheme){
+      case 0:
+	chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
+	break;
+      case 1: // Campo-Oliveira
+	chain.HybFuncWithEn=HybFunc_FromFile_divEn;
+	break;
+      default:
+	chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
+      }
+      // end switch disc scheme
+      chain.HybFuncParams=&dParams; 
+      // We need HybFuncParams to be a single STL 
+      // vector otherwise the GSL function won't work... 
+      char HybFuncDatFileName[64];
+      strcpy(HybFuncDatFileName,"HybFunc.dat");
+      chain.ReadParams(HybFuncDatFileName); // Reads the whole thing.
+      daux=chain.GetHyb_w(0.0);
+      cout << " Hyb(0.0) = " << daux << endl;
+      // NOTE: this file is the FULL hybridization:
+      // Gamma(e)=pi*t(e)^2*rho(e)
+      // If Gamma0=0.0, set HybRef.
+      if ( dEqual(daux,0.0) ){
+	cout << "  SetChain: Hyb(0)=0. Setting HybRef to 1.0 " << endl;
+	chain.HybRef=1.0;
+	chain.HybRefIsSet=true;
+      }
+      // checking z-trick
+      cout << " z_twist = " << chain.z_twist << endl;
+      chain.SetChainLanczos(Nsiteschain);
+      //chain.PrintChain(20);
+      //exit(0);
+      break;
+    case 14: // Sum of Deltas 
+      // Read Params from lanc.in
+      chain.HybFunction=HybFunc_FromFile;
+      chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
+      chain.HybFuncParams=&dParams; 
+      // We need HybFuncParams to be a single STL 
+      // vector otherwise the GSL function won't work... 
+      //char HybFuncDatFileName[64];
+      strcpy(HybFuncDatFileName,"HybDeltas.dat");
+      chain.ReadParams(HybFuncDatFileName); // Reads the whole thing.
+      daux=0.0;
+      //daux=chain.GetHyb_w(0.0);
+      // If Gamma0=0.0, set HybRef.
+      if ( dEqual(daux,0.0) ){
+	cout << "  SetChain: Hyb(0)=0. Setting HybRef to 1.0 " << endl;
+	chain.HybRef=1.0;
+	chain.HybRefIsSet=true;
+      }
+      // Testing graphene
+      chain.HybFuncIsSumDeltas=true;
+      chain.SetChainLanczos(Nsiteschain);
+      chain.PrintChain(20);
+      exit(0);
+      break;
+    case 15: // Co-Silicene
+      // Read Params from lanc.in
+      chain.HybFunction=HybFunc_CoSilicene;
+      chain.HybFuncWithEn=HybFunc_CoSilicene_timesEn;
+      chain.HybFuncParams=&dParams; // HybFuncParams points to dParams.
+      chain.ReadParams(LancInFileName,6);
+      // adds channel index to params
+      dParams.push_back(2.0*ich-1.0);
+      cout << " Co-Silicene: Gamma_chi(w) " << endl;
+      cout << " whichbandtype = " << dParams[0]
+	   << " alpha/D = " << dParams[1]
+	   << " beta/D = " << dParams[2]
+	   << " vF/D = " << dParams[3]
+	   << " lSO/D = " << dParams[4]
+	   << " lEz/D = " << dParams[5]
+	   << " chi (channel) = " << dParams[6]
+	   << endl;
+      daux=chain.GetHyb_w(0.0);
+      if (dEqual(daux,0.0)){
+	cout << "  SetChain: Hyb(0)=0. Do we have a gap? " << endl;
+	// Check!
+	chain.HybRef=1.0;
+      }else{chain.HybRef=daux;}
+      chain.HybRefIsSet=true;
+      // TODO: Set Nsiteschain according with Gap!!
+      chain.SetChainLanczos(Nsiteschain);
       break;
     default:
-      chain.HybFuncWithEn=HybFunc_Const_timesEn;
+      cout << "BandNo = " << BandNo << "not implemented. Exiting..." << endl;
+      exit(0);
+      //chain.SetChainWilson(Nsiteschain);
     }
-    // end switch disc scheme
-    chain.HybFuncParams=&dParams; // HybFuncParams points to dParams.
-    if ( (dInitParams.size()>1)&&(dNEqual(dInitParams[1],0.0)) )
-      dParams.push_back(dInitParams[1]); // Parameter is Gamma
-    else
-      dParams.push_back(1.0);
-    // z_twist comes from command line
-    cout << " z_twist = " << chain.z_twist << endl;
-    chain.SetChainLanczos(Nsiteschain); // Should use z_twist...
-    break;
-  case 12: // PowerLaw
-    // Read Params from lanc.in
-    chain.HybFunction=HybFunc_PowerLaw;
-    chain.HybFuncWithEn=HybFunc_PowerLaw_timesEn;
-    chain.HybFuncParams=&dParams; // HybFuncParams points to dParams.
-    chain.ReadParams(LancInFileName,5);
-    cout << " Power-law band: Gamma(w)=Gamma0*|w-w0|^r + small_gamma " << endl;
-    cout << " whichbandtype = " << dParams[0]
-	 << " r = " << dParams[1]
-	 << " Gamma0 = " << dParams[2]
-	 << " small_gamma = " << dParams[3]
-	 << " w0 = " << dParams[4]
-	 << endl;
-    // Setting HybRef (will always be Gamma0). Needs to change!!
-//     chain.HybRef=dParams[2];
-//     chain.HybRefIsSet=true;
-    daux=chain.GetHyb_w(0.0);
-    if (dEqual(daux,0.0)){
-      cout << "  SetChain: Hyb(0)=0. Setting HybRef to " << dParams[2] << endl;
-      chain.HybRef=dParams[2];
-    }else{chain.HybRef=daux;}
-    chain.HybRefIsSet=true;
-    // Set Nsiteschain according with Delta!!
-    chain.SetChainLanczos(Nsiteschain);
-    break;
-  case 13: // From File
-    // Read Params from lanc.in
-    chain.HybFunction=HybFunc_FromFile;
-//     chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
-    switch (chain.DiscScheme){
-    case 0:
-      chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
-      break;
-    case 1: // Campo-Oliveira
-      chain.HybFuncWithEn=HybFunc_FromFile_divEn;
-      break;
-    default:
-      chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
+    // end switch band type
+
+    if (BandNo!=0){
+      cout << " Special band used: " << BandType << " in channel " << ich+1 << " of " << NumChannels << endl;
+      if (dInitParams.size()>3*ich){
+// 	dInitParams[1]=0.5*chain.Fsq*chain.HybRef; // Valid for one channel only
+//      ich=0 -> dInitParams[1]; //ich=1 -> dInitParams[4]
+	dInitParams[3*ich+1]=0.5*chain.Fsq*chain.HybRef;
+	cout << " Changed Gamma(ch=" << ich+1 <<") to 1/2*Fsq*Gamma(0) = " << dInitParams[3*ich+1] << endl;
+
+      }
+      chain.PrintChain(20);
     }
-    // end switch disc scheme
-    chain.HybFuncParams=&dParams; 
-    // We need HybFuncParams to be a single STL 
-    // vector otherwise the GSL function won't work... 
-    char HybFuncDatFileName[64];
-    strcpy(HybFuncDatFileName,"HybFunc.dat");
-    chain.ReadParams(HybFuncDatFileName); // Reads the whole thing.
-    daux=chain.GetHyb_w(0.0);
-    cout << " Hyb(0.0) = " << daux << endl;
-    // NOTE: this file is the FULL hybridization:
-    // Gamma(e)=pi*t(e)^2*rho(e)
-    // If Gamma0=0.0, set HybRef.
-    if ( dEqual(daux,0.0) ){
-      cout << "  SetChain: Hyb(0)=0. Setting HybRef to 1.0 " << endl;
-      chain.HybRef=1.0;
-      chain.HybRefIsSet=true;
-    }
-    // checking z-trick
-    cout << " z_twist = " << chain.z_twist << endl;
-    chain.SetChainLanczos(Nsiteschain);
-    //chain.PrintChain(20);
-    //exit(0);
-    break;
-  case 14: // Sum of Deltas 
-    // Read Params from lanc.in
-    chain.HybFunction=HybFunc_FromFile;
-    chain.HybFuncWithEn=HybFunc_FromFile_timesEn;
-    chain.HybFuncParams=&dParams; 
-    // We need HybFuncParams to be a single STL 
-    // vector otherwise the GSL function won't work... 
-    //char HybFuncDatFileName[64];
-    strcpy(HybFuncDatFileName,"HybDeltas.dat");
-    chain.ReadParams(HybFuncDatFileName); // Reads the whole thing.
-    daux=0.0;
-    //daux=chain.GetHyb_w(0.0);
-    // If Gamma0=0.0, set HybRef.
-    if ( dEqual(daux,0.0) ){
-      cout << "  SetChain: Hyb(0)=0. Setting HybRef to 1.0 " << endl;
-      chain.HybRef=1.0;
-      chain.HybRefIsSet=true;
-    }
-    // Testing graphene
-    chain.HybFuncIsSumDeltas=true;
-    chain.SetChainLanczos(Nsiteschain);
-    chain.PrintChain(20);
-    exit(0);
-    break;
-  default:
-    cout << "BandNo = " << BandNo << "not implemented. Exiting..." << endl;
-    exit(0);
-    //chain.SetChainWilson(Nsiteschain);
+    // end if BandNo!=0
+
+    // Add to chain vector
+    Chains.push_back(chain);
+
   }
-  // end switch band type
-
-  if (BandNo!=0){
-    cout << " Special band used: " << BandType << endl;
-    if (dInitParams.size()>1){
-      //cout << " Changed Gamma to 1/2*Fsq*Gamma(0) = " << chain.HybRef << endl;
-      dInitParams[1]=0.5*chain.Fsq*chain.HybRef;
-      cout << " Changed Gamma to 1/2*Fsq*Gamma(0) = " << dInitParams[1] << endl;
-
-    }
-    chain.PrintChain(20);
-    // Debugging. Remove later.
-    //if (BandNo==12) exit(0);
-  }
-  // end if BandNo!=0
-
-
+  // end loop in channels
 
 }
 
@@ -384,7 +428,7 @@ void CNRGCodeHandler::SaveBegFile()
   OutFile << " ChemPot      = " << ChemPot << endl;
   OutFile << " UpdateBefCut = " << UpdateBefCut << endl;
   OutFile << " calcdens     = " << calcdens << endl;
-  OutFile << " Oliveira z   = " << chain.z_twist << endl;
+  OutFile << " Oliveira z   = " << code_z_twist << endl;
   OutFile << " Additional parameters : " << endl;
   for (int ii=3;ii<NoInputParamsDouble;ii++)
     OutFile << " Param " << ii << "  = " << dInitParams[ii] << endl;
@@ -409,7 +453,7 @@ void CNRGCodeHandler::SaveBegFile()
   cout << " ChemPot      = " << ChemPot << endl;
   cout << " UpdateBefCut = " << UpdateBefCut << endl;
   cout << " calcdens     = " << calcdens << endl;
-  cout << " Oliveira z   = " << chain.z_twist << endl;
+  cout << " Oliveira z   = " << code_z_twist << endl;
   cout << " Additional parameters : " << endl;
   for (int ii=3;ii<NoInputParamsDouble;ii++)
     cout << " Param " << ii << "  = " << dInitParams[ii] << endl;
@@ -785,7 +829,7 @@ void CNRGCodeHandler::SaveGenPars(){
   // NEW LINE
   OutFile << ModelNo << endl;
   OutFile << BandNo << endl;
-  OutFile << chain.z_twist << endl;
+  OutFile << code_z_twist << endl;
 
   
   OutFile << endl;
@@ -920,7 +964,7 @@ void CNRGCodeHandler::ReadGenPars(bool ReadModelBand){
   if (ReadModelBand){
     ReadFile >> ModelNo;
     ReadFile >> BandNo;
-    ReadFile >> chain.z_twist;
+    ReadFile >> code_z_twist;
   }
   
   ReadFile.close();
@@ -1005,7 +1049,7 @@ void CNRGCodeHandler::ReadArrays(char idname[]){
 void CNRGCodeHandler::SetCurrentDN(){
 
 //   DN=CalcDN(Lambda,Nsites);
-  DN=CalcDN(Lambda,Nsites,chain.z_twist);
+  DN=CalcDN(Lambda,Nsites,code_z_twist);
 
 }
 
@@ -1071,7 +1115,7 @@ void CNRGCodeHandler::PrintSettings(){
   cout << " ChemPot      = " << ChemPot << endl;
   cout << " UpdateBefCut = " << UpdateBefCut << endl;
   cout << " calcdens     = " << calcdens << endl;
-  cout << " Oliveira z   = " << chain.z_twist << endl;
+  cout << " Oliveira z   = " << code_z_twist << endl;
   cout << " Additional parameters : " << endl;
   for (int ii=3;ii<NoInputParamsDouble;ii++)
     cout << " Param " << ii << "  = " << dInitParams[ii] << endl;

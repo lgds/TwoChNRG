@@ -25,6 +25,8 @@ void DM_NRG_SetRhoNmax(vector<double> ParamsTemp,
 
   bool ZeroTemp=false;
 
+  double ThisZN[2]={0.0,0.0};
+
   if (dEqual(TempBar,0.0)){
     ZeroTemp=true;
     betabar=1.0e10;
@@ -34,9 +36,8 @@ void DM_NRG_SetRhoNmax(vector<double> ParamsTemp,
 
   // Partition function only for Q Sz symmetry
 
-  double ZN;
+  double ZN=ParamsTemp[1];
 
-  cout << " Got here " << endl;
 
   // PartitionFuncTeq0() does not work well... Use the other one.
 //   if (ZeroTemp)
@@ -44,10 +45,11 @@ void DM_NRG_SetRhoNmax(vector<double> ParamsTemp,
 //   else
 //     ZN=pAcutNp1->PartitionFunc(betabar);
 
-  ZN=pAcutNp1->PartitionFunc(betabar);
+  ThisZN[0]=pAcutNp1->PartitionFunc(betabar);
 
 
-  cout << " TempBar = " << TempBar << " betabar = " << betabar 
+  cout << " DM_NRG_SetRhoNmax: TempBar = " << TempBar
+       << " betabar = " << betabar 
        << " ZN = " << ZN << " at Nmax." 
        << " Matrix is complex? " << pRhoNmax->IsComplex 
        << " Zero Temperature? " << ZeroTemp 
@@ -78,20 +80,21 @@ void DM_NRG_SetRhoNmax(vector<double> ParamsTemp,
     for (int ist=ist0;ist<=ist1;ist++){
       double auxExp=0.0;
       auxExp=exp(-betabar*pAcutNp1->dEn[ist]);
+      ThisZN[1]+=auxExp;
 
       // THIS IS WRONG!!
       //auxExp=(2.0*Si+1.0)*exp(-betabar*pAcutNp1->dEn[ist]);
 
       // debug
-      if ( (dNEqual(auxExp,0.0)) ){
-	cout << " DMNRG_SetRhoNmax: non-zero element "
-	     << " ibl= " << ibl
-	     << " ist= " << ist
-	     << " betabar= " << betabar
-	     << " Ei= " << pAcutNp1->dEn[ist]
-	     << " auxExp= " << auxExp
-	     << endl;
-      }
+      // if ( (dNEqual(auxExp,0.0)) ){
+      // 	cout << " DMNRG_SetRhoNmax: non-zero element "
+      // 	     << " ibl= " << ibl
+      // 	     << " ist= " << ist
+      // 	     << " betabar= " << betabar
+      // 	     << " Ei= " << pAcutNp1->dEn[ist]
+      // 	     << " auxExp= " << auxExp
+      // 	     << endl;
+      // }
       // end debug
 
       if (pRhoNmax->IsComplex)
@@ -117,7 +120,8 @@ void DM_NRG_SetRhoNmax(vector<double> ParamsTemp,
   // end loop over blocks
 
 
-  cout << " ... Rho Nmax done." << endl;
+  cout << " ... Rho Nmax done. ThisZN[1] = " << ThisZN[1] 
+       << " should be " << ThisZN[0] << endl;
 
 }
 // end subroutine

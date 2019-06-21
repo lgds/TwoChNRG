@@ -1,10 +1,11 @@
-##
 
-## Add the location of the TwoChNRG directory and uncomment the next line!!
-#TWOCHDIR=$(HOME)/MyCodes/TwoChNRG/
+#NRGANDDIR=$(HOME)/Cprogs/NRG/Anderson/
+#CLIBDIR=$(HOME)/Cprogs/Clibrary/
+#ANDLIBDIR=$(NRGANDDIR)lib/
+#DATSDIR=$(NRGANDDIR)Dats/
 
-## Add the location of the LAPACK directory in the next line
-#LAPACKDIR=/usr/src/lapack-3.0-5/lapack-3.0/SRC/
+TWOCHDIR=$(HOME)/Cprogs/TwoChNRG/
+##LAPACKDIR=/usr/src/lapack-3.0-5/lapack-3.0/SRC/
 
 
 ##OBJS_PREV=ProcReadParms.o \
@@ -22,12 +23,15 @@ OBJS=NRGarrayClass.o NRGmatrixClass.o NRGthermoClass.o NRGchainClass.o \
      OneChQS_SetSingleSite.o \
      TwoChQS_SetSingleSite.o TwoChQS_OpTables.o TwoChQS_OpMatRules.o \
      CalcDN.o CodeHandler_ModelSwitch.o HybFuncDefs.o SpecFuncClass.o \
-     GSL_Integrator.o SpecFunc_CFSmethod.o RotateMatrix.o 
+     GSL_Integrator.o SpecFunc_CFSmethod.o SpecFunc_allSTL.o RotateMatrix.o 
 
 OBJS_MAIN=Main_SetH0.o Main_OpMatRules.o Main_SetSingleSite.o
 
-CXXFLAGS =  -I$(CLIBDIR) -I$(TWOCHDIR)include/ -I$(TWOCHDIR)src/ \
-            -I$(LAPACKDIR) -funroll-loops -O2
+#CXXFLAGS =  -I$(CLIBDIR) -I$(TWOCHDIR)src/ -I$(TWOCHDIR)include/ \
+#            -I$(TWOCHDIR)src/OneChQS/ -I$(TWOCHDIR)src/TwoChQS/ \
+#            -I$(LAPACKDIR) -funroll-loops -O2
+CXXFLAGS =  -I$(TWOCHDIR)include/ -I$(TWOCHDIR)src/ \
+            -funroll-loops -O2
 ##LDFLAGS =  -lgsl -lgslcblas -llapack -lblas -lg2c -lm
 # Ubuntu 8.10 does NOT have g77 (or g2c)
 LDFLAGS =  -lgsl -lgslcblas -llapack -lblas -lm
@@ -43,7 +47,9 @@ LDFLAGS =  -lgsl -lgslcblas -llapack -lblas -lm
 ## Specify Directories that make will search
 
 ##VPATH=$(CLIBDIR):$(ANDLIBDIR):$(DATSDIR)
-VPATH=$(CLIBDIR):$(TWOCHDIR)src/:$(TWOCHDIR)include/:$(TWOCHDIR)src/OneChQS/:$(TWOCHDIR)src/TwoChQS/
+##VPATH=$(CLIBDIR):$(TWOCHDIR)src/:$(TWOCHDIR)include/:$(TWOCHDIR)src/OneChQS/:$(TWOCHDIR)src/TwoChQS/
+## Removing OneChQS  and TwoChQS dirs (cpp files should be there...)
+VPATH=$(CLIBDIR):$(TWOCHDIR)src/:$(TWOCHDIR)include/
 
 ##
 ## New pattern rule for "c" files
